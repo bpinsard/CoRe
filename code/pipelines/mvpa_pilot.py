@@ -22,7 +22,7 @@ config.update_config(cfg)
 data_dir = '/home/bpinsard/data/raw/UNF/CoRe'
 proc_dir = '/home/bpinsard/data/analysis/'
 
-subjects = ['S40_JB']
+subjects = ['Pilot01']
 
 tr=2.16
 file_pattern = '_%(PatientName)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -41,18 +41,19 @@ def dicom_dirs():
                                    'fmri_resting_state','fmri_task1','fmri_task2',
                                    'fmri_fieldmap', 'fmri_pa'],
                         sort_filelist = True,
+                        raise_on_empty = False,
                         base_directory = data_dir, template=''),
         name='dicom_dirs')
-    dicom_dirs.inputs.template = 'CoRe_%s_*/??-%s'
+    dicom_dirs.inputs.template = 'CoRe_SleepMRI_%s/??-%s'
     dicom_dirs.inputs.template_args = dict(
         t1_mprage=[['subject','anat_mprage-MPRAGE_12ch']],
         aa_scout=[['subject','AAScout']],
         localizer=[['subject','localizer_12Channel']],
-        fmri_resting_state=[['subject','fmri-BOLD_Resting_State']],
-        fmri_task1=[['subject','fmri-BOLD_Task1']],
-        fmri_task2=[['subject','fmri-BOLD_Task2']],
-        fmri_fieldmap=[['subject','fmri_fieldmap-gre_field_map_BOLD/*']],
-        fmri_pa=[['subject','fmri-BOLD_PA']],)
+        fmri_resting_state=[['subject','BOLD_Resting_State']],
+        fmri_task1=[['subject','BOLD_Task1']],
+        fmri_task2=[['subject','BOLD_Task2']],
+        fmri_fieldmap=[['subject','fieldmap-gre_field_map_BOLD/*']],
+        fmri_pa=[['subject','BOLD_PA']],)
 
     w=pe.Workflow(name='core_pilot')
 
@@ -227,7 +228,7 @@ def preproc_fmri():
     fmri_proc.inputs.inputspec.phase_encoding_dir = 1
 
     n_merge_fmri_sequences = pe.Node(
-        utility.Merge(3),
+        utility.Merge(4),
         name='merge_fmri_sequences')
 
     n_fmri_convert = pe.MapNode(
@@ -289,7 +290,7 @@ def preproc_fmri():
         iterfield = ['in_file'],
         name = 'smooth_bp')
 
-    bold_seqs = ['fmri_resting_state','fmri_task1','fmri_task2']
+    bold_seqs = ['fmri_resting_state','fmri_task1','fmri_task2','fmri_pa']
 
     w.base_dir = proc_dir
     si = w.get_node('subjects_info')
@@ -346,22 +347,3 @@ def preproc_fmri():
     
 
     return w 
-
-
-from mvpa2.clfs.meta import BinaryClassifier, CombinedClassifier, MaximalVote, MappedClassifier
-from mvpa2.generators.splitters import Splitter
-from sklearn.svm import OneClassSVM
-from mvpa2.clfs.skl import SKLLearnerAdapter
-
-def get_classifier():
-    
-
-    clf = SKLLearnerAdapter(OneClassSVM(kernel='linear'))
-    seqA_clf = BinaryClassifier(clf.clone(),['seqA'],['rest', 'rest_block_A', 'rest_block_B', 'seqB'])
-    seqB_clf = BinaryClassifier(clf.clone(),['seqB'],['rest', 'rest_block_A', 'rest_block_B', 'seqA'])
-    map_seqA_clf = MappedClassifier(seqA_clf,Splitter(attr='targets',attr_values=[1]))
-    map_seqB_clf = MappedClassifier(seqB_clf,Splitter(attr='targets',attr_values=[1]))
-
-    comb_clf = CombinedClassifier([map_seqA_clf,map_seqB_clf], combiner=MaximalVote())
-    
-    
