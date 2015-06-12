@@ -1,54 +1,82 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
+# Editor temporary/working/backup files #
+#########################################
+.#*
+[#]*#
+*~
+*$
+*.bak
+*.diff
+*.org
+.project
+*.rej
+.settings/
+.*.sw[nop]
+.sw[nop]
+*.tmp
+*.orig
 
-# C extensions
+# Not sure what the next two are for
+*.kpf
+*-stamp
+
+# Compiled source #
+###################
+*.a
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.py[oc]
 *.so
+*.pyd
 
-# Distribution / packaging
-.Python
-env/
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.bz2
+*.bzip2
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.tbz2
+*.tgz
+*.zip
+
+# Python files #
+################
+MANIFEST
 build/
-develop-eggs/
+_build
 dist/
-downloads/
-eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
+*.egg-info
+.shelf/
 .tox/
 .coverage
-.cache
-nosetests.xml
-coverage.xml
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
+# Logs and databases #
+######################
 *.log
+*.sql
+*.sqlite
 
-# Sphinx documentation
-docs/_build/
+# OS generated files #
+######################
+.gdb_history
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
 
-# PyBuilder
-target/
+# Things specific to this project #
+###################################
+__config__.py
+doc/api/generated
+doc/build/
+doc/manual
+cythonize.dat
