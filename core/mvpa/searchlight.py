@@ -82,7 +82,7 @@ class SurfVoxSearchlight():
         
         slmap_confmat = Dataset(
             np.concatenate([
-                    slmap_surf_confmat.samples.mean(0)[np.newaxis], 
+                    slmap_surf_confmat.samples.mean(0)[np.newaxis],
                     slmap_vox_confmat.samples.mean(0)[np.newaxis]],1),
             fa=ds.fa,
             a=ds.a)
@@ -115,7 +115,6 @@ class GNBSurfVoxSearchlight(SurfVoxSearchlight):
             splitter=spltr,
             errorfx=errorfx,
             reuse_neighbors=True)
-
 
 def searchlight_delays(ds, prtnr):
     surf_vox_slght = GNBSurfVoxSearchlight(ds, GNB(), prtnr)
