@@ -24,9 +24,8 @@ mri_data_dir = os.path.join(data_dir,'MRI')
 proc_dir = '/home/bpinsard/data/analysis/'
 
 subjects = ['S00_BP_pilot','S01_ED_pilot']
-subjects = subjects[1:]
+#subjects = subjects[1:]
 #subjects = subjects[:1]
-
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -474,10 +473,9 @@ def xfm2mat(xfm):
     np.savetxt("out.mat",np.vstack([mat,[0,0,0,1]]))
     return os.path.abspath("out.mat")        
 
-def grab_preproc(subject_id):
+def grab_preproc(subject_id, data_dir, proc_dir):
     import os, glob
     import numpy as np
-    from mvpa_pilot import data_dir, proc_dir
     scans = np.loadtxt(os.path.join(data_dir,'Design/CoRe_%s.csv'%subject_id),delimiter=',',dtype=np.str)
     noise_corrected_ts = [os.path.join(
             proc_dir,'core',
@@ -494,10 +492,12 @@ def mvpa_pipeline():
 
     n_preproc_grabber = pe.Node(
         utility.Function(
-            input_names=['subject_id'],
+            input_names=['subject_id','data_dir','proc_dir'],
             output_names=['noise_corrected_ts','smoothed_ts', 'session_names', 'sequence_names', 'behavior_files'],
             function=grab_preproc),
         name='preproc_grabber')
+    n_preproc_grabber.inputs.data_dir=data_dir
+    n_preproc_grabber.inputs.proc_dir=proc_dir
 
     n_dataset_noisecorr = pe.Node(
         CreateDataset(tr=tr),
@@ -524,8 +524,8 @@ from nipype.interfaces.base import (TraitedSpec, BaseInterface, traits,
                                     BaseInterfaceInputSpec, isdefined, File, Directory,
                                     InputMultiPath, OutputMultiPath)
 
-sys.path.insert(0,'/home/bpinsard/data/projects/CoRe/code/')
-from .. import mvpa as core_mvpa
+from ..mvpa import dataset as mvpa_dataset
+import mvpa2.datasets
 
 class CreateDatasetInputSpec(BaseInterfaceInputSpec):
     subject_id = traits.Str(mandatory=True)
@@ -563,16 +563,16 @@ class CreateDataset(BaseInterface):
                             ('mvpa_CoReOtherSeq', np.asarray([1,3,4,2,1])),
                             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
                 seq_idx = [[s[0] for s in seq_info].index(seq_name)] * 7
-            ds = core_mvpa.ds_from_ts(ts_file, beh, seq_info=seq_info, seq_idx=seq_idx, tr=self.inputs.tr)
+            ds = mvpa_dataset.ds_from_ts(ts_file, beh, seq_info=seq_info, seq_idx=seq_idx, tr=self.inputs.tr)
             ds.sa['scan_name'] = [ses_name]*ds.nsamples
             ds.sa['scan_id'] = [scan_id]*ds.nsamples
             dss.append(ds)
             scan_id += 1
             if beh is not None:
                 reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_exec.dtype.names])
-                ds_glm = ds_tr2glm(ds, 'regressors_exec', reg_groups)
+                ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_exec', reg_groups)
                 dss_glm.append(ds_glm)
-                ds_glm = ds_tr2glm(ds, 'regressors_stim', reg_groups)
+                ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_stim', reg_groups)
                 dss_glm_stim.append(ds_glm)
 
                 del ds.sa['regressors_exec'], ds.sa['regressors_stim']
@@ -588,7 +588,7 @@ class CreateDataset(BaseInterface):
         ds_glm_stim = mvpa2.datasets.vstack(dss_glm_stim)
         ds_glm_stim.a.update(dss[0].a)
         ds_glm_stim.sa['chunks'] = np.cumsum(np.ediff1d(ds_glm_stim.chunks, to_begin=[0])!=0)
-        core_mvpa.datasets.add_aparc_ba_fa(ds, self.inputs.subject_id, pproc_path='/home/bpinsard/data/analysis/core/')
+        mvpa_dataset.add_aparc_ba_fa(ds, self.inputs.subject_id, pproc_path='/home/bpinsard/data/analysis/core/')
         ds_glm.fa = ds.fa
         ds_glm_stim.fa = ds.fa
         

@@ -22,20 +22,9 @@ from mvpa2 import debug
 if __debug__:
     debug.active += ["SLC"]
 
-prtnr_loco_cv = ChainNode([
-        NFoldPartitioner(attr='chunks'), 
-        NonContiguous(dist_attr='time',dist=60)])
-prtnr_loso_cv = NFoldPartitioner(attr='scan_id')
-
-prtnr_mvpa2_retest = CustomPartitioner(
-    [(['d3_mvpa1'],['d3_retest_TSeq','d3_retest_IntSeq','d3_resting1','d3_resting2']),
-     (['d3_mvpa2'],['d3_retest_TSeq','d3_retest_IntSeq','d3_resting1','d3_resting2']),
-     (['d3_mvpa1','d3_mvpa2'],['d3_retest_TSeq','d3_retest_IntSeq','d3_resting1','d3_resting2']),
-     ], attr='scan_name')
-
 class SurfVoxSearchlight():
     
-    def __init__(self, ds, clf, prtnr=prtnr_loco_cv,
+    def __init__(self, ds, clf, prtnr,
                  surf_sl_radius=20, vox_sl_radius=2.5,
                  surf_sl_max_feat=64):
         self._prtnr = prtnr
@@ -77,18 +66,20 @@ class SurfVoxSearchlight():
         self.slght_vox_confmat = Searchlight(cvte, self._idx_qe)
 
     def __call__(self, ds):
+        
         slmap_surf_confmat = self.slght_surf_confmat(ds[:,:self.max_vertex])
         slmap_vox_confmat = self.slght_vox_confmat(ds[:,self.max_vertex:])
         
         slmap_confmat = Dataset(
             np.concatenate([
-                    slmap_surf_confmat.samples.mean(0)[np.newaxis],
-                    slmap_vox_confmat.samples.mean(0)[np.newaxis]],1),
+                    slmap_surf_confmat.samples.sum(0)[np.newaxis],
+                    slmap_vox_confmat.samples.sum(0)[np.newaxis]],1),
             fa=ds.fa,
             a=ds.a)
-        
+        slmap_confmat.samples /= slmap_confmat.samples[0,0].sum()
+
         slmap_accuracy = Dataset(
-            slmap_confmat.samples[:,:,np.eye(slmap_confmat.shape[2],dtype=np.bool)].sum(2)/slmap_confmat.samples[0,0].sum(),
+            slmap_confmat.samples[:,:,np.eye(slmap_confmat.shape[2],dtype=np.bool)].sum(2),
             fa = ds.fa,
             a = ds.a)
         return slmap_confmat, slmap_accuracy
@@ -97,7 +88,7 @@ class GNBSurfVoxSearchlight(SurfVoxSearchlight):
 
     def _setup_surf_vox_searchlight(self, ds, clf):
 
-        errorfx = ConfusionMatrix(labels=range(len(ds.uniquetargets)))
+        errorfx = ConfusionMatrix(labels=ds.uniquetargets)
         spltr = Splitter(attr='partitions',attr_values=[1,2])
 
         self.slght_surf_confmat = GNBSearchlight(
@@ -136,7 +127,7 @@ def searchlight_delays(ds, prtnr):
     del slmaps
     return slmap
 
-def all_searchlights(ds, prtnr=prtnr_loco_cv, surf_vox_slght=None):
+def all_searchlights(ds, prtnr, surf_vox_slght=None):
     slmaps = dict()
 
     if surf_vox_slght is None:

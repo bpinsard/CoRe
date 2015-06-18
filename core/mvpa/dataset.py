@@ -70,6 +70,13 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     ds.sa['delay_from_go'] = [np.nan]*ds.nsamples
     ds.sa['delay_from_first_key'] = [np.nan]*ds.nsamples
 
+    ds.sa['targets_no_delay'] = ds.targets.copy()
+    ds.sa['blocks_idx_no_delay'] = np.zeros(ds.nsamples)-1
+    for bi,b in enumerate(blocks):
+        stim_tr = int(np.round(b[2]/tr))
+        ds.sa.targets_no_delay[stim_tr:] = b[0]
+        ds.sa.blocks_idx_no_delay[stim_tr:] = bi
+
     last_vol = 0
     for instr,go,ex in zip(instrs, gos, execs):
         first_vol = int(np.round(instr[2]/tr+1e-4))
@@ -147,7 +154,11 @@ def ds_from_ts(ts_file, design_file=None,
         for chk in np.where(chunks_count>2*target_chunk_len)[0]:
             ds.chunks[ds.chunks==chk] = chk+(np.arange(target_chunk_len)*1000).repeat(
                 int(np.ceil(chunks_count[chk]/float(target_chunk_len))))[:chunks_count[chk]]
-        ds.sa['chunks'] = np.cumsum(np.ediff1d(ds.chunks,to_begin=[0])!=0)
+        
+        ds.sa['chunks'] = np.cumsum(np.ediff1d(ds.chunks, to_begin=[0])!=0)
+        # rounding is to remove numerical small errors
+        ds.a['blocks_tr'] = [int(np.round(b[2]/tr)) for b in blocks]
+        ds.a['blocks_targets'] = [b[0] for b in blocks]
     else:
         ds.sa['chunks'] = np.arange(target_chunk_len).repeat(int(ds.nsamples/float(target_chunk_len))+1)[:ds.nsamples]
         ds.sa['targets'] = [default_target]*ds.nsamples
@@ -156,14 +167,15 @@ def ds_from_ts(ts_file, design_file=None,
         ds.sa['subtargets_stim'] = ds.sa.targets
         ds.sa['sequence'] = ['']*ds.nsamples
 
-
         for attr in ['n_correct_sequences',
                      'n_failed_sequences',
                      'delay_from_instruction',
                      'delay_from_first_key',
                      'delay_from_go',
                      'tr_from_instruction',
-                     'blocks_idx',]:
+                     'blocks_idx',
+                     'targets_no_delay',
+                     'blocks_idx_no_delay']:
             ds.sa[attr] = [np.nan]*ds.nsamples
     return ds
 
@@ -179,7 +191,7 @@ def add_aparc_ba_fa(ds, subject, pproc_path):
     ds.fa['ba'] = ba_32k
     ds.fa['ba_thres'] = ba_thresh_32k
 
-def add_trend_chunk(ds):
+def add_trend_chunk(ds,tr=default_tr):
     ds.sa['trend_chunks'] = np.zeros(ds.nsamples)
     min_trend_chunk_len = 32./tr
     newchunk = np.zeros(ds.nsamples,dtype=np.bool)
