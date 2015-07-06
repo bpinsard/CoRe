@@ -6,19 +6,26 @@ from mvpa2.datasets import Dataset, vstack
 from mvpa2.clfs.gnb import GNB
 
 preproc_dir = '/home/bpinsard/data/analysis/core'
+dataset_subdir = 'dataset_noisecorr'
+dataset_subdir = 'dataset_smoothed'
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
+output_subdir = 'searchlight'
+output_subdir = 'searchlight_smooth'
 
 subjects = ['S00_BP_pilot','S01_ED_pilot']
 subjects = subjects[1:]
 
 def all_searchlight():
     for subj in subjects:
-        ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, 'dataset_noisecorr', 'glm_ds_%s.h5'%subj))
-        ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, 'dataset_noisecorr', 'ds_%s.h5'%subj))
+        ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
+        ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
+
+        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
+        if len(mvpa_scan_names)==0:
+            mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
         
 #        ds_glm = Dataset.from_hdf5(os.path.join(proc_dir, 'tests', 'glm_ds_%s.h5'%subj))
 #        ds = Dataset.from_hdf5(os.path.join(proc_dir, 'tests', 'ds_%s.h5'%subj))
-        """
         slght_loco = searchlight.GNBSurfVoxSearchlight(
             ds,
             GNB(), 
@@ -34,7 +41,6 @@ def all_searchlight():
             surf_sl_max_feat=128,
             vox_sl_radius=3)
 
-        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
         # do loco searchlight on each mvpa scan separately
         slmaps_accuracy = []
         slmaps_confusion = []
@@ -54,7 +60,7 @@ def all_searchlight():
             ('exec', ds_glm.sa.subtargets=='exec'),]
 
         for scan_subset, scans in scans_subsets:
-            # using trs 
+            # using trs
             mvpa_tr_scans_mask = reduce(
                 lambda mask,msn: np.logical_or(mask,ds.sa.scan_name==msn), 
                 scans,
@@ -82,27 +88,28 @@ def all_searchlight():
                 slmaps_confusion.append(slmaps[0])
 
             if len(scans)>1:
-                print '@@@@@@@@@@@@@@@@  %s %s loso tr @@@@@@@@@@@@@@@@@@@@'%(scan_subset)
-                slmaps = slght_loso(ds[mvpa_tr_scans_mask])
-                for slmap in slmaps:
-                    slmap.sa['slmap'] = ['slmap_tr_loso_%s_%s'%(subset_name,scan_subset)]
-                slmaps_accuracy.append(slmaps[1])
-                slmaps_confusion.append(slmaps[0])
 
-                print '@@@@@@@@@@@@@@@@  %s %s loso glm @@@@@@@@@@@@@@@@@@@@'%(scan_subset)
-                slmaps = slght_loso(ds_glm[mvpa_glm_scans_mask])
-                for slmap in slmaps:
-                    slmap.sa['slmap'] = ['slmap_glm_loso_%s_%s'%(subset_name,scan_subset)]
-                slmaps_accuracy.append(slmaps[1])
-                slmaps_confusion.append(slmaps[0])
+                for subset_name, subset in tr_subsets:
+                    print '@@@@@@@@@@@@@@@@  %s %s loso tr @@@@@@@@@@@@@@@@@@@@'%(scan_subset, subset_name)
+                    slmaps = slght_loso(ds[np.logical_and(mvpa_tr_scans_mask, subset)])
+                    for slmap in slmaps:
+                        slmap.sa['slmap'] = ['slmap_tr_loso_%s_%s'%(subset_name,scan_subset)]
+                    slmaps_accuracy.append(slmaps[1])
+                    slmaps_confusion.append(slmaps[0])
+
+                for subset_name, subset in glm_subsets:
+                    print '@@@@@@@@@@@@@@@@  %s %s loso glm @@@@@@@@@@@@@@@@@@@@'%(scan_subset, subset_name)
+                    slmaps = slght_loso(ds_glm[np.logical_and(mvpa_glm_scans_mask, subset)])
+                    for slmap in slmaps:
+                        slmap.sa['slmap'] = ['slmap_glm_loso_%s_%s'%(subset_name,scan_subset)]
+                    slmaps_accuracy.append(slmaps[1])
+                    slmaps_confusion.append(slmaps[0])
                 
         all_slmaps_accuracy = vstack(slmaps_accuracy)
-        all_slmaps_accuracy.save(os.path.join(proc_dir, 'searchlight', '%s_accuracy_slmaps.h5'%subj))
+        all_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, '%s_accuracy_slmaps.h5'%subj))
         all_slmaps_confmat = vstack(slmaps_confusion)
-        all_slmaps_confmat.save(os.path.join(proc_dir, 'searchlight', '%s_confusion_slmaps.h5'%subj))
+        all_slmaps_confmat.save(os.path.join(proc_dir, output_subdir, '%s_confusion_slmaps.h5'%subj))
         del all_slmaps_accuracy, all_slmaps_confmat, slmaps_accuracy, slmaps_confusion
-
-        """
 
         mvpa_tr_scans_mask = reduce(
                 lambda mask,msn: np.logical_or(mask,ds.sa.scan_name==msn), 
@@ -121,15 +128,15 @@ def all_searchlight():
             delay_ds.targets = ds_mvpa.sa.targets_no_delay[blocks_tr]
             delay_ds.chunks = np.arange(delay_ds.nsamples)
             slmaps = slght_loco(delay_ds)
-            print '$$$$ delay %d : max accuracy %f'%(d, 1-slmaps[1].samples.min())
+            print '$$$$ delay %d : max accuracy %f'%(d, slmaps[1].samples.max())
             delay_slmaps_accuracy.append(slmaps[1])
             delay_slmaps_confusion.append(slmaps[0])
             del delay_ds
 
-        delay_slmaps_confusion = mvpa2.datasets.vstack(delay_slmaps_confusion)
-        delay_slmaps_accuracy = mvpa2.datasets.vstack(delay_slmaps_accuracy)
+        delay_slmaps_confusion = vstack(delay_slmaps_confusion)
+        delay_slmaps_accuracy = vstack(delay_slmaps_accuracy)
         delay_slmaps_confusion.sa['delays'] = delays
         delay_slmaps_accuracy.sa['delays'] = delays
-        delay_slmaps_confusion.save(os.path.join(proc_dir, 'searchlight', '%s_delay_confusion_slmaps.h5'%subj))
-        delay_slmaps_accuracy.save(os.path.join(proc_dir, 'searchlight', '%s_delay_accuracy_slmaps.h5'%subj))
+        delay_slmaps_confusion.save(os.path.join(proc_dir, output_subdir, '%s_delay_confusion_slmaps.h5'%subj))
+        delay_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, '%s_delay_accuracy_slmaps.h5'%subj))
         del delay_slmaps_accuracy, delay_slmaps_confusion

@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import nibabel as nb
 from ..behavior import load_behavior
 
 from nipy.modalities.fmri.experimental_paradigm import BlockParadigm, EventRelatedParadigm

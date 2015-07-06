@@ -23,9 +23,9 @@ data_dir = '/home/bpinsard/data/raw/UNF/CoRe'
 mri_data_dir = os.path.join(data_dir,'MRI')
 proc_dir = '/home/bpinsard/data/analysis/'
 
-subjects = ['S00_BP_pilot','S01_ED_pilot']
+subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot']
 #subjects = subjects[1:]
-#subjects = subjects[:1]
+subjects = subjects[3:]
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -47,10 +47,10 @@ def dicom_dirs():
                         raise_on_empty = False,
                         base_directory = mri_data_dir, template=''),
         name='anat_dirs')
-    anat_dirs.inputs.template = 'CoRe_%s_01/??-%s'
+    anat_dirs.inputs.template = 'CoRe_%s_01/??-*%s*'
     ## all this will change with 32 channel head coil
     anat_dirs.inputs.template_args = dict(
-        t1_mprage=[['subject','anat_mprage-MPRAGE_12ch']], 
+        t1_mprage=[['subject','MPRAGE']], 
         aa_scout=[['subject','AAScout']],
         localizer=[['subject','localizer_12Channel']],
         )
@@ -64,7 +64,7 @@ def dicom_dirs():
                         raise_on_empty = False,
                         base_directory = mri_data_dir, template=''),
         name='func_dirs')
-    func_dirs.inputs.template = 'CoRe_%s_%02d/??-%s'
+    func_dirs.inputs.template = 'CoRe_%s_%02d/??-*%s'
     func_dirs.inputs.template_args = dict(
         aa_scout=[['subject','day','AAScout']],
         localizer=[['subject','day','localizer_12Channel']],

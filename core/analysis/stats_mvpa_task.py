@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 color_cycle = plt.style.library['ggplot']['axes.color_cycle']
-import behavior
 
 uniq_seq = ['CoReTSeq', 'CoReIntSeq', 'mvpa_CoReOtherSeq1', 'mvpa_CoReOtherSeq2']
 
