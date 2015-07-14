@@ -25,7 +25,7 @@ proc_dir = '/home/bpinsard/data/analysis/'
 
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot']
 #subjects = subjects[1:]
-subjects = subjects[3:]
+#subjects = subjects[2:]
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -40,9 +40,7 @@ def dicom_dirs():
 
     anat_dirs = pe.Node(
         nio.DataGrabber(infields=['subject'],
-                        outfields=['aa_scout','localizer',
-                                   'fmri_resting_state','fmri_task1','fmri_task2',
-                                   'fmri_fieldmap', 'fmri_pa'],
+                        outfields=['aa_scout','localizer','t1_mprage'],
                         sort_filelist = True,
                         raise_on_empty = False,
                         base_directory = mri_data_dir, template=''),
@@ -562,7 +560,7 @@ class CreateDataset(BaseInterface):
                             ('CoReIntSeq', np.asarray([1,3,2,4,1])),
                             ('mvpa_CoReOtherSeq', np.asarray([1,3,4,2,1])),
                             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
-                seq_idx = [[s[0] for s in seq_info].index(seq_name)] * 7
+                seq_idx = [[s[0] for s in seq_info].index(seq_name)] * 14
             ds = mvpa_dataset.ds_from_ts(ts_file, beh, seq_info=seq_info, seq_idx=seq_idx, tr=self.inputs.tr)
             ds.sa['scan_name'] = [ses_name]*ds.nsamples
             ds.sa['scan_id'] = [scan_id]*ds.nsamples

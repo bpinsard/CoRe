@@ -7,16 +7,18 @@ from mvpa2.clfs.gnb import GNB
 
 preproc_dir = '/home/bpinsard/data/analysis/core'
 dataset_subdir = 'dataset_noisecorr'
-dataset_subdir = 'dataset_smoothed'
+#dataset_subdir = 'dataset_smoothed'
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 output_subdir = 'searchlight'
-output_subdir = 'searchlight_smooth'
+#output_subdir = 'searchlight_smooth'
 
-subjects = ['S00_BP_pilot','S01_ED_pilot']
-subjects = subjects[1:]
+
+subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot']
+subjects = subjects[:2]
 
 def all_searchlight():
     for subj in subjects:
+        print '______________   %s   ___________'%subj
         ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
         ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
 
@@ -124,8 +126,10 @@ def all_searchlight():
         blocks_tr = np.where(np.diff(ds_mvpa.sa.blocks_idx_no_delay)>0)[0]+1
         for d in delays:
             print '######## computing searchlight for delay %d #######'%d
-            delay_ds = ds_mvpa[blocks_tr+d]
-            delay_ds.targets = ds_mvpa.sa.targets_no_delay[blocks_tr]
+            delay_trs = blocks_tr+d
+            delay_trs = delay_trs[delay_trs < ds_mvpa.nsamples]
+            delay_ds = ds_mvpa[delay_trs]
+            delay_ds.targets = ds_mvpa.sa.targets_no_delay[delay_trs-d]
             delay_ds.chunks = np.arange(delay_ds.nsamples)
             slmaps = slght_loco(delay_ds)
             print '$$$$ delay %d : max accuracy %f'%(d, slmaps[1].samples.max())

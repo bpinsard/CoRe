@@ -11,6 +11,9 @@ default_tr = 2.16
 
 def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     
+    scan_len_sec = ds.nsamples*tr
+    blocks = [b for b in blocks if b[4]<scan_len_sec and b[4]<scan_len_sec]
+
     instrs = np.asarray(
         [['instr_%03d_%s'%(bi,b[0]),b[0],b[2],b[3]-b[2],b[5]-b[2]] for bi,b in enumerate(blocks) if b[2]>0],
         dtype=np.object).reshape(-1,5)
@@ -20,7 +23,7 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     execs = np.asarray(
         [['exec_%03d_%s'%(bi,b[0]),b[0],b[5],b[6]-b[5]] for bi,b in enumerate(blocks)],
         dtype=np.object)
-    
+
     ds.a['blocks_tr'] = np.round(np.asarray([b[2] for b in blocks])/tr).astype(np.int)
     ds.a['blocks_targets'] = [b[0] for b in blocks]
         
@@ -74,7 +77,10 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     ds.sa['targets_no_delay'] = ds.targets.copy()
     ds.sa['blocks_idx_no_delay'] = np.zeros(ds.nsamples)-1
     for bi,b in enumerate(blocks):
-        stim_tr = int(np.round(b[2]/tr))
+        if b[2]>0:
+            stim_tr = int(np.round(b[2]/tr))
+        else:
+            stim_tr = int(np.round(b[3]/tr))
         ds.sa.targets_no_delay[stim_tr:] = b[0]
         ds.sa.blocks_idx_no_delay[stim_tr:] = bi
 
