@@ -7,14 +7,14 @@ from mvpa2.clfs.gnb import GNB
 
 preproc_dir = '/home/bpinsard/data/analysis/core'
 dataset_subdir = 'dataset_noisecorr'
-#dataset_subdir = 'dataset_smoothed'
+dataset_subdir = 'dataset_smoothed'
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 output_subdir = 'searchlight'
-#output_subdir = 'searchlight_smooth'
+output_subdir = 'searchlight_smooth'
 
 
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot']
-subjects = subjects[:2]
+#subjects = subjects[2:3]
 
 def all_searchlight():
     for subj in subjects:
@@ -144,3 +144,12 @@ def all_searchlight():
         delay_slmaps_confusion.save(os.path.join(proc_dir, output_subdir, '%s_delay_confusion_slmaps.h5'%subj))
         delay_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, '%s_delay_accuracy_slmaps.h5'%subj))
         del delay_slmaps_accuracy, delay_slmaps_confusion
+
+
+
+def all_rois_analysis():
+    
+    for subj in subjects:
+        print '______________   %s   ___________'%subj
+        ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
+        ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))

@@ -628,5 +628,3 @@ class AllSearchlights(BaseInterface):
 
     def _list_outputs(self):        
         return outputs
-    
-        
