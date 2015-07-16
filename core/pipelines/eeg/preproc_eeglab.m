@@ -1,4 +1,4 @@
-function EEG=eeg_gca(path, filename, tr)
+function EEG=preproc_eeglab(path, filename, tr, outpath)
 
 [EEG,com] = pop_loadbv(path,filename);
 
@@ -13,7 +13,15 @@ end
 % add dummy triggers
 Trigs = [linspace(-3,-1,3)*(EEG.srate*tr)+Trigs(1) Trigs Trigs(end)+EEG.srate*tr];
 
-EEG_fastr=fmrib_fastr(EEG,70,4,30,Trigs,0,0,0,0,0,0.03,[32,65,66],'auto');
+ecg_chans = [];
+for i=1:EEG_fastr.nbchan
+	chanlab = EEG_fastr.chanlocs(i).labels;
+	if length(strfind(chanlab,'ECG')) > 0
+		ecg_chans(end+1) = i
+	end
+end
+
+EEG_fastr=fmrib_fastr(EEG,70,4,30,Trigs,0,0,0,0,0,0.03,ecg_chans,'auto');
 EEG_qrs = EEG_fastr;
 
 qrs_events = {};
@@ -26,5 +34,5 @@ for i=1:EEG_fastr.nbchan
 		EEG_qrs=pop_fmrib_qrsdetect(EEG_qrs,i,qrs_event,'no');
 	end
 end
-pop_saveset(EEG_qrs,'filename',[fname(1:end-4) '_gca.set'],'filepath',path)
+pop_saveset(EEG_qrs,'filename',[filename(1:end-4) '_gca.set'],'filepath',outpath)
 
