@@ -23,9 +23,10 @@ data_dir = '/home/bpinsard/data/raw/UNF/CoRe'
 mri_data_dir = os.path.join(data_dir,'MRI')
 proc_dir = '/home/bpinsard/data/analysis/'
 
-subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot']
+subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
 #subjects = subjects[1:]
-#subjects = subjects[2:]
+subjects = subjects[-1:]
+#subjects = subjects[1]
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -258,19 +259,19 @@ def preproc_fmri():
 
     ## Phase Inversion TOPUP APPA fieldmap ###############################################################
 
-    n_extract_4vol_pa = pe.Node(
-        nipy.Trim(begin_index=-4,
-                  out_file='%s_4vol_pa'),
-        name='extract_4vol_pa')
+    n_merge_appa = generic_pipelines.fmri.merge_appa()
+    
+    n_topup = pe.MapNode(
+        fsl.TOPUP(),
+        iterfield=['in_file'],
+        name='topup')
+    n_topup.inputs.readout_times = [0.016695]*8
+    n_topup.inputs.encoding_direction = ['x-']*4+['x']*4
 
-    n_merge_appa = pe.MapNode(
-        utility.Merge(2),
-        iterfield='',
-        name='merge_appa')
-
-#    w.connect([
-#            (n_fmri_convert, n_extract_4vol_pa,[(('nifti_file',utility.select,-2),'in_file')]),
-#            ])
+    w.connect([
+            (n_fmri_convert, n_merge_appa,[('nifti_file','in_files')]),
+            (n_merge_appa, n_topup,[('out_files','in_file')]),
+            ])
 
     ###############################################    ###############################################
     def name_struct(f,n,*args):
@@ -358,7 +359,6 @@ def preproc_fmri():
         iterfield = ['in_file'],
         name = 'smooth_bp')
 
-    """
     n_surf_resample = pe.MapNode(
         nipy.preprocess.SurfaceResampling(
             echo_time=.03,
@@ -369,7 +369,8 @@ def preproc_fmri():
         iterfield = ['dicom_files','motion','fieldmap','fieldmap_reg'],
         overwrite=False,
         name = 'surf_resample')
-    
+
+    """    
     n_smooth_bp_nofilt = pe.MapNode(
         generic_pipelines.fmri_surface.GrayOrdinatesBandPassSmooth(
             data_field = 'FMRI/DATA',
@@ -417,6 +418,7 @@ def preproc_fmri():
             (n_st_realign, n_convert_motion_par,[('par_file','motion')]),
             (n_fmri_convert, n_convert_motion_par,[('nifti_file','matrix_file')]),
 
+
             (n_convert_motion_par, n_noise_corr,[('motion','motion')]),
             (w.get_node('all_func_dirs'),n_noise_corr,[(('fmri_all', flatten_remove_none),'dicom_files')]),
 
@@ -439,7 +441,7 @@ def preproc_fmri():
             (n_noise_corr, n_smooth_bp,[('out_file','in_file')]),
             
             ])
-    if False:
+    if True:
         w.connect([
             (n_anat_grabber, n_surf_resample,[
                     ('norm','surfaces_volume_reference'),
@@ -447,7 +449,6 @@ def preproc_fmri():
                     (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
                       '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
                      'resample_rois'),
-                    ('pve_maps','partial_volume_maps')
                     ]),
             (n_repeat_fieldmaps, n_surf_resample,[
                     ('fieldmaps','fieldmap'),
@@ -458,7 +459,7 @@ def preproc_fmri():
             (w.get_node('all_func_dirs'), n_surf_resample,[(('fmri_all', flatten_remove_none),'dicom_files')]),
             (n_group_hemi_surfs, n_surf_resample,[('out','resample_surfaces')]),
 
-            (n_surf_resample, n_smooth_bp_nofilt,[('out_file','in_file')]),            
+#            (n_surf_resample, n_smooth_bp_nofilt,[('out_file','in_file')]),            
             ])
 
     return w 

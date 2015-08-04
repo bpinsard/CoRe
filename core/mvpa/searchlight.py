@@ -8,8 +8,9 @@ from mvpa2.generators.resampling import NonContiguous
 from mvpa2.measures.searchlight import Searchlight, sphere_searchlight
 from mvpa2.measures.base import CrossValidation
 from mvpa2.measures.gnbsearchlight import GNBSearchlight, sphere_gnbsearchlight
+from mvpa2.measures.rsa import PDist
 from mvpa2.base.node import ChainNode
-from mvpa2.datasets import Dataset, hstack
+from mvpa2.datasets import Dataset, hstack, vstack
 from mvpa2.base.hdf5 import h5load
 from mvpa2.generators.resampling import Balancer
 from mvpa2.mappers.fx import mean_sample
@@ -106,6 +107,26 @@ class GNBSurfVoxSearchlight(SurfVoxSearchlight):
             splitter=spltr,
             errorfx=errorfx,
             reuse_neighbors=True)
+
+class RSASurfVoxSearchlight(SurfVoxSearchlight):
+
+    def __init__(self, ds, **kwargs):
+        SurfVoxSearchlight.__init__(self, ds, None, None, **kwargs)
+
+    def _setup_surf_vox_searchlight(self, ds, clf):
+
+        pdist = PDist(square=False)
+
+        self.slght_surf_pdist = Searchlight(pdist, self._sqe)
+        self.slght_vox_pdist = Searchlight(pdist, self._idx_qe)
+
+    def __call__(self, ds):
+        
+        slmap_surf_pdist = self.slght_surf_pdist(ds[:,:self.max_vertex])
+        slmap_vox_pdist = self.slght_vox_pdist(ds[:,self.max_vertex:])
+
+        slmap_pdist = hstack([slmap_surf_pdist, slmap_vox_pdist])
+        return slmap_pdist
 
 def searchlight_delays(ds, prtnr):
     surf_vox_slght = GNBSurfVoxSearchlight(ds, GNB(), prtnr)

@@ -10,11 +10,12 @@ dataset_subdir = 'dataset_noisecorr'
 dataset_subdir = 'dataset_smoothed'
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 output_subdir = 'searchlight'
-output_subdir = 'searchlight_smooth'
+output_subdir = 'searchlight_smooth2'
 
 
-subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot']
+subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
 #subjects = subjects[2:3]
+#subjects=subjects[-1:]
 
 def all_searchlight():
     for subj in subjects:
