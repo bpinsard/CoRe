@@ -4,13 +4,15 @@ from ..mvpa import searchlight
 from . import mvpa_nodes
 from mvpa2.datasets import Dataset, vstack
 from mvpa2.clfs.gnb import GNB
+import joblib
+
 
 preproc_dir = '/home/bpinsard/data/analysis/core'
 dataset_subdir = 'dataset_noisecorr'
-dataset_subdir = 'dataset_smoothed'
+#dataset_subdir = 'dataset_smoothed'
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 output_subdir = 'searchlight'
-output_subdir = 'searchlight_smooth2'
+#output_subdir = 'searchlight_smooth2'
 
 
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
@@ -18,12 +20,14 @@ subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_P
 #subjects=subjects[-1:]
 
 def all_searchlight():
-    for subj in subjects:
+    joblib.Parallel(n_jobs=10)([joblib.delayed(subject_searchlight)(subj) for subj in subjects])
+
+def subject_searchlight(subj):
         print '______________   %s   ___________'%subj
         ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
         ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
 
-        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
+        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
         if len(mvpa_scan_names)==0:
             mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
         
@@ -33,16 +37,16 @@ def all_searchlight():
             ds,
             GNB(), 
             mvpa_nodes.prtnr_loco_cv,
-            surf_sl_radius=30,
-            surf_sl_max_feat=128,
-            vox_sl_radius=3)
+            surf_sl_radius=20,
+            surf_sl_max_feat=64,
+            vox_sl_radius=2)
         slght_loso = searchlight.GNBSurfVoxSearchlight(
             ds,
             GNB(), 
             mvpa_nodes.prtnr_loso_cv,
-            surf_sl_radius=30,
-            surf_sl_max_feat=128,
-            vox_sl_radius=3)
+            surf_sl_radius=20,
+            surf_sl_max_feat=64,
+            vox_sl_radius=2)
 
         # do loco searchlight on each mvpa scan separately
         slmaps_accuracy = []
@@ -76,7 +80,10 @@ def all_searchlight():
             
             for subset_name, subset in tr_subsets:
                 print '@@@@@@@@@@@@@@@@  %s %s tr @@@@@@@@@@@@@@@@@@@@'%(scan_subset, subset_name)
-                slmaps = slght_loco(ds[np.logical_and(mvpa_tr_scans_mask, subset)])
+                subs = np.logical_and(mvpa_tr_scans_mask, subset)
+                if not len(subs):
+                    raise RuntimeError
+                slmaps = slght_loco(ds[subs])
                 for slmap in slmaps:
                     slmap.sa['slmap'] = ['slmap_tr_%s_%s'%(subset_name,scan_subset)]
                 slmaps_accuracy.append(slmaps[1])
@@ -84,7 +91,10 @@ def all_searchlight():
 
             for subset_name, subset in glm_subsets:
                 print '@@@@@@@@@@@@@@@@  %s %s glm @@@@@@@@@@@@@@@@@@@@'%(scan_subset, subset_name)
-                slmaps = slght_loco(ds_glm[np.logical_and(mvpa_glm_scans_mask, subset)])
+                subs = np.logical_and(mvpa_glm_scans_mask, subset)
+                if not len(subs):
+                    raise RuntimeError
+                slmaps = slght_loco(ds_glm[subs])
                 for slmap in slmaps:
                     slmap.sa['slmap'] = ['slmap_glm_%s_%s'%(subset_name,scan_subset)]
                 slmaps_accuracy.append(slmaps[1])
@@ -110,6 +120,7 @@ def all_searchlight():
                 
         all_slmaps_accuracy = vstack(slmaps_accuracy)
         all_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, '%s_accuracy_slmaps.h5'%subj))
+        print 'all accuracies ', all_slmaps_accuracy.samples.max(1)
         all_slmaps_confmat = vstack(slmaps_confusion)
         all_slmaps_confmat.save(os.path.join(proc_dir, output_subdir, '%s_confusion_slmaps.h5'%subj))
         del all_slmaps_accuracy, all_slmaps_confmat, slmaps_accuracy, slmaps_confusion

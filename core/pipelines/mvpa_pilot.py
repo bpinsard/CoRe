@@ -23,6 +23,13 @@ data_dir = '/home/bpinsard/data/raw/UNF/CoRe'
 mri_data_dir = os.path.join(data_dir,'MRI')
 proc_dir = '/home/bpinsard/data/analysis/'
 
+
+SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
+            ('CoReIntSeq', np.asarray([1,3,2,4,1])),
+            ('mvpa_CoReOtherSeq', np.asarray([1,3,4,2,1])),
+            ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
+
+
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
 #subjects = subjects[1:]
 subjects = subjects[-1:]
@@ -104,7 +111,7 @@ def preproc_anat():
         name='convert_t1_dicom')
 
     t1_pipeline = generic_pipelines.t1_new.t1_freesurfer_pipeline()
-    t1_pipeline.inputs.freesurfer.args=''
+    t1_pipeline.inputs.freesurfer.args='-use-gpu'
     t1_pipeline.inputs.freesurfer.openmp = 8
     wm_surface = generic_pipelines.t1_new.extract_wm_surface()
 
@@ -557,10 +564,7 @@ class CreateDataset(BaseInterface):
             seq_idx = None
             seq_info = None
             if not seq_name is None and not beh is None:
-                seq_info = [('CoReTSeq', np.asarray([1,4,2,3,1])),
-                            ('CoReIntSeq', np.asarray([1,3,2,4,1])),
-                            ('mvpa_CoReOtherSeq', np.asarray([1,3,4,2,1])),
-                            ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
+                seq_info = SEQ_INFO
                 seq_idx = [[s[0] for s in seq_info].index(seq_name)] * 14
             ds = mvpa_dataset.ds_from_ts(ts_file, beh, seq_info=seq_info, seq_idx=seq_idx, tr=self.inputs.tr)
             ds.sa['scan_name'] = [ses_name]*ds.nsamples

@@ -102,3 +102,23 @@ def behavior_stats(blocks):
     uniq_seq = np.unique([b[0] for b in blocks])
     
     stats['sequence_rts'] = dict([(seq,[np.diff(np.hstack([sq['time'] for sq in b[-1]])) for b in blocks if b[0]==seq]) for seq in uniq_seq])
+
+
+def inf2nan(x):
+    x[np.isinf(x)]=np.nan
+    return x
+
+def blocks_to_rts(blocks):
+    rt_post = []
+    for block in blocks:
+        rts = []
+        for seqi,seq in enumerate(block[-1]):
+            if np.all(seq['match']) and len(seq)==len(block[1]):
+                rt = seq['rt_post']
+                if seqi==len(block[-1])-1:
+                    rt[-1] = np.nan
+                rts.append(inf2nan(rt))
+        if not len(rts):
+            rts.append(np.zeros(len(seq)))
+        rt_post.append(np.asarray(rts))
+    return rt_post

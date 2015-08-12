@@ -74,7 +74,7 @@ class SurfVoxSearchlight():
         slmap_confmat = Dataset(
             np.concatenate([
                     slmap_surf_confmat.samples.sum(0)[np.newaxis],
-                    slmap_vox_confmat.samples.sum(0)[np.newaxis]],1),
+                    slmap_vox_confmat.samples.sum(0)[np.newaxis]],1).astype(np.float32),
             fa=ds.fa,
             a=ds.a)
         slmap_confmat.samples /= slmap_confmat.samples[0,0].sum()
@@ -83,6 +83,7 @@ class SurfVoxSearchlight():
             slmap_confmat.samples[:,:,np.eye(slmap_confmat.shape[2],dtype=np.bool)].sum(2),
             fa = ds.fa,
             a = ds.a)
+        print 'max accuracy: %d'%slmap_accuracy.samples.max()
         return slmap_confmat, slmap_accuracy
 
 class GNBSurfVoxSearchlight(SurfVoxSearchlight):
