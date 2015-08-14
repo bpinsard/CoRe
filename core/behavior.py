@@ -28,13 +28,18 @@ def load_behavior(in_file, seq_info=None, seq_idx=None, remapping=None):
     block_idx = 0
     t_instr = -1
     t_go = -1
+    ttl_start = None
     for ie,ee in enumerate(log['logoriginal'][0,1:]):
         if len(ee[0])>1:
             log_time = float(ee[0,0][0])
-            evt_type = str(ee[0,1][0])
+            evt_type = ee[0,1][0]
             if evt_type=='START':
                 ttl_start = log_time
                 keys['time'] -= ttl_start # set key presses to scanner time
+            if evt_type=='STOP':
+                break
+            if ttl_start is None:
+                continue
             scan_time = log_time - ttl_start
             if evt_type=='Instruction':
                 t_instr = scan_time

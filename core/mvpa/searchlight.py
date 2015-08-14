@@ -83,7 +83,7 @@ class SurfVoxSearchlight():
             slmap_confmat.samples[:,:,np.eye(slmap_confmat.shape[2],dtype=np.bool)].sum(2),
             fa = ds.fa,
             a = ds.a)
-        print 'max accuracy: %d'%slmap_accuracy.samples.max()
+        print 'max accuracy: ', slmap_accuracy.samples.max()
         return slmap_confmat, slmap_accuracy
 
 class GNBSurfVoxSearchlight(SurfVoxSearchlight):

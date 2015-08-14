@@ -9,10 +9,10 @@ import joblib
 
 preproc_dir = '/home/bpinsard/data/analysis/core'
 dataset_subdir = 'dataset_noisecorr'
-#dataset_subdir = 'dataset_smoothed'
+dataset_subdir = 'dataset_smoothed'
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 output_subdir = 'searchlight'
-#output_subdir = 'searchlight_smooth2'
+output_subdir = 'searchlight_smooth'
 
 
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
@@ -27,7 +27,7 @@ def subject_searchlight(subj):
         ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
         ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
 
-        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
+        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
         if len(mvpa_scan_names)==0:
             mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
         
@@ -159,9 +159,67 @@ def subject_searchlight(subj):
 
 
 
+
+bas_labels = {
+    'BA1':10,
+    'BA2b':11,
+    'BA3a':12,
+    'BA3b':13,
+    'BA4a':4,
+    'BA4p':5,
+    'BA44':2,
+    'BA45':3}
+
+fs_clt = np.loadtxt('/home/bpinsard/softs/freesurfer/FreeSurferColorLUT.txt',np.str)
+rois = np.hstack([np.asarray([46,29,70,69,28,4,3,7,8])+a for a in [11100,12100]]+[53,17,10,49,51,12,8,47,11,50])
+aparc_labels = dict([(fs_clt[fs_clt[:,0]==str(r)][0,1],r) for r in rois])
+
+
+from mvpa2.measures.base import CrossValidation
+from mvpa2.generators.splitters import Splitter
+
+def test_clf(clf, ds, partitioner, rois_fa, roi_labels):
+
+    spltr = Splitter(attr='partitions',attr_values=[1,2])
+    cvte = CrossValidation(clf, partitioner, splitter=spltr, enable_ca=['stats'])
+
+    stats = dict()
+
+    for roi_name,roi in roi_labels.items():
+        print np.count_nonzero(ds.fa[rois_fa].value==roi)
+        res = cvte(ds[:,ds.fa[rois_fa].value==roi])
+        stats[roi_name] = cvte.ca.stats
+        print stats[roi_name].stats['ACC']
+    return stats
+
+
+
+def stats_all_subjects(subjects, clf, partitioner, rois_fa, roi_labels):
+    stats = dict()
+    for subj in subjects:
+        print subj
+        ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
+        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
+        if len(mvpa_scan_names)==0:
+            mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
+        mvpa_tr_scans_mask = np.logical_and(
+            reduce(
+                lambda mask,msn: np.logical_or(mask,ds.sa.scan_name==msn), 
+                mvpa_scan_names, np.ones(ds.nsamples,dtype=np.bool)),
+            ds.sa.targets!='rest')
+        cv_ds = ds[mvpa_tr_scans_mask]
+        stats[subj]=test_clf(clf,cv_ds,partitioner,rois_fa,roi_labels)
+#        del ds, cv_ds
+    return stats
+
+
+
 def all_rois_analysis():
     
     for subj in subjects:
         print '______________   %s   ___________'%subj
         ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
         ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
+        
+        
+        mvpa_nodes.prtnr_loco_cv

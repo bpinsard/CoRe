@@ -489,9 +489,12 @@ def grab_preproc(subject_id, data_dir, proc_dir):
     smoothed_ts = [os.path.join(
             proc_dir,'core',
             '_subject_%s/smooth_bp/mapflow/_smooth_bp%d/ts_smooth_bp.h5'%(subject_id, int(i))) for i in scans[:,0]]
+    raw_ts = [os.path.join(
+            proc_dir,'core',
+            '_subject_%s/surf_resample/mapflow/_surf_resample%d/ts.h5'%(subject_id, int(i))) for i in scans[:,0]]
     seqs = [(None if s=='None' else s) for s in scans[:,2]]
     behs = [(None if s=='None' else s) for s in scans[:,3]]
-    return noise_corrected_ts, smoothed_ts, scans[:,1].tolist(), seqs, behs
+    return noise_corrected_ts, smoothed_ts, raw_ts, scans[:,1].tolist(), seqs, behs
 
 def mvpa_pipeline():
     w = dicom_dirs()
@@ -499,7 +502,7 @@ def mvpa_pipeline():
     n_preproc_grabber = pe.Node(
         utility.Function(
             input_names=['subject_id','data_dir','proc_dir'],
-            output_names=['noise_corrected_ts','smoothed_ts', 'session_names', 'sequence_names', 'behavior_files'],
+            output_names=['noise_corrected_ts','smoothed_ts','raw_ts', 'session_names', 'sequence_names', 'behavior_files'],
             function=grab_preproc),
         name='preproc_grabber')
     n_preproc_grabber.inputs.data_dir=data_dir
@@ -513,14 +516,19 @@ def mvpa_pipeline():
         CreateDataset(tr=tr),
         name='dataset_smoothed')
 
+    n_dataset_raw = pe.Node(
+        CreateDataset(tr=tr),
+        name='dataset_raw')
+
     w.base_dir = proc_dir
     si = w.get_node('subjects_info')
     w.connect([
             (si, n_preproc_grabber, [('subject','subject_id')]),
             (n_preproc_grabber, n_dataset_noisecorr, [('noise_corrected_ts','ts_files')]),
             (n_preproc_grabber, n_dataset_smoothed, [('smoothed_ts','ts_files')]),
+            (n_preproc_grabber, n_dataset_raw, [('raw_ts','ts_files')]),
             ])
-    for n in [n_dataset_noisecorr, n_dataset_smoothed]:
+    for n in [n_dataset_noisecorr, n_dataset_smoothed, n_dataset_raw]:
         w.connect(si, 'subject', n, 'subject_id')
         for f in ['session_names','sequence_names','behavior_files']:
             w.connect(n_preproc_grabber, f, n, f)

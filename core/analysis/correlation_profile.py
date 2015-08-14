@@ -81,8 +81,11 @@ def perf_profile_corr():
 
 
 def discontinuity_fit(n, a, b, c, y, ):
+    print n.shape
     k=n<14
-    r = k * (a+b*n**-c) + (1-k) * (a+b*n**-c-y)
+#    r = k* (a+b*n**-c) + (1-k) * (a+b*n**-c-y)
+    r = a+b*n**-c + (1-k) * -y
+
 #    print a, b, c, y
     return r
     
@@ -140,3 +143,5 @@ def fit_learning_curv():
         pyplot.title(sname)
         f.savefig('../projects/CoRe/results/behavior/rt_fits/fit_median_noerror_%s.pdf'%sname)
 #        pyplot.close()
+
+
