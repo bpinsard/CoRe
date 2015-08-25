@@ -12,8 +12,8 @@ default_tr = 2.16
 def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     
     scan_len_sec = ds.nsamples*tr
-    blocks = [b for b in blocks if b[4]<scan_len_sec and b[4]<scan_len_sec]
-
+    blocks = [b for b in blocks if b[3]<scan_len_sec and b[5]<scan_len_sec]
+    
     instrs = np.asarray(
         [['instr_%03d_%s'%(bi,b[0]),b[0],b[2],b[3]-b[2],b[5]-b[2]] for bi,b in enumerate(blocks) if b[2]>0],
         dtype=np.object).reshape(-1,5)
@@ -88,7 +88,7 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     for instr,go,ex in zip(instrs, gos, execs):
         first_vol = int(np.round(instr[2]/tr+1e-4))
         prev_vol = last_vol
-        last_vol = int(np.ceil((go[2]+go[3])/tr))
+        last_vol = min(int(np.ceil((go[2]+go[3])/tr)),ds.nsamples-1)
         ds.sa.delay_from_instruction[prev_vol:last_vol+1] = np.arange(last_vol-prev_vol+1)*tr - (first_vol-prev_vol)*tr
         ds.sa.tr_from_instruction[prev_vol:last_vol] = np.arange(last_vol-prev_vol) - (first_vol-prev_vol)
         
@@ -96,7 +96,7 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
         ds.sa.delay_from_go[first_vol:last_vol] = np.arange(last_vol-first_vol)*tr + (go[2]-first_vol*tr)
 
         first_vol = int(np.floor(ex[2]/tr))
-        last_vol = int(np.ceil((ex[2]+ex[3])/tr))
+        last_vol = min(int(np.ceil((ex[2]+ex[3])/tr)),ds.nsamples-1)
         ds.sa.delay_from_first_key[first_vol:last_vol] = np.arange(last_vol-first_vol)*tr + (ex[2]-first_vol*tr)
 
     
