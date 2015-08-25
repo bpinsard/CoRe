@@ -32,7 +32,7 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
 
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
 #subjects = subjects[1:]
-subjects = subjects[-1:]
+#subjects = subjects[-1:]
 #subjects = subjects[1]
 
 tr = 2.16

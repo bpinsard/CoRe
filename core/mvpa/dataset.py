@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import numpy as np
 import nibabel as nb
 from ..behavior import load_behavior
@@ -167,7 +167,7 @@ def ds_from_ts(ts_file, design_file=None,
         ds.a['blocks_tr'] = [int(np.round(b[2]/tr)) for b in blocks]
         ds.a['blocks_targets'] = [b[0] for b in blocks]
     else:
-        ds.sa['chunks'] = np.arange(target_chunk_len).repeat(int(ds.nsamples/float(target_chunk_len))+1)[:ds.nsamples]
+        ds.sa['chunks'] = np.arange(int(ds.nsamples/float(target_chunk_len))+1).repeat(target_chunk_len)[:ds.nsamples]
         ds.sa['targets'] = [default_target]*ds.nsamples
         ds.sa['subtargets'] = ds.sa.targets
         ds.sa['targets_stim'] = ds.sa.targets
@@ -186,15 +186,16 @@ def ds_from_ts(ts_file, design_file=None,
             ds.sa[attr] = [np.nan]*ds.nsamples
     return ds
 
-def add_aparc_ba_fa(ds, subject, pproc_path):
+def add_aparc_ba_fa(ds, subject, pproc_tpl):
+    pproc_path = pproc_tpl%subject
     roi_aparc = np.loadtxt('/home/bpinsard/data/src/Pipelines/global/templates/91282_Greyordinates/Atlas_ROIs.csv',
                            skiprows=1,delimiter=',')[:,-1].astype(np.int)
     
-    aparcs_surf = np.hstack([nb.gifti.read(pproc_path+'surface_32k/_subject_%s/label_resample/mapflow/_label_resample%d/%sh.aparc.a2009s.annot_converted.32k.gii'%(subject,i,h)).darrays[0].data.astype(np.int)+11100+i*1000 for i,h in enumerate('lr')])
+    aparcs_surf = np.hstack([nb.gifti.read(os.path.join(pproc_path,'label_resample/mapflow/_label_resample%d/%sh.aparc.a2009s.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int)+11100+i*1000 for i,h in enumerate('lr')])
     ds.fa['aparc'] = np.hstack([aparcs_surf, roi_aparc])
         
-    ba_32k = np.hstack([nb.gifti.read(pproc_path+'surface_32k/_subject_%s/BA_resample/mapflow/_BA_resample%d/%sh.BA_exvivo.annot_converted.32k.gii'%(subject,i,h)).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))])
-    ba_thresh_32k = np.hstack([nb.gifti.read(pproc_path+'surface_32k/_subject_%s/BA_thresh_resample/mapflow/_BA_thresh_resample%d/%sh.BA_exvivo.thresh.annot_converted.32k.gii'%(subject,i,h)).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))])
+    ba_32k = np.hstack([nb.gifti.read(os.path.join(pproc_path,'BA_resample/mapflow/_BA_resample%d/%sh.BA_exvivo.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))])
+    ba_thresh_32k = np.hstack([nb.gifti.read(os.path.join(pproc_path,'BA_thresh_resample/mapflow/_BA_thresh_resample%d/%sh.BA_exvivo.thresh.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))])
     ds.fa['ba'] = ba_32k
     ds.fa['ba_thres'] = ba_thresh_32k
 

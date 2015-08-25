@@ -4,9 +4,9 @@ import scipy.io
 def load_behavior(in_file, seq_info=None, seq_idx=None, remapping=None):
     
     log = scipy.io.loadmat(in_file)    
-    if 'seq_info' in log and seq_info is None:
-        seq_info = [(str(seq['seq_desc'][0,0][0]), seq['seq'][0,0][0]) for seq  in log['seq_info'][0]]
-    if 'seq_matrx' in log:
+    if 'seq_info' in log and len(log['seq_info'])>0 and seq_info is None:
+        seq_info = [(str(seq['seq_desc'][0,0][0]), seq['seq'][0,0][0]) for seq in log['seq_info'][0]]
+    if 'seq_matrx' in log and len(log['seq_matrx'])>0:
         seq_idx = log['seq_matrx'][0]-1
 
     if seq_idx is None:

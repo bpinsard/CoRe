@@ -7,43 +7,48 @@ from mvpa2.clfs.gnb import GNB
 import joblib
 
 
-preproc_dir = '/home/bpinsard/data/analysis/core'
+preproc_dir = '/home/bpinsard/data/analysis/core_sleep'
 dataset_subdir = 'dataset_noisecorr'
-dataset_subdir = 'dataset_smoothed'
+#dataset_subdir = 'dataset_smoothed'
 #dataset_subdir = 'dataset_raw'
 
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 output_subdir = 'searchlight'
-output_subdir = 'searchlight_smooth'
-output_subdir = 'searchlight_raw'
+#output_subdir = 'searchlight_smooth'
+#output_subdir = 'searchlight_raw'
 
-subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
+subject_ids = [1]
 #subjects = subjects[2:3]
 #subjects=subjects[-1:]
 
 def all_searchlight():
-    joblib.Parallel(n_jobs=10)([joblib.delayed(subject_searchlight)(subj) for subj in subjects])
+    joblib.Parallel(n_jobs=10)([joblib.delayed(subject_searchlight)(sid) for sid in subject_ids])
 
-def subject_searchlight(subj):
-        print('______________   %s   ___________'%subj)
-        ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
-        ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
-
+def subject_searchlight(sid):
+        print('______________   CoRe %03d   ___________'%sid)
+        ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'glm_ds_%d.h5'%sid))
+        ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'ds_%d.h5'%sid))
         mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
         if len(mvpa_scan_names)==0:
             mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
+
+        scan_names=ds.sa.scan_name
+        mvpa_tr_scans_mask = reduce(
+            lambda mask,msn: np.logical_or(mask,scan_names==msn), 
+            mvpa_scan_names,
+            np.zeros(ds.nsamples,dtype=np.bool))
+        ds_mvpa = ds[mvpa_tr_scans_mask]
+        del ds
         
-#        ds_glm = Dataset.from_hdf5(os.path.join(proc_dir, 'tests', 'glm_ds_%s.h5'%subj))
-#        ds = Dataset.from_hdf5(os.path.join(proc_dir, 'tests', 'ds_%s.h5'%subj))
         slght_loco = searchlight.GNBSurfVoxSearchlight(
-            ds,
+            ds_mvpa,
             GNB(), 
             mvpa_nodes.prtnr_loco_cv,
             surf_sl_radius=20,
             surf_sl_max_feat=64,
             vox_sl_radius=2)
         slght_loso = searchlight.GNBSurfVoxSearchlight(
-            ds,
+            ds_mvpa,
             GNB(), 
             mvpa_nodes.prtnr_loso_cv,
             surf_sl_radius=20,
@@ -59,10 +64,10 @@ def subject_searchlight(subj):
             scans_subsets.append(('all', mvpa_scan_names))
 
         tr_subsets = [
-            ('all', np.ones(ds.nsamples, dtype=np.bool)),
-            ('norest',ds.sa.subtargets!='rest'),
-            ('instr', ds.sa.subtargets=='instr'),
-            ('exec', ds.sa.subtargets=='exec'),]
+            ('all', np.ones(ds_mvpa.nsamples, dtype=np.bool)),
+            ('norest',ds_mvpa.sa.subtargets!='rest'),
+            ('instr', ds_mvpa.sa.subtargets=='instr'),
+            ('exec', ds_mvpa.sa.subtargets=='exec'),]
         glm_subsets = [
             ('all', np.ones(ds_glm.nsamples, dtype=np.bool)),
             ('instr', ds_glm.sa.subtargets=='instr'),
@@ -71,9 +76,9 @@ def subject_searchlight(subj):
         for scan_subset, scans in scans_subsets:
             # using trs
             mvpa_tr_scans_mask = reduce(
-                lambda mask,msn: np.logical_or(mask,ds.sa.scan_name==msn), 
+                lambda mask,msn: np.logical_or(mask,ds_mvpa.sa.scan_name==msn), 
                 scans,
-                np.zeros(ds.nsamples,dtype=np.bool))
+                np.zeros(ds_mvpa.nsamples,dtype=np.bool))
 
             mvpa_glm_scans_mask = reduce(
                 lambda mask,msn: np.logical_or(mask,ds_glm.sa.scan_name==msn), 
@@ -85,7 +90,7 @@ def subject_searchlight(subj):
                 subs = np.logical_and(mvpa_tr_scans_mask, subset)
                 if not len(subs):
                     raise RuntimeError
-                slmaps = slght_loco(ds[subs])
+                slmaps = slght_loco(ds_mvpa[subs])
                 for slmap in slmaps:
                     slmap.sa['slmap'] = ['slmap_tr_%s_%s'%(subset_name,scan_subset)]
                 slmaps_accuracy.append(slmaps[1])
@@ -106,7 +111,7 @@ def subject_searchlight(subj):
 
                 for subset_name, subset in tr_subsets:
                     print('@@@@@@@@@@@@@@@@  %s %s loso tr @@@@@@@@@@@@@@@@@@@@'%(scan_subset, subset_name))
-                    slmaps = slght_loso(ds[np.logical_and(mvpa_tr_scans_mask, subset)])
+                    slmaps = slght_loso(ds_mvpa[np.logical_and(mvpa_tr_scans_mask, subset)])
                     for slmap in slmaps:
                         slmap.sa['slmap'] = ['slmap_tr_loso_%s_%s'%(subset_name,scan_subset)]
                     slmaps_accuracy.append(slmaps[1])
@@ -121,17 +126,12 @@ def subject_searchlight(subj):
                     slmaps_confusion.append(slmaps[0])
                 
         all_slmaps_accuracy = vstack(slmaps_accuracy)
-        all_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, '%s_accuracy_slmaps.h5'%subj))
+        all_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_accuracy_slmaps.h5'%sid))
         print('all accuracies ', all_slmaps_accuracy.samples.max(1))
         all_slmaps_confmat = vstack(slmaps_confusion)
-        all_slmaps_confmat.save(os.path.join(proc_dir, output_subdir, '%s_confusion_slmaps.h5'%subj))
+        all_slmaps_confmat.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_confusion_slmaps.h5'%sid))
         del all_slmaps_accuracy, all_slmaps_confmat, slmaps_accuracy, slmaps_confusion
 
-        mvpa_tr_scans_mask = reduce(
-            lambda mask,msn: np.logical_or(mask,ds.sa.scan_name==msn), 
-            mvpa_scan_names,
-            np.zeros(ds.nsamples,dtype=np.bool))
-        ds_mvpa = ds[mvpa_tr_scans_mask]
         start = -2
         end = 22
         delays = range(start, end)
@@ -155,8 +155,8 @@ def subject_searchlight(subj):
         delay_slmaps_accuracy = vstack(delay_slmaps_accuracy)
         delay_slmaps_confusion.sa['delays'] = delays
         delay_slmaps_accuracy.sa['delays'] = delays
-        delay_slmaps_confusion.save(os.path.join(proc_dir, output_subdir, '%s_delay_confusion_slmaps.h5'%subj))
-        delay_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, '%s_delay_accuracy_slmaps.h5'%subj))
+        delay_slmaps_confusion.save(os.path.join(proc_dir, output_subdir, 'CoRe %03d_delay_confusion_slmaps.h5'%sid))
+        delay_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_delay_accuracy_slmaps.h5'%sid))
         del delay_slmaps_accuracy, delay_slmaps_confusion
 
 
