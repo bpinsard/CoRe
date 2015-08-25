@@ -35,5 +35,5 @@ for i=1:EEG_fastr.nbchan
 		EEG_qrs=pop_fmrib_qrsdetect(EEG_qrs,i,qrs_event,'no');
 	end
 end
-pop_saveset(EEG_qrs,'filename',[filename(1:end-4) '_gca.set'],'filepath',outpath)
+pop_saveset(EEG_qrs,'filename',[filename(1:end-5) '_gca.set'],'filepath',outpath)
 
