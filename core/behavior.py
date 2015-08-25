@@ -28,13 +28,18 @@ def load_behavior(in_file, seq_info=None, seq_idx=None, remapping=None):
     block_idx = 0
     t_instr = -1
     t_go = -1
+    ttl_start = None
     for ie,ee in enumerate(log['logoriginal'][0,1:]):
         if len(ee[0])>1:
             log_time = float(ee[0,0][0])
-            evt_type = str(ee[0,1][0])
+            evt_type = ee[0,1][0]
             if evt_type=='START':
                 ttl_start = log_time
                 keys['time'] -= ttl_start # set key presses to scanner time
+            if evt_type=='STOP':
+                break
+            if ttl_start is None:
+                continue
             scan_time = log_time - ttl_start
             if evt_type=='Instruction':
                 t_instr = scan_time
@@ -102,3 +107,23 @@ def behavior_stats(blocks):
     uniq_seq = np.unique([b[0] for b in blocks])
     
     stats['sequence_rts'] = dict([(seq,[np.diff(np.hstack([sq['time'] for sq in b[-1]])) for b in blocks if b[0]==seq]) for seq in uniq_seq])
+
+
+def inf2nan(x):
+    x[np.isinf(x)]=np.nan
+    return x
+
+def blocks_to_rts(blocks):
+    rt_post = []
+    for block in blocks:
+        rts = []
+        for seqi,seq in enumerate(block[-1]):
+            if np.all(seq['match']) and len(seq)==len(block[1]):
+                rt = seq['rt_post']
+                if seqi==len(block[-1])-1:
+                    rt[-1] = np.nan
+                rts.append(inf2nan(rt))
+        if not len(rts):
+            rts.append(np.zeros(len(seq)))
+        rt_post.append(np.asarray(rts))
+    return rt_post

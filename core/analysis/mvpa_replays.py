@@ -4,13 +4,15 @@ from ..mvpa import searchlight
 from . import mvpa_nodes
 from mvpa2.datasets import Dataset, vstack
 from mvpa2.clfs.gnb import GNB
+import joblib
+
 
 preproc_dir = '/home/bpinsard/data/analysis/core'
 dataset_subdir = 'dataset_noisecorr'
 dataset_subdir = 'dataset_smoothed'
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 output_subdir = 'searchlight'
-output_subdir = 'searchlight_smooth2'
+output_subdir = 'searchlight_smooth'
 
 
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
@@ -18,7 +20,9 @@ subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_P
 #subjects=subjects[-1:]
 
 def all_searchlight():
-    for subj in subjects:
+    joblib.Parallel(n_jobs=10)([joblib.delayed(subject_searchlight)(subj) for subj in subjects])
+
+def subject_searchlight(subj):
         print '______________   %s   ___________'%subj
         ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
         ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
@@ -33,16 +37,16 @@ def all_searchlight():
             ds,
             GNB(), 
             mvpa_nodes.prtnr_loco_cv,
-            surf_sl_radius=30,
-            surf_sl_max_feat=128,
-            vox_sl_radius=3)
+            surf_sl_radius=20,
+            surf_sl_max_feat=64,
+            vox_sl_radius=2)
         slght_loso = searchlight.GNBSurfVoxSearchlight(
             ds,
             GNB(), 
             mvpa_nodes.prtnr_loso_cv,
-            surf_sl_radius=30,
-            surf_sl_max_feat=128,
-            vox_sl_radius=3)
+            surf_sl_radius=20,
+            surf_sl_max_feat=64,
+            vox_sl_radius=2)
 
         # do loco searchlight on each mvpa scan separately
         slmaps_accuracy = []
@@ -76,7 +80,10 @@ def all_searchlight():
             
             for subset_name, subset in tr_subsets:
                 print '@@@@@@@@@@@@@@@@  %s %s tr @@@@@@@@@@@@@@@@@@@@'%(scan_subset, subset_name)
-                slmaps = slght_loco(ds[np.logical_and(mvpa_tr_scans_mask, subset)])
+                subs = np.logical_and(mvpa_tr_scans_mask, subset)
+                if not len(subs):
+                    raise RuntimeError
+                slmaps = slght_loco(ds[subs])
                 for slmap in slmaps:
                     slmap.sa['slmap'] = ['slmap_tr_%s_%s'%(subset_name,scan_subset)]
                 slmaps_accuracy.append(slmaps[1])
@@ -84,7 +91,10 @@ def all_searchlight():
 
             for subset_name, subset in glm_subsets:
                 print '@@@@@@@@@@@@@@@@  %s %s glm @@@@@@@@@@@@@@@@@@@@'%(scan_subset, subset_name)
-                slmaps = slght_loco(ds_glm[np.logical_and(mvpa_glm_scans_mask, subset)])
+                subs = np.logical_and(mvpa_glm_scans_mask, subset)
+                if not len(subs):
+                    raise RuntimeError
+                slmaps = slght_loco(ds_glm[subs])
                 for slmap in slmaps:
                     slmap.sa['slmap'] = ['slmap_glm_%s_%s'%(subset_name,scan_subset)]
                 slmaps_accuracy.append(slmaps[1])
@@ -110,6 +120,7 @@ def all_searchlight():
                 
         all_slmaps_accuracy = vstack(slmaps_accuracy)
         all_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, '%s_accuracy_slmaps.h5'%subj))
+        print 'all accuracies ', all_slmaps_accuracy.samples.max(1)
         all_slmaps_confmat = vstack(slmaps_confusion)
         all_slmaps_confmat.save(os.path.join(proc_dir, output_subdir, '%s_confusion_slmaps.h5'%subj))
         del all_slmaps_accuracy, all_slmaps_confmat, slmaps_accuracy, slmaps_confusion
@@ -148,9 +159,67 @@ def all_searchlight():
 
 
 
+
+bas_labels = {
+    'BA1':10,
+    'BA2b':11,
+    'BA3a':12,
+    'BA3b':13,
+    'BA4a':4,
+    'BA4p':5,
+    'BA44':2,
+    'BA45':3}
+
+fs_clt = np.loadtxt('/home/bpinsard/softs/freesurfer/FreeSurferColorLUT.txt',np.str)
+rois = np.hstack([np.asarray([46,29,70,69,28,4,3,7,8])+a for a in [11100,12100]]+[53,17,10,49,51,12,8,47,11,50])
+aparc_labels = dict([(fs_clt[fs_clt[:,0]==str(r)][0,1],r) for r in rois])
+
+
+from mvpa2.measures.base import CrossValidation
+from mvpa2.generators.splitters import Splitter
+
+def test_clf(clf, ds, partitioner, rois_fa, roi_labels):
+
+    spltr = Splitter(attr='partitions',attr_values=[1,2])
+    cvte = CrossValidation(clf, partitioner, splitter=spltr, enable_ca=['stats'])
+
+    stats = dict()
+
+    for roi_name,roi in roi_labels.items():
+        print np.count_nonzero(ds.fa[rois_fa].value==roi)
+        res = cvte(ds[:,ds.fa[rois_fa].value==roi])
+        stats[roi_name] = cvte.ca.stats
+        print stats[roi_name].stats['ACC']
+    return stats
+
+
+
+def stats_all_subjects(subjects, clf, partitioner, rois_fa, roi_labels):
+    stats = dict()
+    for subj in subjects:
+        print subj
+        ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
+        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
+        if len(mvpa_scan_names)==0:
+            mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
+        mvpa_tr_scans_mask = np.logical_and(
+            reduce(
+                lambda mask,msn: np.logical_or(mask,ds.sa.scan_name==msn), 
+                mvpa_scan_names, np.ones(ds.nsamples,dtype=np.bool)),
+            ds.sa.targets!='rest')
+        cv_ds = ds[mvpa_tr_scans_mask]
+        stats[subj]=test_clf(clf,cv_ds,partitioner,rois_fa,roi_labels)
+#        del ds, cv_ds
+    return stats
+
+
+
 def all_rois_analysis():
     
     for subj in subjects:
         print '______________   %s   ___________'%subj
         ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
         ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
+        
+        
+        mvpa_nodes.prtnr_loco_cv

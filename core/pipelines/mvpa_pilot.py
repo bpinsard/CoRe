@@ -23,6 +23,13 @@ data_dir = '/home/bpinsard/data/raw/UNF/CoRe'
 mri_data_dir = os.path.join(data_dir,'MRI')
 proc_dir = '/home/bpinsard/data/analysis/'
 
+
+SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
+            ('CoReIntSeq', np.asarray([1,3,2,4,1])),
+            ('mvpa_CoReOtherSeq', np.asarray([1,3,4,2,1])),
+            ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
+
+
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
 #subjects = subjects[1:]
 subjects = subjects[-1:]
@@ -104,7 +111,7 @@ def preproc_anat():
         name='convert_t1_dicom')
 
     t1_pipeline = generic_pipelines.t1_new.t1_freesurfer_pipeline()
-    t1_pipeline.inputs.freesurfer.args=''
+    t1_pipeline.inputs.freesurfer.args='-use-gpu'
     t1_pipeline.inputs.freesurfer.openmp = 8
     wm_surface = generic_pipelines.t1_new.extract_wm_surface()
 
@@ -482,9 +489,12 @@ def grab_preproc(subject_id, data_dir, proc_dir):
     smoothed_ts = [os.path.join(
             proc_dir,'core',
             '_subject_%s/smooth_bp/mapflow/_smooth_bp%d/ts_smooth_bp.h5'%(subject_id, int(i))) for i in scans[:,0]]
+    raw_ts = [os.path.join(
+            proc_dir,'core',
+            '_subject_%s/surf_resample/mapflow/_surf_resample%d/ts.h5'%(subject_id, int(i))) for i in scans[:,0]]
     seqs = [(None if s=='None' else s) for s in scans[:,2]]
     behs = [(None if s=='None' else s) for s in scans[:,3]]
-    return noise_corrected_ts, smoothed_ts, scans[:,1].tolist(), seqs, behs
+    return noise_corrected_ts, smoothed_ts, raw_ts, scans[:,1].tolist(), seqs, behs
 
 def mvpa_pipeline():
     w = dicom_dirs()
@@ -492,7 +502,7 @@ def mvpa_pipeline():
     n_preproc_grabber = pe.Node(
         utility.Function(
             input_names=['subject_id','data_dir','proc_dir'],
-            output_names=['noise_corrected_ts','smoothed_ts', 'session_names', 'sequence_names', 'behavior_files'],
+            output_names=['noise_corrected_ts','smoothed_ts','raw_ts', 'session_names', 'sequence_names', 'behavior_files'],
             function=grab_preproc),
         name='preproc_grabber')
     n_preproc_grabber.inputs.data_dir=data_dir
@@ -506,14 +516,19 @@ def mvpa_pipeline():
         CreateDataset(tr=tr),
         name='dataset_smoothed')
 
+    n_dataset_raw = pe.Node(
+        CreateDataset(tr=tr),
+        name='dataset_raw')
+
     w.base_dir = proc_dir
     si = w.get_node('subjects_info')
     w.connect([
             (si, n_preproc_grabber, [('subject','subject_id')]),
             (n_preproc_grabber, n_dataset_noisecorr, [('noise_corrected_ts','ts_files')]),
             (n_preproc_grabber, n_dataset_smoothed, [('smoothed_ts','ts_files')]),
+            (n_preproc_grabber, n_dataset_raw, [('raw_ts','ts_files')]),
             ])
-    for n in [n_dataset_noisecorr, n_dataset_smoothed]:
+    for n in [n_dataset_noisecorr, n_dataset_smoothed, n_dataset_raw]:
         w.connect(si, 'subject', n, 'subject_id')
         for f in ['session_names','sequence_names','behavior_files']:
             w.connect(n_preproc_grabber, f, n, f)
@@ -557,10 +572,7 @@ class CreateDataset(BaseInterface):
             seq_idx = None
             seq_info = None
             if not seq_name is None and not beh is None:
-                seq_info = [('CoReTSeq', np.asarray([1,4,2,3,1])),
-                            ('CoReIntSeq', np.asarray([1,3,2,4,1])),
-                            ('mvpa_CoReOtherSeq', np.asarray([1,3,4,2,1])),
-                            ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
+                seq_info = SEQ_INFO
                 seq_idx = [[s[0] for s in seq_info].index(seq_name)] * 14
             ds = mvpa_dataset.ds_from_ts(ts_file, beh, seq_info=seq_info, seq_idx=seq_idx, tr=self.inputs.tr)
             ds.sa['scan_name'] = [ses_name]*ds.nsamples
