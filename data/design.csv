@@ -8,8 +8,8 @@
 2,d2_resting1,BOLD_Resting_State,,,0,
 2,d2_retest_TSeq_1block,BOLD_Retest_TSeq_1block,CoReTSeq,Reactivation-TSeq-D-Two,-1,
 2,d2_training_IntSeq,BOLD_IntSeq,CoReIntSeq,Training-IntSeq-D-Two,-1,1
-2,d2_resting2,BOLD_IntSeq,,,1,1
-2,d2_resting3,BOLD_Resting_State,,,2,1
+2,d2_resting2,BOLD_IntSeq,,,0,1
+2,d2_resting3,BOLD_Resting_State,,,1,0
 2,d2_sleep,BOLD_Sleep,,,,
 3,d3_resting1,BOLD_Resting_State,,,0,
 3,d3_retest_TSeq,BOLD_TSeq,CoReTSeq,Testing-TSeq-D-Three,-1,

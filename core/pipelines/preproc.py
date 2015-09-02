@@ -542,7 +542,7 @@ class CreateDataset(BaseInterface):
         scan_id = 0
 
         subject_id = self.inputs.subject_id
-        all_ts_files = self.inputs.ts_files
+        used_ts_files = []
 
         empty_to_none =lambda x: x if len(x) else None
         design = np.atleast_2d(
@@ -572,8 +572,10 @@ class CreateDataset(BaseInterface):
                         raise RuntimeError('missing data')
                 behavior_file = behavior_file[-1]
             # deal with multiple scans
-            ts_files = [f for f,dd in zip(all_ts_files,self.inputs.dicom_dirs)\
+            ts_files = [f for f,dd in zip(self.inputs.ts_files,self.inputs.dicom_dirs)\
                             if ('_D%d/'%day in dd and mri_name in dd)]
+
+            print ts_files
             if scan_idx is not None:
                 scan_idx = int(scan_idx)
                 if scan_idx >= len(ts_files):
@@ -582,9 +584,12 @@ class CreateDataset(BaseInterface):
                     else:
                         raise RuntimeError('missing data')
                 ts_files = [ts_files[int(scan_idx)]]
+            ts_files = [f for f in ts_files if f not in used_ts_files]
 
             for ts_file in ts_files:
                 scan_id += 1
+                print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
+#                continue
                 ds = mvpa_dataset.ds_from_ts(ts_file, behavior_file,
                                              seq_info=seq_info, seq_idx=seq_idx,
                                              tr=self.inputs.tr)
@@ -600,8 +605,8 @@ class CreateDataset(BaseInterface):
                     dss_glm_stim.append(ds_glm)
 
                     del ds.sa['regressors_exec'], ds.sa['regressors_stim']
-                # delete used ts files to avoid repeating
-                all_ts_files = [ts for ts in all_ts_files if ts!=ts_file]
+                # used ts files to avoid repeating
+                used_ts_files,append(ts_file)
         # stack all
         ds = mvpa2.datasets.vstack(dss)
         ds.a.update(dss[0].a)
