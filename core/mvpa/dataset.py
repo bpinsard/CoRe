@@ -188,8 +188,11 @@ def ds_from_ts(ts_file, design_file=None,
 
 def add_aparc_ba_fa(ds, subject, pproc_tpl):
     pproc_path = pproc_tpl%subject
-    roi_aparc = np.loadtxt('/home/bpinsard/data/src/Pipelines/global/templates/91282_Greyordinates/Atlas_ROIs.csv',
-                           skiprows=1,delimiter=',')[:,-1].astype(np.int)
+    import generic_pipelines
+    roi_aparc = np.loadtxt(
+        os.path.join(generic_pipelines.__path__,'data','Atlas_ROIs.csv'),
+        skiprows=1,
+        delimiter=',')[:,-1].astype(np.int)
     
     aparcs_surf = np.hstack([nb.gifti.read(os.path.join(pproc_path,'label_resample/mapflow/_label_resample%d/%sh.aparc.a2009s.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int)+11100+i*1000 for i,h in enumerate('lr')])
     ds.fa['aparc'] = np.hstack([aparcs_surf, roi_aparc])

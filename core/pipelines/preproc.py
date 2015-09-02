@@ -31,8 +31,8 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23]
-#subject_ids = subject_ids[:2]
+subject_ids = [1,11,23,22]
+subject_ids = subject_ids[:3]
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -148,8 +148,7 @@ def preproc_anat():
     
     ants_for_sbctx = generic_pipelines.fmri_surface.ants_for_subcortical()
     ants_for_sbctx.inputs.inputspec.template = '/home/bpinsard/data/src/Pipelines/global/templates/MNI152_T1_1mm_brain.nii.gz'
-    ants_for_sbctx.inputs.inputspec.coords = '/home/bpinsard/data/src/Pipelines/global/templates/91282_Greyordinates/Atlas_ROIs.csv'
-    
+    ants_for_sbctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__,'data','Atlas_ROIs.csv')
     
     t1_pipeline.connect([
             (t1_pipeline.get_node('freesurfer'),n_reg_crop,[
@@ -498,7 +497,6 @@ def preproc_fmri():
             (w.get_node('all_func_dirs'),n_dataset_smoothed,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
             ])
-
     return w 
 
 
@@ -544,6 +542,7 @@ class CreateDataset(BaseInterface):
         scan_id = 0
 
         subject_id = self.inputs.subject_id
+        all_ts_files = self.inputs.ts_files
 
         empty_to_none =lambda x: x if len(x) else None
         design = np.atleast_2d(
@@ -573,7 +572,7 @@ class CreateDataset(BaseInterface):
                         raise RuntimeError('missing data')
                 behavior_file = behavior_file[-1]
             # deal with multiple scans
-            ts_files = [f for f,dd in zip(self.inputs.ts_files,self.inputs.dicom_dirs)\
+            ts_files = [f for f,dd in zip(all_ts_files,self.inputs.dicom_dirs)\
                             if ('_D%d/'%day in dd and mri_name in dd)]
             if scan_idx is not None:
                 scan_idx = int(scan_idx)
@@ -583,6 +582,7 @@ class CreateDataset(BaseInterface):
                     else:
                         raise RuntimeError('missing data')
                 ts_files = [ts_files[int(scan_idx)]]
+
             for ts_file in ts_files:
                 scan_id += 1
                 ds = mvpa_dataset.ds_from_ts(ts_file, behavior_file,
@@ -600,7 +600,8 @@ class CreateDataset(BaseInterface):
                     dss_glm_stim.append(ds_glm)
 
                     del ds.sa['regressors_exec'], ds.sa['regressors_stim']
-            
+                # delete used ts files to avoid repeating
+                all_ts_files = [ts for ts in all_ts_files if ts!=ts_file]
         # stack all
         ds = mvpa2.datasets.vstack(dss)
         ds.a.update(dss[0].a)
@@ -631,3 +632,7 @@ class CreateDataset(BaseInterface):
         outputs['glm_dataset'] = os.path.abspath('./glm_ds_%s.h5'%self.inputs.subject_id)
         outputs['glm_stim_dataset'] = os.path.abspath('./glm_stim_ds_%s.h5'%self.inputs.subject_id)
         return outputs
+
+
+#def preproc_eeg():
+    

@@ -18,7 +18,7 @@ output_subdir = 'searchlight'
 #output_subdir = 'searchlight_raw'
 
 subject_ids = [1,11,23]
-#subject_ids=subject_ids[-1:]
+subject_ids=subject_ids[1:]
 
 def all_searchlight():
     joblib.Parallel(n_jobs=10)([joblib.delayed(subject_searchlight)(sid) for sid in subject_ids])

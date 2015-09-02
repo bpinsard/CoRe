@@ -195,7 +195,7 @@ def preproc_fmri():
              'white_resample_surf/mapflow/_white_resample_surf1/rh.white_converted.32k.gii'],
             ['surface_32k/_subject','subject',
              'pial_resample_surf/mapflow/_pial_resample_surf1/rh.pial_converted.32k.gii']],
-        lowres_rois_coords = [['ants_for_subcortical/_subject','subject','coords_ants2fs/atlas_coords_fs.csv']],
+        lowres_rois_coords = [['ants_for_subcortical/_subject','subject','coords_itk2nii/atlas_coords_nii.csv']],
         )
     n_anat_grabber = pe.Node(
         nio.DataGrabber(
