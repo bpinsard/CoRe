@@ -190,7 +190,7 @@ def add_aparc_ba_fa(ds, subject, pproc_tpl):
     pproc_path = pproc_tpl%subject
     import generic_pipelines
     roi_aparc = np.loadtxt(
-        os.path.join(generic_pipelines.__path__[0],'data','Atlas_ROIs.csv'),
+        os.path.join(generic_pipelines.__path__[0],'../data','Atlas_ROIs.csv'),
         skiprows=1,
         delimiter=',')[:,-1].astype(np.int)
     

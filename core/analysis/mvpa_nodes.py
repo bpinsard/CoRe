@@ -9,14 +9,19 @@ prtnr_loco_cv = ChainNode([
         NonContiguous(dist_attr='time',dist=60)])
 prtnr_loso_cv = NFoldPartitioner(attr='scan_id')
 
-prtnr_mvpa2_retest_pilot = CustomPartitioner(
-    [(['d3_mvpa1'],['d3_retest_TSeq','d3_retest_IntSeq','d3_resting1','d3_resting2']),
-     (['d3_mvpa2'],['d3_retest_TSeq','d3_retest_IntSeq','d3_resting1','d3_resting2']),
-     (['d3_mvpa1','d3_mvpa2'],['d3_retest_TSeq','d3_retest_IntSeq','d3_resting1','d3_resting2']),
-     ], attr='scan_name')
+prtnr_d3_retest = CustomPartitioner(
+    [(learning_set,['d3_retest_TSeq','d3_retest_IntSeq','d3_resting1'])\
+     for learning_set in [['d3_mvpa1'],['d3_mvpa2'],['d3_mvpa1','d3_mvpa2']]], attr='scan_name')
 
-prtnr_mvpa_d1 = CustomPartitioner(
-    [(learning_set,['d1_resting1','d1_training_TSeq','d1_resting2','d1_resting3','d1_retest_TSeq_1block']) \
-         for learning_set in [['d3_mvpa1'],['d3_mvpa2'],['d3_mvpa1','d3_mvpa2']]])
-prtnr_mvpa_d2 = CustomPartitioner(
-    [])
+prtnr_d3_retest = ChainNode([
+    prtnr_d3_retest,
+    Balancer(amount='equal', attr='targets', count=5, apply_selection=True, limit='partitions')])
+
+prtnr_d1d2_training = CustomPartitioner(
+    [(learning_set,['d1_resting1','d1_training_TSeq','d1_retest_TSeq_1block',
+                    'd2_resting1','d2_retest_TSeq_1block','d2_training_IntSeq']) \
+     for learning_set in [['d3_mvpa1'],['d3_mvpa2'],['d3_mvpa1','d3_mvpa2']]], attr='scan_name')
+
+prtnr_d1d2_training = ChainNode([
+    prtnr_d1d2_training,
+    Balancer(amount='equal', attr='targets', count=5, apply_selection=True, limit='partitions')])

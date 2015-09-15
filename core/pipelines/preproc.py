@@ -32,7 +32,8 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
 
 
 subject_ids = [1,11,23,22]
-subject_ids = subject_ids[:3]
+subject_ids = [63]
+#subject_ids = subject_ids[:3]
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -148,7 +149,7 @@ def preproc_anat():
     
     ants_for_sbctx = generic_pipelines.fmri_surface.ants_for_subcortical()
     ants_for_sbctx.inputs.inputspec.template = '/home/bpinsard/data/src/Pipelines/global/templates/MNI152_T1_1mm_brain.nii.gz'
-    ants_for_sbctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__,'data','Atlas_ROIs.csv')
+    ants_for_sbctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__[0],'../data','Atlas_ROIs.csv')
     
     t1_pipeline.connect([
             (t1_pipeline.get_node('freesurfer'),n_reg_crop,[
@@ -575,7 +576,6 @@ class CreateDataset(BaseInterface):
             ts_files = [f for f,dd in zip(self.inputs.ts_files,self.inputs.dicom_dirs)\
                             if ('_D%d/'%day in dd and mri_name in dd)]
 
-            print ts_files
             if scan_idx is not None:
                 scan_idx = int(scan_idx)
                 if scan_idx >= len(ts_files):
@@ -606,7 +606,7 @@ class CreateDataset(BaseInterface):
 
                     del ds.sa['regressors_exec'], ds.sa['regressors_stim']
                 # used ts files to avoid repeating
-                used_ts_files,append(ts_file)
+                used_ts_files.append(ts_file)
         # stack all
         ds = mvpa2.datasets.vstack(dss)
         ds.a.update(dss[0].a)

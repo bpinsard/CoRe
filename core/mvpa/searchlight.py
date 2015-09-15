@@ -73,8 +73,8 @@ class SurfVoxSearchlight():
         
         slmap_confmat = Dataset(
             np.concatenate([
-                    slmap_surf_confmat.samples.sum(0)[np.newaxis],
-                    slmap_vox_confmat.samples.sum(0)[np.newaxis]],1).astype(np.float32),
+                slmap_surf_confmat.samples.sum(0)[np.newaxis],
+                slmap_vox_confmat.samples.sum(0)[np.newaxis]],1).astype(np.float32),
             fa=ds.fa,
             a=ds.a)
         slmap_confmat.samples /= slmap_confmat.samples[0,0].sum()

@@ -17,8 +17,8 @@ output_subdir = 'searchlight'
 #output_subdir = 'searchlight_smooth'
 #output_subdir = 'searchlight_raw'
 
-subject_ids = [1,11,23]
-subject_ids=subject_ids[1:]
+subject_ids = [1,11,23,22,63]
+subject_ids=subject_ids[4:]
 
 def all_searchlight():
     joblib.Parallel(n_jobs=10)([joblib.delayed(subject_searchlight)(sid) for sid in subject_ids])
@@ -157,6 +157,34 @@ def subject_searchlight(sid):
         delay_slmaps_confusion.save(os.path.join(proc_dir, output_subdir, 'CoRe %03d_delay_confusion_slmaps.h5'%sid))
         delay_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_delay_accuracy_slmaps.h5'%sid))
         del delay_slmaps_accuracy, delay_slmaps_confusion
+
+
+def searchlight_cross_day(sid):
+    print('______________   CoRe %03d   ___________'%sid)
+    ds_all = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'ds_%d.h5'%sid))
+    ds = ds_all[np.logical_and(ds_all.sa.scan_name!='d1_sleep',ds_all.sa.scan_name!='d2_sleep')]
+    ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'glm_ds_%d.h5'%sid))
+    del ds_all
+    slght_d3_retest = searchlight.GNBSurfVoxSearchlight(
+        ds,
+        GNB(),
+        mvpa_nodes.prtnr_d3_retest,
+        surf_sl_radius=20,
+        surf_sl_max_feat=64,
+        vox_sl_radius=2)
+
+    slmaps_d3_retest = slght_d3_retest(ds)
+
+    slght_d1d2_training = searchlight.GNBSurfVoxSearchlight(
+        ds,
+        GNB(), 
+        mvpa_nodes.prtnr_d1d2_training,
+        surf_sl_radius=20,
+        surf_sl_max_feat=64,
+        vox_sl_radius=2)
+
+    slmaps_d1d2_training = slght_d1d2_training(ds)
+    return slmaps_d3_retest, slmaps_d1d2_training
 
 
 subjects_4targ = ['S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
