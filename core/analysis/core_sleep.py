@@ -3,6 +3,7 @@ import numpy as np
 from ..mvpa import searchlight
 from . import mvpa_nodes
 from mvpa2.datasets import Dataset, vstack
+from mvpa2.mappers.fx import mean_sample
 from mvpa2.clfs.gnb import GNB
 import joblib
 
@@ -18,10 +19,10 @@ output_subdir = 'searchlight'
 #output_subdir = 'searchlight_raw'
 
 subject_ids = [1,11,23,22,63]
-subject_ids=subject_ids[4:]
+subject_ids=subject_ids[:4]
 
 def all_searchlight():
-    joblib.Parallel(n_jobs=10)([joblib.delayed(subject_searchlight)(sid) for sid in subject_ids])
+    joblib.Parallel(n_jobs=2)([joblib.delayed(subject_searchlight)(sid) for sid in subject_ids])
 
 def subject_searchlight(sid):
         print('______________   CoRe %03d   ___________'%sid)
@@ -45,14 +46,16 @@ def subject_searchlight(sid):
             mvpa_nodes.prtnr_loco_cv,
             surf_sl_radius=20,
             surf_sl_max_feat=64,
-            vox_sl_radius=2)
+            vox_sl_radius=2,
+            postproc=mean_sample())
         slght_loso = searchlight.GNBSurfVoxSearchlight(
             ds_mvpa,
             GNB(), 
             mvpa_nodes.prtnr_loso_cv,
             surf_sl_radius=20,
             surf_sl_max_feat=64,
-            vox_sl_radius=2)
+            vox_sl_radius=2,
+            postproc=mean_sample())
 
         # do loco searchlight on each mvpa scan separately
         slmaps_accuracy = []
@@ -168,23 +171,52 @@ def searchlight_cross_day(sid):
     slght_d3_retest = searchlight.GNBSurfVoxSearchlight(
         ds,
         GNB(),
-        mvpa_nodes.prtnr_d3_retest,
+        mvpa_nodes.targets_balancer,
         surf_sl_radius=20,
         surf_sl_max_feat=64,
-        vox_sl_radius=2)
+        vox_sl_radius=2,
+        postproc=mean_sample())
 
-    slmaps_d3_retest = slght_d3_retest(ds)
-
+    subsets = {
+        'all':lambda x: slice(0,None),
+        'noinstr':lambda x:x.sa.subtargets!='instr',
+        'exec':lambda x:x.sa.subtargets=='exec'}
+    slmaps_accuracy = []
+    slmaps_confusion = []
+    for learn_sn, part in zip(mvpa_nodes.learning_scan_names,mvpa_nodes.prtnr_d3_retest.generate(ds)):
+        for subset, sel in subsets.items():
+            print 'slmap_d3_retest_%s_%s'%('_'.join(learn_sn),subset)
+            slmaps = slght_d3_retest(part[sel(part)])
+            for slmap in slmaps:
+                slmap.sa['slmap'] = ['slmap_d3_retest_%s_%s'%('_'.join(learn_sn),subset)]
+            slmaps_accuracy.append(slmaps[1])
+            slmaps_confusion.append(slmaps[0])
+        
     slght_d1d2_training = searchlight.GNBSurfVoxSearchlight(
         ds,
         GNB(), 
-        mvpa_nodes.prtnr_d1d2_training,
+        mvpa_nodes.targets_balancer,
         surf_sl_radius=20,
         surf_sl_max_feat=64,
-        vox_sl_radius=2)
+        vox_sl_radius=2,
+        postproc=mean_sample())
 
-    slmaps_d1d2_training = slght_d1d2_training(ds)
-    return slmaps_d3_retest, slmaps_d1d2_training
+    for learn_sn, part in zip(mvpa_nodes.learning_scan_names,mvpa_nodes.prtnr_d3_retest.generate(ds)):
+        for subset, sel in subsets.items():
+            print 'slmap_d1d2_training_%s_%s'%('_'.join(learn_sn),subset)
+            slmaps = slght_d3_retest(part[sel(part)])
+            for slmap in slmaps:
+                slmap.sa['slmap'] = ['slmap_d1d2_training_%s_%s'%('_'.join(learn_sn),subset)]
+            slmaps_accuracy.append(slmaps[1])
+            slmaps_confusion.append(slmaps[0])
+
+    all_slmaps_accuracy = vstack(slmaps_accuracy)
+    all_slmaps_accuracy.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_crossday_accuracy_slmaps.h5'%sid))
+    print('all accuracies ', all_slmaps_accuracy.samples.max(1))
+    all_slmaps_confmat = vstack(slmaps_confusion)
+    all_slmaps_confmat.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_crossday_confusion_slmaps.h5'%sid))
+    del all_slmaps_accuracy, all_slmaps_confmat, slmaps_accuracy, slmaps_confusion
+
 
 
 subjects_4targ = ['S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']

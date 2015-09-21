@@ -31,9 +31,6 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
 
 
 subjects = ['S00_BP_pilot','S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
-#subjects = subjects[1:]
-#subjects = subjects[-1:]
-#subjects = subjects[1]
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -88,7 +85,7 @@ def dicom_dirs():
         utility.IdentityInterface(fields=['fmri_all','fmri_fieldmap_all','fmri_pa_all']),
         joinsource = 'func_dirs',
         name='all_func_dirs')
-    w = pe.Workflow(name='core')
+    w = pe.Workflow(name='core_pilot')
 
     for n in [anat_dirs, func_dirs]:
         w.connect([(subjects_info,n,[('subject',)*2])])
@@ -142,7 +139,7 @@ def preproc_anat():
 
     ants_for_sbctx = generic_pipelines.fmri_surface.ants_for_subcortical()
     ants_for_sbctx.inputs.inputspec.template = '/home/bpinsard/data/src/Pipelines/global/templates/MNI152_T1_1mm_brain.nii.gz'
-    ants_for_sbctx.inputs.inputspec.coords = '/home/bpinsard/data/src/Pipelines/global/templates/91282_Greyordinates/Atlas_ROIs.csv'
+    ants_for_sbctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__[0],'../data','Atlas_ROIs.csv')
 
 
     t1_pipeline.connect([

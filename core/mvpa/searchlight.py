@@ -25,10 +25,11 @@ if __debug__:
 
 class SurfVoxSearchlight():
     
-    def __init__(self, ds, clf, prtnr,
+    def __init__(self, ds, clf, prtnr, postproc=None,
                  surf_sl_radius=20, vox_sl_radius=2.5,
                  surf_sl_max_feat=64):
         self._prtnr = prtnr
+        self._postproc = postproc
         self._surf_sl_radius = surf_sl_radius
         self._vox_sl_radius = vox_sl_radius
         self._surf_sl_max_feat = surf_sl_max_feat
@@ -61,7 +62,8 @@ class SurfVoxSearchlight():
         spltr = Splitter(attr='partitions',attr_values=[1,2])
         cvte = CrossValidation(
             clf, self._prtnr, splitter=spltr,
-            errorfx=errorfx)
+            errorfx=errorfx,
+        )
 
         self.slght_surf_confmat = Searchlight(cvte, self._sqe)
         self.slght_vox_confmat = Searchlight(cvte, self._idx_qe)
@@ -73,14 +75,18 @@ class SurfVoxSearchlight():
         
         slmap_confmat = Dataset(
             np.concatenate([
-                slmap_surf_confmat.samples.sum(0)[np.newaxis],
-                slmap_vox_confmat.samples.sum(0)[np.newaxis]],1).astype(np.float32),
+                slmap_surf_confmat.samples,
+                slmap_vox_confmat.samples],1).astype(np.float32),
+            sa=slmap_surf_confmat.sa,
             fa=ds.fa,
             a=ds.a)
+        if self._postproc:
+            slmap_confmat = Dataset(self._postproc(slmap_confmat.samples)[np.newaxis])
+
         slmap_confmat.samples /= slmap_confmat.samples[0,0].sum()
 
         slmap_accuracy = Dataset(
-            slmap_confmat.samples[:,:,np.eye(slmap_confmat.shape[2],dtype=np.bool)].sum(2),
+            slmap_confmat.samples[...,np.eye(slmap_confmat.shape[2],dtype=np.bool)].sum(2),
             fa = ds.fa,
             a = ds.a)
         print 'max accuracy: ', slmap_accuracy.samples.max()
@@ -90,7 +96,7 @@ class GNBSurfVoxSearchlight(SurfVoxSearchlight):
 
     def _setup_surf_vox_searchlight(self, ds, clf):
 
-        errorfx = ConfusionMatrix(labels=ds.uniquetargets)
+        errorfx = ConfusionMatrix(ds.uniquetargets)
         spltr = Splitter(attr='partitions',attr_values=[1,2])
 
         self.slght_surf_confmat = GNBSearchlight(
