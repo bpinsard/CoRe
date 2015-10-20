@@ -127,3 +127,25 @@ def blocks_to_rts(blocks):
             rts.append(np.zeros(len(seq)))
         rt_post.append(np.asarray(rts))
     return rt_post
+
+
+def blocks_to_rt_all(blocks):
+    data = []
+    correct_seq_idx = 0
+    for bi,block in enumerate(blocks):
+        nkey = 0
+        keypress = ' '
+        for seqi, seq in enumerate(block[-1]):
+            if np.all(seq['match']):
+                correct_seq_idx += 1
+            for key in seq:
+                nkey += 1
+                pkey = keypress
+                time,keypress,match,rt_pre,rt_post = key
+                data.append((bi, seqi, correct_seq_idx, nkey,
+                             time,rt_pre,rt_post,
+                             block[0],keypress,'%s%s'%(pkey,keypress),match))
+    return np.asarray(data, dtype=[
+        ('block_id',np.int),('seq_id',np.int),('correct_seq_idx',np.int),('nkey',np.int),
+        ('time',np.float),('rt_pre',np.float),('rt_post',np.float),
+        ('sequence', np.dtype('S64')),('keypress',np.int),('transition',np.dtype('S2')),('match',np.bool)])

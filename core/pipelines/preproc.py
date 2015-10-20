@@ -31,8 +31,8 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23,22]
-subject_ids = [63]
+subject_ids = [1,11,23,22,63,50,67,79,54,107]
+subject_ids = [128]
 #subject_ids = subject_ids[:3]
 
 tr = 2.16
@@ -562,10 +562,10 @@ class CreateDataset(BaseInterface):
             behavior_file = None
             if not beh is None:
                 # take the last behavioral file which matches in case of failed task
-                behavior_file = glob.glob(
+                behavior_file = sorted(glob.glob(
                     os.path.join(
                         self.inputs.behavioral_data_path,
-                        'CoRe_%03d_D%d/CoRe_%03d_%s_?.mat'%(subject_id,day,subject_id,beh)))
+                        'CoRe_%03d_D%d/CoRe_%03d_%s_?.mat'%(subject_id,day,subject_id,beh))))
                 if not len(behavior_file): 
                     if optional:
                         continue
