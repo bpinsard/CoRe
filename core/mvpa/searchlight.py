@@ -53,6 +53,7 @@ class GNBSearchlightOpt(GNBSearchlight):
         pl.nsamples = np.zeros(shape[:1] + (1,)*(len(shape)-1))
 
 
+    """ 
     def _pass_attr(self, dataset, result):
         if self.errorfx is None:
             # when output is the raw predictions, sa can be guessed from generator (if not random)
@@ -63,6 +64,7 @@ class GNBSearchlightOpt(GNBSearchlight):
             return super(GNBSearchlightOpt, self)._pass_attr(ds_sa, result)
         else:
             return super(GNBSearchlightOpt, self)._pass_attr(dataset, result)
+    """
             
     def _sl_call_on_a_split(self,
                             split, X,
@@ -160,7 +162,7 @@ class SurfVoxQueryEngine(QueryEngine):
 
     def __init__(self,
                  surf_sl_radius=20,
-                 vox_sl_radius=2,
+                 vox_sl_radius=2.4,
                  max_feat=None):
         QueryEngine.__init__(self)
         self._surf_sl_radius = surf_sl_radius
@@ -169,8 +171,10 @@ class SurfVoxQueryEngine(QueryEngine):
 
     def _train(self, ds):
 
+        self._include = np.logical_and(~ds.fa.nans, (ds.samples==0).sum(0)==0)
+
         self._max_vertex = ds.a.triangles.max()+1
-               
+        
         self._surface = Surface(
             ds.fa.coordinates[:self._max_vertex],
             ds.a.triangles)
@@ -181,6 +185,7 @@ class SurfVoxQueryEngine(QueryEngine):
             max_feat = self._max_feat)
 
         self._idx_qe = IndexQueryEngine(
+            sorted=True,
             voxel_indices=Sphere(self._vox_sl_radius))
 
         self._sqe.train(ds[:,:self._max_vertex])
@@ -188,9 +193,11 @@ class SurfVoxQueryEngine(QueryEngine):
 
     def query_byid(self, fid):
         if fid < self._max_vertex:
-            return self._sqe.query_byid(fid)
+            ids = self._sqe.query_byid(fid)
         else:
-            return self._max_vertex+self._idx_qe.query_byid(fid-self._max_vertex)
+            ids = self._max_vertex+self._idx_qe.query_byid(fid-self._max_vertex)#[:self._max_feat]
+        ids = np.asarray(ids)[self._include[ids]]
+        return ids.tolist()
 
 class GroupConfusionMatrixError(ConfusionMatrixError):
 
@@ -210,6 +217,8 @@ class GroupConfusionMatrixError(ConfusionMatrixError):
             conf_mxs.append(cm.matrix[None, :])
         return np.vstack(conf_mxs)
 
+
+"""
 class SurfVoxSearchlight(Measure):
     
     def __init__(self, ds, clf, prtnr, postproc=None,
@@ -335,35 +344,4 @@ class RSASurfVoxSearchlight(SurfVoxSearchlight):
         slmap_pdist = hstack([slmap_surf_pdist, slmap_vox_pdist])
         return slmap_pdist
 
-def searchlight_delays(ds, prtnr):
-    surf_vox_slght = GNBSurfVoxSearchlight(ds, GNB(), prtnr)
-    start = -2
-    end = 22
-    delays = range(start, end)
-    slmaps = []
-    for d in delays:
-        print '######## computing searchlight for delay %d #######'%d
-        delay_ds = ds[ds.a.blocks_tr+d]
-        delay_ds.targets = ds.a.blocks_targets
-        delay_ds.chunks = np.arange(delay_ds.nsamples)
-        slmap = surf_vox_slght(delay_ds)
-        print '$$$$ delay %d : max accuracy %f'%(d, 1-slmap.samples.min())
-        slmaps.append(slmap)
-        del delay_ds
-    slmap = mvpa2.datasets.vstack(slmaps)
-    slmap.sa['delays'] = delays
-    del slmaps
-    return slmap
-
-def all_searchlights(ds, prtnr, surf_vox_slght=None):
-    slmaps = dict()
-
-    if surf_vox_slght is None:
-        surf_vox_slght = SurfVoxSearchlight(ds, prtnr)
-    slmaps['all'] = surf_vox_slght(ds)
-    slmaps['norest'] = surf_vox_slght(ds[ds.sa.targets!='rest'])
-    slmaps['instr'] = surf_vox_slght(ds[ds.sa.subtargets=='instr'])
-    slmaps['exec'] = surf_vox_slght(ds[ds.sa.subtargets=='exec'])
-    
-    return slmaps
-
+"""

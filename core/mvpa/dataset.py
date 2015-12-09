@@ -9,7 +9,7 @@ from nipy.modalities.fmri.design_matrix import dmtx_light
 
 default_tr = 2.16
 
-def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
+def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.5, tr=default_tr):
     
     scan_len_sec = ds.nsamples*tr
     blocks = [b for b in blocks if b[3]<scan_len_sec and b[5]<scan_len_sec]
@@ -75,22 +75,21 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     ds.sa['delay_from_first_key'] = [np.nan]*ds.nsamples
 
     ds.sa['targets_no_delay'] = ds.targets.copy()
+    ds.sa['subtargets_no_delay'] = ds.sa.subtargets.copy()
     ds.sa['blocks_idx_no_delay'] = np.zeros(ds.nsamples)-1
-    for bi,b in enumerate(blocks):
-        if b[2]>0:
-            stim_tr = int(np.round(b[2]/tr))
-        else:
-            stim_tr = int(np.round(b[3]/tr))
-        ds.sa.targets_no_delay[stim_tr:] = b[0]
-        ds.sa.blocks_idx_no_delay[stim_tr:] = bi
 
     last_vol = 0
-    for instr,go,ex in zip(instrs, gos, execs):
+    for bi,instr,go,ex in zip(range(len(blocks)),instrs, gos, execs):
         first_vol = int(np.round(instr[2]/tr+1e-4))
         prev_vol = last_vol
-        last_vol = min(int(np.ceil((go[2]+go[3])/tr)),ds.nsamples-1)
+        last_vol = min(int(np.ceil((ex[2]+ex[3])/tr)), ds.nsamples-1)
+
         ds.sa.delay_from_instruction[prev_vol:last_vol+1] = np.arange(last_vol-prev_vol+1)*tr - (first_vol-prev_vol)*tr
         ds.sa.tr_from_instruction[prev_vol:last_vol] = np.arange(last_vol-prev_vol) - (first_vol-prev_vol)
+
+        ds.sa.subtargets_no_delay[first_vol:] = 'instr'
+        ds.sa.targets_no_delay[first_vol:] = blocks[bi][0]
+        ds.sa.blocks_idx_no_delay[first_vol:] = bi
         
         first_vol = int(np.floor(go[2]/tr))
         ds.sa.delay_from_go[first_vol:last_vol] = np.arange(last_vol-first_vol)*tr + (go[2]-first_vol*tr)
@@ -98,6 +97,11 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
         first_vol = int(np.floor(ex[2]/tr))
         last_vol = min(int(np.ceil((ex[2]+ex[3])/tr)),ds.nsamples-1)
         ds.sa.delay_from_first_key[first_vol:last_vol] = np.arange(last_vol-first_vol)*tr + (ex[2]-first_vol*tr)
+
+        ds.sa.subtargets_no_delay[first_vol:] = 'exec'
+        ds.sa.subtargets_no_delay[last_vol:] = 'rest'
+        ds.sa.blocks_idx_no_delay[last_vol:] = -1
+        ds.sa.targets_no_delay[last_vol:] = 'rest'
 
     
     
@@ -148,7 +152,7 @@ def ds_from_ts(ts_file, design_file=None,
     else:
         ds.sa['time'] = np.arange(ds.nsamples)*tr
 
-    target_chunk_len = 6
+    target_chunk_len = 8
     if not design_file is None:
         blocks = load_behavior(
             design_file,
@@ -156,11 +160,8 @@ def ds_from_ts(ts_file, design_file=None,
             seq_info=seq_info,
             seq_idx=seq_idx)
         blocks_to_attributes(ds, blocks, tr=tr)
-        ds.sa['chunks'] = np.hstack([[0],np.cumsum(ds.sa.targets[:-1]!=ds.sa.targets[1:])])
+        ds.sa['chunks'] = np.cumsum(np.ediff1d(ds.sa.blocks_idx, to_begin=[0])>0)
         chunks_count = np.bincount(ds.chunks)
-        for chk in np.where(chunks_count>2*target_chunk_len)[0]:
-            ds.chunks[ds.chunks==chk] = chk+(np.arange(target_chunk_len)*1000).repeat(
-                int(np.ceil(chunks_count[chk]/float(target_chunk_len))))[:chunks_count[chk]]
         
         ds.sa['chunks'] = np.cumsum(np.ediff1d(ds.chunks, to_begin=[0])!=0)
         # rounding is to remove numerical small errors
@@ -182,6 +183,7 @@ def ds_from_ts(ts_file, design_file=None,
                      'tr_from_instruction',
                      'blocks_idx',
                      'targets_no_delay',
+                     'subtargets_no_delay',
                      'blocks_idx_no_delay']:
             ds.sa[attr] = [np.nan]*ds.nsamples
     return ds
@@ -202,13 +204,14 @@ def add_aparc_ba_fa(ds, subject, pproc_tpl):
     ds.fa['ba'] = ba_32k
     ds.fa['ba_thres'] = ba_thresh_32k
 
-def add_trend_chunk(ds,tr=default_tr):
+def add_trend_chunk(ds, tr=default_tr):
     ds.sa['trend_chunks'] = np.zeros(ds.nsamples)
     min_trend_chunk_len = 32./tr
     newchunk = np.zeros(ds.nsamples,dtype=np.bool)
     diffmean = np.mean(np.abs(np.diff(ds.samples,1,0)),1)
     diffmean = np.hstack([0,diffmean])
     cutoff = diffmean.mean()+2*diffmean.std()
+    ds.sa['diffmean'] = diffmean.copy()
     while True:
         c = np.argmax(diffmean)
         if diffmean[c] < cutoff:
@@ -221,7 +224,7 @@ def add_trend_chunk(ds,tr=default_tr):
             ds.sa.trend_chunks[newchunk] = ds.sa.trend_chunks.max()+1
         diffmean[c] = 0
                 
-    ds.sa.trend_chunks = np.cumsum(np.ediff1d(ds.sa.trend_chunks,to_begin=[0])>0)
+    ds.sa.trend_chunks = np.cumsum(np.ediff1d(ds.sa.trend_chunks,to_begin=[0])!=0)
 
 def ds_tr2glm(ds, regressors_attr, group_regressors):
     
@@ -232,7 +235,7 @@ def ds_tr2glm(ds, regressors_attr, group_regressors):
         print 'fitting %s'%reg_name
         max_ind.append(np.argmax(ds.sa[regressors_attr].value[:,reg_i].astype(np.float)))
 
-        summed_regs = np.asarray([ds.sa[regressors_attr].value.astype(np.float)[:,np.asarray([(n.split('_')[0]==rt and n!=reg_name) for n in  ds.sa[regressors_attr].value.dtype.names])].sum(1) for rt in group_regressors]).T
+        summed_regs = np.asarray([ds.sa[regressors_attr].value.astype(np.float)[:,np.asarray([(n.split('_')[0]==rt and n!=reg_name) for n in ds.sa[regressors_attr].value.dtype.names])].sum(1) for rt in group_regressors]).T
         mtx = np.hstack([ds.sa[regressors_attr].value[:,reg_i,np.newaxis].astype(np.float), summed_regs])
         glm = GeneralLinearModel(mtx)
         glm.fit(ds.samples)
@@ -240,7 +243,9 @@ def ds_tr2glm(ds, regressors_attr, group_regressors):
         del glm, mtx, summed_regs
         
     ds_glm = Dataset(np.asarray(betas), fa=ds.fa, a=ds.a)
-    for attr in ['targets','subtargets','time','scan_id','scan_name']:
+    for attr in ds.sa.keys():
+        if 'regressor' in attr:
+            continue
         ds_glm.sa[attr] = ds.sa[attr].value[max_ind]
 
     ds_glm.sa['chunks'] = np.arange(ds_glm.nsamples)
