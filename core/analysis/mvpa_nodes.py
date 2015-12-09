@@ -32,9 +32,7 @@ prtnr_loco_cv = ChainNode([
     BalancedPartitions()],
     space='balanced_partitions')
 
-prtnr_loco_delay = ChainNode([
-    prtnr_loco_cv
-])
+prtnr_loco_delay = NFoldPartitioner(attr='chunks')
 
 prtnr_loso_cv = ChainNode([
     NFoldPartitioner(attr='scan_id'),
@@ -84,7 +82,7 @@ class FeaturewiseConfusionMatrix(FeaturewiseMeasure):
 
     def _call(self, ds):
         nlabels = len(self._labels)
-        confmat = np.zeros((1,ds.nfeatures, nlabels, nlabels), dtype=np.uint)
+        confmat = np.zeros((1,ds.nfeatures, nlabels, nlabels), dtype=np.uint16) # not many samples -> uint16
         
         tl_test = np.zeros((nlabels,ds.nsamples), dtype=np.bool)
         for ti,tl in enumerate(self._labels):
@@ -100,13 +98,22 @@ class FeaturewiseConfusionMatrix(FeaturewiseMeasure):
     def _pass_attr(self, ds, results):
         # drop all nonunique ds.sa attribute and take sa from a single sample
         ds = ds.copy(deep=False)
-        for attr in ds.sa.keys():
-            if len(ds.sa[attr].unique)>1:
-                del ds.sa[attr]
+#        for attr in ds.sa.keys():
+#            if len(ds.sa[attr].unique)>1:
+#                del ds.sa[attr]
         return super(FeaturewiseConfusionMatrix, self)._pass_attr(ds[:1], results)
+
+confmat_pass_attr_sa = [
+    'scan_name','scan_id', 'blocks_idx','sequence','n_correct_sequences','n_failed_sequences','targets',]
+pass_attr_fa  = [
+    'ba_thres', 'ba', 'aparc', 'coordinates','nans','node_indices','voxel_indices', 'roi_sizes']
+pass_attr_a = [
+    'triangles']
+# split block in each scan
 
 confmat_all = FeaturewiseConfusionMatrix(
     attr='targets_num',labels=range(5),
+    pass_attr=confmat_pass_attr_sa+pass_attr_fa+pass_attr_a,
     auto_train=True)
 
 # splits scans
@@ -122,16 +129,11 @@ scan_confmat = RepeatedMeasure(
             amount='equal',
             attr='targets',
             apply_selection=True),]))
-confmat_pass_attr_sa = [
-    'scan_name','scan_id', 'blocks_idx','sequence','n_correct_sequences','n_failed_sequences','targets',]
-pass_attr_fa  = [
-    'ba_thres', 'ba', 'aparc', 'coordinates','nans','node_indices','voxel_indices', 'roi_sizes']
-# split block in each scan
 split_scans_blocks = ChainNode([split_scans, Splitter(attr='blocks_idx', ignore_values=[np.nan, -1])])
 scan_blocks_confmat = RepeatedMeasure(
     FeaturewiseConfusionMatrix(
         attr='targets_num',labels=range(5), auto_train=True,
-        pass_attr=confmat_pass_attr_sa+pass_attr_fa),
+        pass_attr=confmat_pass_attr_sa+pass_attr_fa+pass_attr_a),
     split_scans_blocks)
 
 split_trs = Splitter(attr='tr_from_instruction',attr_values=range(-3,7))

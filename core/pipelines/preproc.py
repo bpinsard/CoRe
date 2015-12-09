@@ -31,9 +31,10 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107]
-subject_ids = [128]
-#subject_ids = subject_ids[:3]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82]
+#subject_ids = subject_ids[:-1]
+#subject_ids = [184]
+subject_ids = [82]
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
@@ -493,9 +494,9 @@ def preproc_fmri():
             (n_noise_corr,n_dataset_noisecorr,[('out_file','ts_files')]),
             (w.get_node('all_func_dirs'),n_dataset_noisecorr,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
-            (si,n_dataset_smoothed,[('subject_id',)*2]),
-            (n_smooth_bp,n_dataset_smoothed,[('out_file','ts_files')]),
-            (w.get_node('all_func_dirs'),n_dataset_smoothed,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
+#            (si,n_dataset_smoothed,[('subject_id',)*2]),
+#            (n_smooth_bp,n_dataset_smoothed,[('out_file','ts_files')]),
+#            (w.get_node('all_func_dirs'),n_dataset_smoothed,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
             ])
     return w 
@@ -588,7 +589,7 @@ class CreateDataset(BaseInterface):
 
             for ts_file in ts_files:
                 scan_id += 1
-                print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
+#                print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
 #                continue
                 ds = mvpa_dataset.ds_from_ts(ts_file, behavior_file,
                                              seq_info=seq_info, seq_idx=seq_idx,
