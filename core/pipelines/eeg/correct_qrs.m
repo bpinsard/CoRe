@@ -26,18 +26,27 @@ for qrs_id=1:length(qrs_events)
         end
         slide_median_heartrate(1,qrs_i) = median(heartrate(1,idx_start:idx_stop));
     end
-    %figure();
-    %plot(EEG.data(qrs_id,1:20:end)+4000);
-    %hold on;
-    %plot(qrs_times(1,1:end-1)/20,slide_median_heartrate,'+-');
+    figure();
+
+    
+    for i=1:length(EEG.chanlocs)
+	    if strcmp(EEG.chanlocs(i).labels,qrs_event(5:end))
+        ecg_chan = i
+      end
+    end
+      
+    plot(EEG.data(ecg_chan,:)-mean(EEG.data(ecg_chan,:)));
+    hold on;
+
+    plot(qrs_times(1,1:end-1),slide_median_heartrate,'+-g');
     demean_heartrate = heartrate-slide_median_heartrate;
 
-    %plot(qrs_times(1,1:end-1)/20,heartrate,'rx-');
+    plot(qrs_times(1,1:end-1),heartrate,'rx-');
     
     missing_qrs = heartrate./slide_median_heartrate>1.5;
     false_pos = heartrate./slide_median_heartrate<.75;
-    %plot(qrs_times(missing_qrs)/20,heartrate(missing_qrs),'*g');
-    %plot(qrs_times(false_pos)/20,heartrate(false_pos),'*g');
+    plot(qrs_times(missing_qrs),heartrate(missing_qrs),'*y');
+    plot(qrs_times(false_pos),heartrate(false_pos),'*y');
     
     EEG.event(to_remove)=[];
     EEG.urevent(to_remove)=[];

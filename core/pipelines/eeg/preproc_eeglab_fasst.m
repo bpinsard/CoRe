@@ -1,8 +1,15 @@
 function EEG=preproc_eeglab(path, filename, tr, outpath)
 
-gca_file = [outpath '/' filename(1:end-5) '_gca.vhdr'];
+gca_file = [outpath '/' filename(1:end-5) '_gca_mx.vhdr'];
+gca_file_vec = [filename(1:end-5) '_gca.vhdr'];
 
-if exist(gca_file,'file') ~= 2
+if (exist(gca_file,'file') ~= 2) & (exist([outpath '/' gca_file_vec],'file') == 2)
+    disp('vec to mx');
+    [EEG_vec,com] = pop_loadbv(outpath, gca_file_vec);
+    pop_writebva(EEG_vec, gca_file, 'MULTIPLEXED');
+end
+
+if (exist(gca_file,'file') ~= 2)
 [EEG,com] = pop_loadbv(path,filename);
 
 % compute a number of component depending on the length of recording
@@ -43,39 +50,20 @@ for i=1:EEG_qrs.nbchan
 end;
 
 EEG_qrs = correct_qrs(EEG_qrs, qrs_events);
-%pop_writebva(EEG_qrs,[outpath '/' filename(1:end-5) '_gca_hr.vhdr']);
 
 % remove drifts
 EEG_hp = pop_eegfiltnew(EEG_qrs, .2, []);
 
 EEG_downsample = pop_resample(EEG_hp, 250);
 clear EEG EEG_fastr EEG_qrs EEG_hp
-pop_writebva(EEG_downsample,gca_file);
-else
-disp('load existing gca file');
-[pathstr,name,ext] = fileparts(gca_file);
-EEG_downsample = pop_loadbv(pathstr,[name,ext]);
-ncomp = round(log(EEG_downsample.pnts/EEG_downsample.srate/60)+3);
-qrs_events = {};
-for i=1:EEG_downsample.nbchan
-    chanlab = EEG_downsample.chanlocs(i).labels;
-    if length(strfind(chanlab,'ECG')) > 0
-        qrs_event = ['qrs_' chanlab];
-        qrs_events{end+1} = qrs_event;
-    end
-end
+pop_writebva(EEG_downsample,gca_file,'MULTIPLEXED');
+del EEG_downsample
 end
 
-EEG_pas = pop_fmrib_pas(EEG_downsample,qrs_events{2},'obs',ncomp);
-pop_writebva(EEG_pas,[outpath '/' filename(1:end-5) '_gca_pas.vhdr']);
+addpath('~/softs/FASST');
 
-%save([outpath filename(1:end-5) '_gca_pas_pca.mat'], '-struct','EEG_pas','pca','-v7.3')
-
-clear EEG_downsample
-%EEG_filt = pop_eegfiltnew(EEG_pas, .5, 35);
-%clear EEG_pas
-
-%pop_writebva(EEG_filt,[outpath '/' filename(1:end-5) '_gca_pas_filt.vhdr']);
+[EEG_fasst,Fdata] = crc_eeg_rdata_brpr(gca_file);
+D_cica=crc_par([EEG_fasst.path '/' EEG_fasst.fname],struct('bcgmethod','acica','ecgchan',32,'badchan',[32,65]));
 
 function Trigs=find_trig(EEG,etype)
 Trigs=[];
