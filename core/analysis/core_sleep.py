@@ -21,8 +21,8 @@ output_subdir = 'searchlight_new'
 #output_subdir = 'searchlight_raw'
 compression= 'gzip'
 
-subject_ids = [1,11,23,22,63,50,79,54,107,128,162,102]
-group_Int = [1,23,63,79,107,128]
+subject_ids = [1,11,23,22,63,50,79,54,107,128,162,102,82,155,100]
+group_Int = [1,23,63,79,107,128,82,100]
 #subject_ids=subject_ids[5:]
 ulabels = ['CoReTSeq','CoReIntSeq','mvpa_CoReOtherSeq1','mvpa_CoReOtherSeq2','rest']
 #ulabels = ulabels[1:]
@@ -94,6 +94,7 @@ def subject_searchlight_new(sid):
     ds_mvpa = ds[dict(scan_name=mvpa_scan_names)]
     ds_mvpa.fa = ds.fa # cheat CachedQueryEngine hashing    
     del ds
+
     mvpa_slght_subset = {
 #        'all': slice(None),
         'instr': dict(subtargets=['instr']),
@@ -125,7 +126,6 @@ def subject_searchlight_new(sid):
         gnb,
         NFoldPartitioner(attr='chunks'),
         svqe_cached,
-        splitter=spltr,
         errorfx=None,
         pass_attr=ds_mvpa.sa.keys()+ds_mvpa.fa.keys()+ds_mvpa.a.keys()+[('ca.roi_sizes','fa')],
         enable_ca=['roi_sizes'],

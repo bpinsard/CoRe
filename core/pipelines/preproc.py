@@ -1,7 +1,7 @@
 import os,sys,glob,datetime
 import numpy as np
 
-from nipype.interfaces import spm, fsl, afni, nitime, utility, lif, dcmstack as np_dcmstack, freesurfer, nipy, ants
+from nipype.interfaces import spm, fsl, afni, nitime, utility, dcmstack as np_dcmstack, freesurfer, nipy, ants
 
 import nipype.pipeline.engine as pe
 import nipype.interfaces.io as nio
@@ -31,10 +31,10 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100]
 #subject_ids = subject_ids[:-1]
 #subject_ids = [184]
-subject_ids = [82]
+subject_ids = [94]
 
 tr = 2.16
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
