@@ -46,6 +46,17 @@ prtnr_loso_cv = ChainNode([
     BalancedPartitions()],
     space='balanced_partitions')
 
+prtnr_loso_glm_cv = ChainNode([
+    NFoldPartitioner(attr='scan_id'),
+    Balancer(
+        amount='equal',
+        attr='targets',
+        apply_selection=False,
+        limit=dict(partitions=[1]),
+        include_offlimit=True),
+    BalancedPartitions()],
+    space='balanced_partitions')
+
 training_scans = ['d3_mvpa1','d3_mvpa2']
 
 testing_scans = [

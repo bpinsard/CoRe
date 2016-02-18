@@ -31,12 +31,16 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100]
-#subject_ids = subject_ids[:-1]
-#subject_ids = [184]
-subject_ids = [94]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94]
+#subject_ids = subject_ids[1:]
+#subject_ids = [50]
+#subject_ids = [155,162,184,94]
+subject_ids=[87]
 
 tr = 2.16
+echo_time = .03
+echo_spacing = .00053
+phase_encoding_dir = -1
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
 meta_tag_force=['PatientID','PatientName','SeriesDate','SeriesTime']
 
@@ -358,9 +362,9 @@ def preproc_fmri():
 
     n_noise_corr = pe.MapNode(
         nipy.preprocess.OnlineFilter(
-            echo_time=.03,
-            echo_spacing=.000265,
-            phase_encoding_dir=1,
+            echo_time=echo_time,
+            echo_spacing=echo_spacing,
+            phase_encoding_dir=phase_encoding_dir,
             resampled_first_frame='frame1.nii',
             out_file_format='ts.h5'),
         iterfield = ['dicom_files','motion','fieldmap','fieldmap_reg'],
@@ -379,9 +383,9 @@ def preproc_fmri():
 
     n_surf_resample = pe.MapNode(
         nipy.preprocess.SurfaceResampling(
-            echo_time=.03,
-            echo_spacing=.000265,
-            phase_encoding_dir=1,
+            echo_time=echo_time,
+            echo_spacing=echo_spacing,
+            phase_encoding_dir=phase_encoding_dir,
             resampled_first_frame='frame1.nii',
             out_file_format='ts.h5'),
         iterfield = ['dicom_files','motion','fieldmap','fieldmap_reg'],
@@ -437,8 +441,6 @@ def preproc_fmri():
             (n_epi2t1_xfm2mat,n_convert_motion_par,[('mat','epi2t1')]),
             (n_st_realign, n_convert_motion_par,[('par_file','motion')]),
             (n_fmri_convert, n_convert_motion_par,[('nifti_file','matrix_file')]),
-
-
             (n_convert_motion_par, n_noise_corr,[('motion','motion')]),
             (w.get_node('all_func_dirs'),n_noise_corr,[(('fmri_all', flatten_remove_none),'dicom_files')]),
 
@@ -458,7 +460,7 @@ def preproc_fmri():
                     ('fieldmap_regs','fieldmap_reg')]),
 
             (n_group_hemi_surfs, n_noise_corr,[('out','resample_surfaces')]),
-            (n_noise_corr, n_smooth_bp,[('out_file','in_file')]),
+#            (n_noise_corr, n_smooth_bp,[('out_file','in_file')]),
             
             ])
     if False:
@@ -486,19 +488,30 @@ def preproc_fmri():
         CreateDataset(tr=tr,
                       behavioral_data_path=os.path.join(data_dir,'Behavior'),
                       design=os.path.join(project_dir,'data/design.csv')),
-        name='dataset_noisecorr')
+        name='dataset_noisecorr_evts')
+    n_dataset_nofilt = pe.Node(
+        CreateDataset(tr=tr,
+                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
+                      design=os.path.join(project_dir,'data/design.csv')),
+        name='dataset_nofilt')
     n_dataset_smoothed = n_dataset_noisecorr.clone('dataset_smoothed')
     
+
     w.connect([
             (si,n_dataset_noisecorr,[('subject_id',)*2]),
             (n_noise_corr,n_dataset_noisecorr,[('out_file','ts_files')]),
             (w.get_node('all_func_dirs'),n_dataset_noisecorr,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
+
+#            (si,n_dataset_nofilt,[('subject_id',)*2]),
+#            (n_surf_resample,n_dataset_nofilt,[('out_file','ts_files')]),
+#            (w.get_node('all_func_dirs'),n_dataset_nofilt,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
 #            (si,n_dataset_smoothed,[('subject_id',)*2]),
 #            (n_smooth_bp,n_dataset_smoothed,[('out_file','ts_files')]),
 #            (w.get_node('all_func_dirs'),n_dataset_smoothed,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
             ])
+
     return w 
 
 

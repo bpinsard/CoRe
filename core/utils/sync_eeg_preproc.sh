@@ -1,0 +1,1 @@
+rsync -azv --delete --include='*/' --include='*_gca_cica_mx.v*' --include='cICA_*' --exclude='*' stark.criugm.qc.ca:/scratch/bsl/analysis/core/eeg_preproc/ ~/data/Seafile/CoRe/02_CoRe_EEG_MRI/EEG_preproc
