@@ -31,11 +31,9 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94]
-#subject_ids = subject_ids[1:]
-#subject_ids = [50]
-#subject_ids = [155,162,184,94]
-subject_ids=[87]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184]
+#subject_ids = subject_ids[:-1]
+#subject_ids = [94,100]
 
 tr = 2.16
 echo_time = .03
@@ -263,11 +261,9 @@ def preproc_fmri():
 
     def group_by_3(lst):
         return reduce(lambda l,x: (l+[x[i:i+3] for i in range(0,len(x),3)] if x is not None else l),lst,[])
-    def first_fieldmap(lst):
-        return reduce(lambda l,x: (l+[x[:3]] if x is not None else l),lst,[])
 
     w.connect([
-            (w.get_node('all_func_dirs'),n_fieldmap_fmri_convert,[(('fmri_fieldmap_all',first_fieldmap), 'dicom_files')]),
+            (w.get_node('all_func_dirs'),n_fieldmap_fmri_convert,[(('fmri_fieldmap_all',group_by_3), 'dicom_files')]),
 
             (n_fieldmap_fmri_convert, n_flirt_fmap2t1,[('magnitude_file','in_file')]),
             (n_anat_grabber, n_flirt_fmap2t1,[('cropped_t1','reference'),]),
@@ -287,13 +283,35 @@ def preproc_fmri():
         fsl.TOPUP(),
         iterfield=['in_file'],
         name='topup')
-    n_topup.inputs.readout_times = [0.016695]*8
+    n_topup.inputs.readout_times = [echo_spacing*(64-1)]*8
     n_topup.inputs.encoding_direction = ['x-']*4+['x']*4
 
-    w.connect([
+    n_repeat_topup = pe.Node(
+        utility.Function(
+            input_names = ['fmri_scans','fieldmaps','fieldmap_regs'],
+            output_names = ['fieldmaps','fieldmap_regs'],
+            function = repeat_fieldmaps),
+        name='repeat_topup')
+
+    n_applytopup = pe.MapNode(
+        fsl.ApplyTOPUP(in_index=[1],in_topup_movpar='/etc/issue'),
+        iterfield=['in_files','in_topup_fieldcoef','encoding_file'],
+        name='applytopup')
+
+    topup = False
+    if topup:
+        w.connect([
             (n_fmri_convert, n_merge_appa,[('nifti_file','in_files')]),
             (n_merge_appa, n_topup,[('out_files','in_file')]),
-            ])
+            
+            (w.get_node('all_func_dirs'),n_repeat_topup,[('fmri_all','fmri_scans')]),
+            (n_topup, n_repeat_topup,[
+                ('out_fieldcoef', 'fieldmaps'),
+                ('out_enc_file', 'fieldmap_regs')]),
+            (n_repeat_topup, n_applytopup,[('fieldmap_regs','encoding_file')]),
+            (n_repeat_topup, n_applytopup,[('fieldmaps','in_topup_fieldcoef')]),
+            (n_fmri_convert, n_applytopup,[('nifti_file','in_files')]),
+        ])
 
     ###############################################    ###############################################
     def name_struct(f,n,*args):
@@ -341,16 +359,6 @@ def preproc_fmri():
         iterfield=['xfm'],
         name='epi2t1_xfm2mat')
 
-    def repeat_fieldmaps(fmri_scans, fieldmaps, fieldmap_regs):
-        fmaps_out = []
-        fmap_regs_out = []
-        i = 0
-        for sess in fmri_scans:
-            if sess != None:
-                fmaps_out += [fieldmaps[i]]*len(sess)
-                fmap_regs_out += [fieldmap_regs[i]]*len(sess)
-                i += 1
-        return fmaps_out, fmap_regs_out
     n_repeat_fieldmaps = pe.Node(
         utility.Function(
             input_names = ['fmri_scans','fieldmaps','fieldmap_regs'],
@@ -414,56 +422,77 @@ def preproc_fmri():
     w.base_dir = proc_dir
     si = w.get_node('subjects_info')
     w.connect([
-            (si, n_anat_grabber, [('subject_id',)*2]),
-
-             (n_anat_grabber, n_group_hemi_surfs,[
-                    (('lowres_surf_lh',name_struct,'CORTEX_LEFT'),'in1'),
-                    (('lowres_surf_rh',name_struct,'CORTEX_RIGHT'),'in2')]),
-
-            (w.get_node('all_func_dirs'),n_fmri_convert,[(('fmri_all',flatten_remove_none),'dicom_files')]),
-
-            (n_fmri_convert,n_st_realign,[('nifti_file','in_file')]),
-            (n_anat_grabber,n_bbreg_epi,[('subjects_dir',)*2]),
-            (si,n_bbreg_epi,[(('subject_id',wrap(str),[]),'subject_id')]),
-            (n_st_realign,n_bbreg_epi,[('out_file','source_file')]),
-
-
-#            (n_st_realign,n_bbreg2xfm,[(('out_file',generic_pipelines.utils.getitem_rec,0),'mov')]),
-#            (n_bbreg_epi, n_bbreg2xfm,[('out_reg_file','reg_file')]),
-#            (n_anat_grabber,n_bbreg2xfm,[('subjects_dir',)*2]),            
-#            (n_bbreg_epi,n_convert_motion_par,[('out_reg_file','epi2t1')]),
-            (n_st_realign,n_epi2t1_bbreg2xfm,[('out_file','mov')]),
-            (n_bbreg_epi, n_epi2t1_bbreg2xfm,[('out_reg_file','reg_file')]),
-            (n_anat_grabber,n_epi2t1_bbreg2xfm,[('norm','target')]),
-            (n_epi2t1_bbreg2xfm, n_epi2t1_xfm2mat,[('xfm_out','xfm')]),
-            
-
-            (n_epi2t1_xfm2mat,n_convert_motion_par,[('mat','epi2t1')]),
-            (n_st_realign, n_convert_motion_par,[('par_file','motion')]),
-            (n_fmri_convert, n_convert_motion_par,[('nifti_file','matrix_file')]),
+        (si, n_anat_grabber, [('subject_id',)*2]),
+        
+        (n_anat_grabber, n_group_hemi_surfs,[
+            (('lowres_surf_lh',name_struct,'CORTEX_LEFT'),'in1'),
+            (('lowres_surf_rh',name_struct,'CORTEX_RIGHT'),'in2')]),
+        
+        (w.get_node('all_func_dirs'),n_fmri_convert,[(('fmri_all',flatten_remove_none),'dicom_files')]),
+        
+        (n_fmri_convert,n_st_realign,[('nifti_file','in_file')]),
+        (n_anat_grabber,n_bbreg_epi,[('subjects_dir',)*2]),
+        (si,n_bbreg_epi,[(('subject_id',wrap(str),[]),'subject_id')]),
+        (n_st_realign,n_bbreg_epi,[('out_file','source_file')]),
+        
+        
+        #(n_st_realign,n_bbreg2xfm,[(('out_file',generic_pipelines.utils.getitem_rec,0),'mov')]),
+        #(n_bbreg_epi, n_bbreg2xfm,[('out_reg_file','reg_file')]),
+        #(n_anat_grabber,n_bbreg2xfm,[('subjects_dir',)*2]),            
+        #(n_bbreg_epi,n_convert_motion_par,[('out_reg_file','epi2t1')]),
+        
+        (n_st_realign,n_epi2t1_bbreg2xfm,[('out_file','mov')]),
+        (n_bbreg_epi, n_epi2t1_bbreg2xfm,[('out_reg_file','reg_file')]),
+        (n_anat_grabber,n_epi2t1_bbreg2xfm,[('norm','target')]),
+        (n_epi2t1_bbreg2xfm, n_epi2t1_xfm2mat,[('xfm_out','xfm')]),
+        
+        (n_epi2t1_xfm2mat,n_convert_motion_par,[('mat','epi2t1')]),
+        (n_st_realign, n_convert_motion_par,[('par_file','motion')]),
+        (n_fmri_convert, n_convert_motion_par,[('nifti_file','matrix_file')]),
+        
+        (w.get_node('all_func_dirs'),n_repeat_fieldmaps,[('fmri_all','fmri_scans')]),
+        (n_fieldmap_fmri_convert, n_repeat_fieldmaps, [('fieldmap_file','fieldmaps')]),
+        (n_xfm2mat, n_repeat_fieldmaps, [('mat','fieldmap_regs')]),
+        
+        ])
+    noise_filt = False
+    if noise_filt:
+        w.connect([
             (n_convert_motion_par, n_noise_corr,[('motion','motion')]),
             (w.get_node('all_func_dirs'),n_noise_corr,[(('fmri_all', flatten_remove_none),'dicom_files')]),
-
-            (n_anat_grabber, n_noise_corr,[
-                    ('norm','surfaces_volume_reference'),
-                    ('cropped_mask','mask'),
-                    (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
-                      '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
-                     'resample_rois'),
-                    ('pve_maps','partial_volume_maps')
-                    ]),
-            (w.get_node('all_func_dirs'),n_repeat_fieldmaps,[('fmri_all','fmri_scans')]),
-            (n_fieldmap_fmri_convert, n_repeat_fieldmaps, [('fieldmap_file','fieldmaps')]),
-            (n_xfm2mat, n_repeat_fieldmaps, [('mat','fieldmap_regs')]),
-            (n_repeat_fieldmaps, n_noise_corr,[
-                    ('fieldmaps','fieldmap'),
-                    ('fieldmap_regs','fieldmap_reg')]),
-
-            (n_group_hemi_surfs, n_noise_corr,[('out','resample_surfaces')]),
-#            (n_noise_corr, n_smooth_bp,[('out_file','in_file')]),
             
-            ])
-    if False:
+            (n_anat_grabber, n_noise_corr,[
+                ('norm','surfaces_volume_reference'),
+                ('cropped_mask','mask'),
+                (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
+                  '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
+                 'resample_rois'),
+                ('pve_maps','partial_volume_maps')]),
+            (n_repeat_fieldmaps, n_noise_corr,[
+                ('fieldmaps','fieldmap'),
+                ('fieldmap_regs','fieldmap_reg')]),
+            
+            (n_group_hemi_surfs, n_noise_corr,[('out','resample_surfaces')]),
+            #(n_noise_corr, n_smooth_bp,[('out_file','in_file')]),
+        ])
+
+
+    n_dataset_noisecorr = pe.Node(
+        CreateDataset(tr=tr,
+                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
+                      design=os.path.join(project_dir,'data/design.csv')),
+        name='dataset_noisecorr')
+    n_dataset_nofilt = pe.Node(
+        CreateDataset(tr=tr,
+                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
+                      design=os.path.join(project_dir,'data/design.csv'),
+                      mean_divide=True),
+        name='dataset_nofilt')
+    
+    n_dataset_smoothed = n_dataset_noisecorr.clone('dataset_smoothed')
+
+    nofilt_resample = True
+    if nofilt_resample:
         w.connect([
             (n_anat_grabber, n_surf_resample,[
                     ('norm','surfaces_volume_reference'),
@@ -476,41 +505,31 @@ def preproc_fmri():
                     ('fieldmaps','fieldmap'),
                     ('fieldmap_regs','fieldmap_reg')]),
 
-
             (n_convert_motion_par, n_surf_resample,[('motion','motion')]),
             (w.get_node('all_func_dirs'), n_surf_resample,[(('fmri_all', flatten_remove_none),'dicom_files')]),
             (n_group_hemi_surfs, n_surf_resample,[('out','resample_surfaces')]),
 
 #            (n_surf_resample, n_smooth_bp_nofilt,[('out_file','in_file')]),            
+            (si,n_dataset_nofilt,[('subject_id',)*2]),
+            (n_surf_resample,n_dataset_nofilt,[('out_file','ts_files')]),
+            (w.get_node('all_func_dirs'),n_dataset_nofilt,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
+
             ])
 
-    n_dataset_noisecorr = pe.Node(
-        CreateDataset(tr=tr,
-                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
-                      design=os.path.join(project_dir,'data/design.csv')),
-        name='dataset_noisecorr_evts')
-    n_dataset_nofilt = pe.Node(
-        CreateDataset(tr=tr,
-                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
-                      design=os.path.join(project_dir,'data/design.csv')),
-        name='dataset_nofilt')
-    n_dataset_smoothed = n_dataset_noisecorr.clone('dataset_smoothed')
-    
 
-    w.connect([
+
+    if False:
+        w.connect([
             (si,n_dataset_noisecorr,[('subject_id',)*2]),
             (n_noise_corr,n_dataset_noisecorr,[('out_file','ts_files')]),
             (w.get_node('all_func_dirs'),n_dataset_noisecorr,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
-#            (si,n_dataset_nofilt,[('subject_id',)*2]),
-#            (n_surf_resample,n_dataset_nofilt,[('out_file','ts_files')]),
-#            (w.get_node('all_func_dirs'),n_dataset_nofilt,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
 #            (si,n_dataset_smoothed,[('subject_id',)*2]),
 #            (n_smooth_bp,n_dataset_smoothed,[('out_file','ts_files')]),
 #            (w.get_node('all_func_dirs'),n_dataset_smoothed,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
-            ])
+        ])
 
     return w 
 
@@ -537,6 +556,7 @@ class CreateDatasetInputSpec(BaseInterfaceInputSpec):
     data_path = traits.Str('FMRI/DATA',usedefault=True,)
     design = File(exists=True,mandatory=True)
     behavioral_data_path=Directory()
+    mean_divide = traits.Bool(False, usedefault=True)
     
     tr = traits.Float(mandatory=True)
 
@@ -584,7 +604,8 @@ class CreateDataset(BaseInterface):
                     if optional:
                         continue
                     else:
-                        raise RuntimeError('missing data')
+                        break # do not crash, in case we want to analyze for early boost...
+                        #raise RuntimeError('missing data')
                 behavior_file = behavior_file[-1]
             # deal with multiple scans
             ts_files = [f for f,dd in zip(self.inputs.ts_files,self.inputs.dicom_dirs)\
@@ -596,7 +617,8 @@ class CreateDataset(BaseInterface):
                     if optional:
                         continue
                     else:
-                        raise RuntimeError('missing data')
+                        break
+                        #raise RuntimeError('missing data')
                 ts_files = [ts_files[int(scan_idx)]]
             ts_files = [f for f in ts_files if f not in used_ts_files]
 
@@ -606,7 +628,8 @@ class CreateDataset(BaseInterface):
 #                continue
                 ds = mvpa_dataset.ds_from_ts(ts_file, behavior_file,
                                              seq_info=seq_info, seq_idx=seq_idx,
-                                             tr=self.inputs.tr)
+                                             tr=self.inputs.tr,
+                                             mean_divide=self.inputs.mean_divide)
                 ds.sa['scan_name'] = [ses_name]*ds.nsamples
                 ds.sa['scan_id'] = [scan_id]*ds.nsamples
                 dss.append(ds)
@@ -655,3 +678,29 @@ class CreateDataset(BaseInterface):
 
 #def preproc_eeg():
     
+
+
+def repeat_fieldmaps(fmri_scans, fieldmaps, fieldmap_regs):
+    from datetime import datetime
+    import glob, os, re
+    import dicom
+    import numpy as np
+    fmaps_out = []
+    fmap_regs_out = []
+    i = 0
+    fieldmap_datetimes = [datetime.strptime(re.search('[0-9]{8}_[0-9]{6}',fmap).group(0),'%Y%m%d_%H%M%S') \
+                          for fmap in fieldmaps]
+    for sess in fmri_scans:
+        if sess != None:
+            for scan in sess:
+                dcm = dicom.read_file(glob.glob(os.path.join(scan,'*0001.dcm'))[0])
+                fmri_time = datetime.strptime(dcm.AcquisitionDate+dcm.AcquisitionTime,'%Y%m%d%H%M%S.%f')
+                time_to_fmap = np.asarray([(fmap_time-fmri_time).total_seconds() for fmap_time in fieldmap_datetimes])
+                fmap_idx = np.where(time_to_fmap>0)[0]
+                fmap_idx = fmap_idx[0] if len(fmap_idx) else -1
+                if time_to_fmap[fmap_idx] > 3600*6: #more than 6 hours later!! only for PA usually
+                    fmap_idx = fmap_idx-1
+                fmaps_out.append(fieldmaps[fmap_idx])
+                fmap_regs_out.append(fieldmap_regs[fmap_idx])
+                i += 1
+    return fmaps_out, fmap_regs_out

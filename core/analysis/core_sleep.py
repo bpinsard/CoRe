@@ -15,18 +15,18 @@ import joblib
 preproc_dir = '/home/bpinsard/data/analysis/core_sleep'
 dataset_subdir = 'dataset_noisecorr'
 #dataset_subdir = 'dataset_smoothed'
-#dataset_subdir = 'dataset_raw'
+dataset_subdir = 'dataset_nofilt'
 
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 output_subdir = 'searchlight_new'
 compression= 'gzip'
 
-subject_ids = [1,11,23,22,63,50,79,54,107,128,162,102,82,155,100,94]
-group_Int = [1,23,63,79,107,128,82,100]
+subject_ids = [1,11,23,22,63,50,79,54,107,128,162,102,82,155,100,94,87,192]
+group_Int = [1,23,63,79,107,128,82,100,94,87,192]
 #subject_ids=subject_ids[5:]
 ulabels = ['CoReTSeq','CoReIntSeq','mvpa_CoReOtherSeq1','mvpa_CoReOtherSeq2','rest']
 #ulabels = ulabels[1:]
-#subject_ids = [128,11,100]
+subject_ids = [102,107,11,128,155,162,1,22,23,50,54,63,79,82,87]
 
 seq_groups = {
     'mvpa_new_seqs' : ulabels[2:4],
@@ -187,9 +187,7 @@ def targets_num(ds, utargets, targets_src='targets', targets_num_attr='targets_n
 
 def all_searchlight():
     new_sids = [sid for sid in subject_ids if len(glob.glob(os.path.join(proc_dir,output_subdir,'CoRe_%03d_*'%sid)))==0]
-    print new_sids
-    new_sids=subject_ids[1:]
-    joblib.Parallel(n_jobs=3)([joblib.delayed(subject_searchlight_new)(sid) for sid in new_sids])
+    joblib.Parallel(n_jobs=2)([joblib.delayed(subject_searchlight_new)(sid) for sid in new_sids])
 
 
 subjects_4targ = ['S01_ED_pilot','S349_AL_pilot','S341_WC_pilot','S02_PB_pilot','S03_MC_pilot']
@@ -304,7 +302,7 @@ def subject_rois_analysis(subj, clf):
 #        'all_seqs': ulabels[:4]
     }
     block_phases = [
-        #'instr',
+        'instr',
         'exec']
     cvte_subsets = dict([('%s_%s'%(sg_name, bp),dict(targets=seqs,subtargets=[bp])) \
                     for sg_name,seqs in seq_groups.items() \
@@ -313,7 +311,7 @@ def subject_rois_analysis(subj, clf):
     spltr = Splitter(attr='partitions',attr_values=[1,2])
 
     prtnrs = dict(
-#        loco=mvpa_nodes.prtnr_loco_cv,
+        loco=mvpa_nodes.prtnr_loco_cv,
         loso=mvpa_nodes.prtnr_loso_glm_cv
     )
     

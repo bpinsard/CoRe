@@ -1,4 +1,5 @@
 
+
 ## Introduction
 
 Motor skills recruits an extended network of cerebral and spinal regions, which involvement evolves differently across learning stages [@dayan_neuroplasticity_2011].
@@ -6,12 +7,13 @@ Motor sequence learning (MSL) is a adequate paradigm [@] to study neural process
 While MSL aggregates cognitive abilities to improve performance of execution, the local or distributed network specifically encoding different features of the sequence is only partialy known.
 
 Cortical networks are critical to sequence learning for which large-scale network is activated [@dayan_neuroplasticity_2011] including primary and supplementary motor cortices as well as posterior parietal and dorso-lateral prefrontal cortices.
-The execution implicates primary motor cortex which is topologically structured to encode both single and multi-joint finger movements [@diedrichsen_two_2013;@ejaz_hand_2015].
-While motor execution network is strongly lateralized to the cortex contralateral to the effector, ipsilateral activity and finger specific neural patterns are also observed [@diedrichsen_two_2013] that might enable bi-manual coordination.
+The execution implicates primary motor cortex which is topologically structured to encode both single and multi-joint finger movements [@diedrichsen_two_2013;@ejaz_hand_2015;@shen_decoding_2014].
+While motor execution network is strongly lateralized to the cortex contralateral to the effector limb, ipsilateral activity
+and finger specific neural patterns are also observed [@diedrichsen_two_2013] that might enable bi-manual coordination.
 
 At the subcortical level, hippocampus and striatum [@albouy_hippocampus_2013] were also identified as important players in the learning and consolidation of motor sequences.
 Hippocampus is a major memory structure that not only encodes episodic memory but also supports procedural memory acquisition in it's early stages [@ref].
-On the other hand, the striatum participates in automation of sequences processing through reinforcement learning [@jin_basal_2014;@graybiel_striatum:_2015], but is not limited to procedural motor skills.
+On the other hand, the striatum participates in automation of sequences processing through reinforcement learning [@jin_basal_2014;@graybiel_striatum_2015], but is not limited to procedural motor skills.
 Optimality of motor production is progressively attained through local optimization of transition often achieved through chunking of sub-sequences [@rosenbaum_hierarchical_1983;@diedrichsen_motor_2015], which variations are explored during learning process and depends on learning strategy [@lungu_striatal_2014].
 The generality of such structures for learning sequences could also support the transfer between modality [@mosha_unstable_2016].
 
@@ -70,7 +72,7 @@ Each subject performed the task twice in scans separated by few minutes to allow
 MRI data were acquired on a Siemens Trio 3T scanner on 2 two separate sessions.
 The first session used 32-channel coil to acquire high-resolution anatomical T1 weighted image using Multi-Echo (4) MPRAGE (MEMPRAGE) at 1mm isotropic resolution. 
 
-Functional data were acquired during the second session with 12-channel coil for comparison with other dataset. EPI sequence consists of 40 slices with 3.44mm in-plane resolution and 3.3mm slice thickness to provide full cortical and cerebellum coverage.
+Functional data were acquired during the second session with 12-channel coil for comparison with other dataset. EPI sequence consists of 40 slices with 3.44mm in-plane resolution and 3.3mm slice thickness to provide full cortical and cerebellum coverage with a TR of 2.16 sec.
 Consecutively fieldmap was obtained to measure B0 field inhomogeneity to allow retrospective compensation of induced distortions.
 
 ### Preprocessing
@@ -92,6 +94,8 @@ We also aim to analyze the classification of trained sequences versus untrained 
 For this reason, we first aimed at classifying untrained sequences which are comparable as being completely new to the subjects, and are learned along the course of the "MVPA task". This 2-class scheme allows mapping representation of non-consolidated sequence.
 
 Then TSeq and IntSeq are also analyzed separately in IntGroup mapping sequences consolidated on two separate nights of sleep.
+
+Morover, the instruction stimuli presented before each execution, enable disambiguation of the memory traces from explicit recall from that during execution of the motor plan.
 
 The MVPA analysis was based on PyMVPA software [@hanke_pymvpa_2009] package with additional development of custom cross-validation scheme, Searchlight and measures to adapt to the study design and analyses.
 
@@ -142,7 +146,7 @@ Also we complemented the analysis by taking TRs subsamples with similar delay fr
 Such analysis aims at uncovering the dynamics of motor sequence execution, as instruction phase might causes motor planning and simulation of sequence performance, while execution phase generally includes warm-up and then automation of repetition. 
 Furthermore, this method is independent of HRF model allowing potential non-hemodynamic related neurally-driven BOLD signal changes.
 
-While the rapid block design might hampers temporal disambiguation, De Bruijn cycle ordering imposes balanced successive bloc Mais selon la CORPIQ, le changement législatif demandé par la SPCA pourrait avoir un effet pervers. «À partir du moment où on enverrait le message qu’au Québec, les propriétaires ne peuvent plus refuser les animaux, on pourrait se retrouver dans une société où il y aurait encore plus d’animaux domestiques, affirme Hans Brouillette, directeur des affaires publiques de la CORPIQ. Or, il risquerait d’y avoir encore plus de familles qui réaliseraient après un certain temps qu’elles n’arrivent pas à s’occuper d’un animal et qu’elles doivent l’abandonner.» ks pairs in the dataset. Thus temporal leaking of BOLD activity of the previous sequence production is then balanced across the 4 sequences and should yield chance level prediction if no signal related to the present sequence is observable in the data, allowing unbiased analysis relative to the chance level.
+While the rapid block design might hampers temporal disambiguation, De Bruijn cycle ordering imposes balanced successive blocks pairs in the dataset. Thus temporal leaking of BOLD activity of the previous sequence production is then balanced across the 4 sequences and should yield chance level prediction if no signal related to the present sequence is observable in the data, allowing unbiased analysis relative to the chance level.
 
 ## ROI analyzes
 
@@ -162,18 +166,24 @@ Non-consolidated additional sequences were analyzed separately to provide a loca
 Consolidated sequences in Int group has, despite lower number of subjects, an extended representation spanning over posterior parietal and premotor cortex, cerebellum, caudate and putamen bilateraly.
 When contrasted with the untrained sequences, only bilateral anterior putamen clusters contains significantly higher discrimination patterns relative to untrained sequences. [@fig]
 
-
 ### ROIS
 
 
 
 ## Discussion
 
+### MVPA analyses
+
+Our study aimed at providing an "as unbiased as possible" mapping of sequences representation in the human brain.
+Compared to [@wiestler_skill_2013], the use of only one hand ensure that classification is not aided by lateralized activity level. However the task used differs in multiple aspects, including...
+
+While we didn't controlled for differences in execution force, velocity and other parameters for potential influence on activity patterns increasing classification accuracy, we controlled for more basic features of the task. Also these execution parameters are in fact inherent to the motor plan stabilized during learning and cannot be truly disentangled from the sequence specific memory trace.
+
 ### Searchlight
 
 Using Searchlight even in a very controlled design gave individual maps with variabilities despite important common network found accross subjects as highlighted by group analysis. This raise an interest regarding potential causes of variable extended representation of sequences in each subject.
 
-Our group analysis revealed implication of a cortical network specific to sequences features, similar to [@wiestler_skill_2013], as well as subcortical contributions to this representation. However, absence of primary motor cortex and smaller cluster size in cortical regions in our results is due to only left-hand execution of sequence. The high accuracy rate relative to chance level reported previously can be largely attributed to action preparation and execution inducing a broad lateralization of activity [@refs].
+Our group analysis revealed implication of a cortical network specific to sequences features, similar to [@wiestler_skill_2013], as well as subcortical contributions to this representation.
 
 
 - representation of sequences characteristics and ROIs: [@kornysheva_human_2014] 
@@ -182,9 +192,9 @@ Our group analysis revealed implication of a cortical network specific to sequen
 comparison with [@wiestler_skill_2013]:
 
 - worst acquisition (12-channel, resolution...) but shorter TR.
-- same hand: implication for cross-validation in general +  temporal dynamics: readiness potential
 - sequences not trained using mvpa small-block design
 - sequences not as intensively trained
 - sequences at different stages
 - continuous execution of sequences
 - using TRs
+- cross-scan validation

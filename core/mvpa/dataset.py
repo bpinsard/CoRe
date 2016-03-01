@@ -129,22 +129,31 @@ import hrf_estimation as he
 
 def ds_from_ts(ts_file, design_file=None,
                remapping=None, seq_info=None, seq_idx=None,
-               default_target='rest', tr=default_tr, data_path='FMRI/DATA'):
+               default_target='rest', tr=default_tr, data_path='FMRI/DATA',
+               mean_divide=False):
 
     ts = h5py.File(ts_file,'r')    
     ds = Dataset(np.transpose(ts[data_path]))
 
     print ds.shape
+    
+    add_trend_chunk(ds)
+    if mean_divide:
+        for tc in np.unique(ds.sa.trend_chunks):
+            ds.samples[ds.sa.trend_chunks==tc] /= np.nanmean(ds.samples[ds.sa.trend_chunks==tc],0)
     #ds.samples /= np.nanmean(ds.samples,0) # convert to pct change
+
+    # convert to pct change per trend chunk
     if np.count_nonzero(np.isnan(ds.samples)) > 0:
         print 'Warning : dataset contains NaN, replaced with 0 and created nans_mask'
         nans_mask = np.any(np.isnan(ds.samples), 0)
         ds.fa['nans'] = nans_mask
         ds.samples[:,nans_mask] = 0
-#    print min(57, ((ds.nsamples/2)-1)*2+1)
-#    ds.samples -= he.savitzky_golay.savgol_filter(ds.samples, min(57, ((ds.nsamples/2)-1)*2+1), 3, axis=0)
+    sg_win = min(57, ((ds.nsamples/2)-1)*2+1)
+#    print sg_win
+#    ds.samples -= he.savitzky_golay.savgol_filter(ds.samples, sg_win, 3, axis=0)
 
-    add_trend_chunk(ds)
+
     polyord = (np.bincount(ds.sa.trend_chunks)>(64./tr)).astype(np.int)
     poly_detrend(ds, chunks_attr='trend_chunks', polyord=polyord)
     
@@ -226,7 +235,7 @@ def add_trend_chunk(ds, tr=default_tr):
     ds.sa['trend_chunks'] = np.zeros(ds.nsamples)
     min_trend_chunk_len = 32./tr
     newchunk = np.zeros(ds.nsamples,dtype=np.bool)
-    diffmean = np.mean(np.abs(np.diff(ds.samples,1,0)),1)
+    diffmean = np.nanmean(np.abs(np.diff(ds.samples,1,0)),1)
     diffmean = np.hstack([0,diffmean])
     cutoff = diffmean.mean()+2*diffmean.std()
     ds.sa['diffmean'] = diffmean.copy()
@@ -258,8 +267,10 @@ def ds_tr2glm(ds, regressors_attr, group_regressors):
 
         mtx = np.hstack([ds.sa[regressors_attr].value[:,reg_i,np.newaxis].astype(np.float), summed_regs])
         glm = GeneralLinearModel(mtx)
-        glm.fit(ds.samples, model='ar1')
-        contrast = glm.contrast([1,0,0,0]).stat()
+        glm.fit(ds.samples, model='ols')
+        ctx_mtx = np.ones(mtx.shape[-1])
+        ctx_mtx[0] = 1
+        contrast = glm.contrast(ctx_mtx).stat()
 #        betas.append(np.squeeze(glm.get_beta(0)))
         betas.append(contrast)
         del glm, mtx, summed_regs
