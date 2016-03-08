@@ -1,33 +1,127 @@
+---
+title: Mapping of Motor Sequence Representations in the Human Brain across learning and consolidation
+tags: [example, citation]
+bibliography: [abstract_rbiq.bib]
+author:
+- family: Pinsard
+  given: Basile
+  affiliation: 1,2
+  email: basile.pinsard@gmail.com
+- family: Gabitov
+  given: Ella
+  affiliation: 1
+- family: Boutin
+  given: Arnaud
+  affiliation: 1
+- family: Benali
+  given: Habib
+  affiliation: 1,2
+- family: Doyon
+  given: Julien
+  affiliation: 1
+institute: here
+organization:
+- id: 1
+  name: Functional Neuroimaging Unit, Centre de Recherche de l'Institut Universitaire de Gériatrie de Montréal
+  address: Montreal, Quebec, Canada
+  url: http://unf-montreal.ca
+- id: 2
+  name: Sorbonne Universités, UPMC Univ Paris 06, CNRS, INSERM, Laboratoire d’Imagerie Biomédicale (LIB) 
+  address: 75013, Paris, France
+  url: http://lib.upmc.fr
+date: 
+---
 
+
+## Introduction plan
+
+- introduction on sequential motor skills
+- known motor sequence execution neocortical+subcortical circuits: striatum, cerebellum from GLM studies
+- learning and consolidation related networks changes observed with GLM
+- interest to identify representation of the sequences in more specific local networks emerging during learning or consolidation
+- mvpa advantages over GLM: avoid unperfect control, identify discriminating regions ~ closer to neural code
+- articles to compare to:
+
+  - [@wiestler_skill_2013] : only cortical, trained (multiple days) minus untrained
+  - [@nambu_decoding_2015] : focusses on sequence preparation, only cortical is significant
+  
+- questions:
+  
+  1. can we discriminate untrained sequences patterns during preparation and execution. (we "replicate" both [@wiestler_skill_2013] and [@nambu_decoding_2015], separating preparation and execution and exploring full brain)
+  2. does fast-learning of new sequences induces changes in the representation's topography
+  3. does consolidated sequences (IntGroup) show changes in representation's topography
+ 
+## Results 
+
+### searchlight:
+  
+  Q1. all subjects f-sample-t-test accuracy sequences C&D to chance level (50%)
+  Q2. all subjects 2-related-samples-t-test accuracy of C&D mvpa2-mvpa1
+  Q3. IntGroup 2-related-samples-t-test accuracy (A&B)-(C&D)
+
+### rois:
 
 ## Introduction
 
-Motor skills recruits an extended network of cerebral and spinal regions, which involvement evolves differently across learning stages [@dayan_neuroplasticity_2011].
-Motor sequence learning (MSL) is a adequate paradigm [@] to study neural processes involved from initial learning to automation of a skill such as a temporally ordered succession of coordinated movements.
-While MSL aggregates cognitive abilities to improve performance of execution, the local or distributed network specifically encoding different features of the sequence is only partialy known.
 
-Cortical networks are critical to sequence learning for which large-scale network is activated [@dayan_neuroplasticity_2011] including primary and supplementary motor cortices as well as posterior parietal and dorso-lateral prefrontal cortices.
-The execution implicates primary motor cortex which is topologically structured to encode both single and multi-joint finger movements [@diedrichsen_two_2013;@ejaz_hand_2015;@shen_decoding_2014].
-While motor execution network is strongly lateralized to the cortex contralateral to the effector limb, ipsilateral activity
-and finger specific neural patterns are also observed [@diedrichsen_two_2013] that might enable bi-manual coordination.
+- introduction on sequential motor skills
+
+Sequences of motor movements constructs the complex action repertoire of animal and human beings, acquired and evolving with their practice.
+Thus motor sequence learning (MSL) is a adequate paradigm [@] to study neural processes involved from initial learning to automation of a skill such as a temporally ordered succession of coordinated movements.
+
+- known motor sequence execution neocortical+subcortical circuits: striatum, cerebellum from GLM studies
+
+Sequential motor skills recruits an extended network of cerebral [@hardwick_quantitative_2013] and spinal regions [@vadhat_simultaneous_2015], which involvement evolves differently across learning stages [@dayan_neuroplasticity_2011].
+
+At the cerebral level, cortical networks are critical to sequence execution for which large-scale network is activated including primary and supplementary motor cortices as well as posterior parietal and dorso-lateral prefrontal cortices.
 
 At the subcortical level, hippocampus and striatum [@albouy_hippocampus_2013] were also identified as important players in the learning and consolidation of motor sequences.
-Hippocampus is a major memory structure that not only encodes episodic memory but also supports procedural memory acquisition in it's early stages [@ref].
-On the other hand, the striatum participates in automation of sequences processing through reinforcement learning [@jin_basal_2014;@graybiel_striatum_2015], but is not limited to procedural motor skills.
-Optimality of motor production is progressively attained through local optimization of transition often achieved through chunking of sub-sequences [@rosenbaum_hierarchical_1983;@diedrichsen_motor_2015], which variations are explored during learning process and depends on learning strategy [@lungu_striatal_2014].
-The generality of such structures for learning sequences could also support the transfer between modality [@mosha_unstable_2016].
+Hippocampus is a major memory structure that not only encodes episodic memory but also supports procedural memory acquisition in it's early stages [@albouy_both_2008] forecasting their long-term retention [@albouy_interaction_2013]. 
+Activated in both explicit and implicit learning [@schendan_fmri_2003] it could reflect it's capacity in detecting sequential patterns in space and time.
+
+On the other hand, the striatum participates in automation of sequences processing through reinforcement learning [@jin_basal_2014], but is not limited solely to procedural motor skills [@graybiel_striatum_2015].
+Optimality of motor production is progressively attained through local optimization of transition often achieved through chunking of sub-sequences [@rosenbaum_hierarchical_1983;@wymbs_differential_2012;@diedrichsen_motor_2015], which variations are explored during learning process and depends on learning strategy [@lungu_striatal_2014].
+While trained temporal structure evokes specific patterns in premotor cortex, temporal chunking driven by subject's own optimization of physical practice could rely on other circuits, using combination of pre-existing and exploratory chunking patterns.
+
+The generality of both structures for learning sequences could also support the transfer between modality [@mosha_unstable_2016].
+It is therefore of higher interest to study how striatum and hippocampus storage of sequence specific codes evolves in the course of skill acquisition.
+ 
+In addition, subthalamic nuclei (STN) and substantia nigra (SN) and pallidum were also reported to be activated differently in extended training over multiple days [@lehericy_distinct_2005;@boecker_role_2008].
+Progressive shift from associative and premotor to sensorimotor basal ganglia distributed network concurs with automation of the skill.
+
+Cerebellum... 
+
+While physical practice engages a number of structures related to execution, both preparation and motor imagery activates an overlapping network. 
+During preparation, representation of the whole sequence can be observed in contralateral premotor and supplementary motor cortex [@nambu_decoding_2015], supposedly showing the loading of a motor plan of forthcoming execution [@cisek_neural_2005].
+
+- learning and consolidation related networks changes observed with GLM
+
+While training periods induce critical changes in the networks, evidences of offline reprocessing of acquired procedural memory have accumulated [@walker_sleep_2003;@hotermans_early_2006;@barakat_sleep_2013;@cellini_temporal_2015;@cousins_cued_2014;@gregory_resting_2014;@korman_daytime_2007;@ramanathan_sleep-dependent_2015] despite controversies regarding wake and sleep stages respective roles [@nettersheim_role_2015;@landry_effects_2016].
 
 Sleep-supported consolidation restructures the trace of memory, alleviating the implication of hippocampus, while striatum enables the skill to become automated, requiring lower cognitive load, and long-term storage of behavior.
 Congruent with models of consolidation [@born_system_2012], hippocampus acts as a buffer for recent memories, delaying selective transfer to cortical or specialized structures during offline period, enabling balanced plasticity versus stability, necessary for system homeostasis.
 
 In the light of memory consolidation theory, large-scale motor network activity exhibit changes across days after learning which are supported by offline processing notably during sleep [@born_system_2012]. 
 Active System Consolidation model hypothesize that relative implication of subparts of the network is modified by consolidation, sometimes called a "transfer" but is rather a rebalancing.
+
+- interest to identify representation of the sequences in more specific local networks emerging during learning or consolidation
+
+While MSL aggregates cognitive abilities to improve performance of execution, the local or distributed network specifically encoding different features of the sequence is only partially known.
 However while motor practice is less variable with automation of the skill, subparts of the networks stabilize [@costa_differential_2004,@peters_emergence_2014] as well as evoked BOLD fMRI activity patterns [@wiestler_skill_2013].
-Premotor patterns sub-components can both encode spatial and temporal features [@kornysheva_human_2014], the former characterizing the learned sequences.
+
+- mvpa advantages over GLM: avoid unperfect control, identify discriminating regions ~ closer to neural code
 
 The goal of our study is to provide further insight in brain representation of motor sequence with Multivariate Pattern Analysis (MVPA).
-We extend previous research [@wiestler_skill_2013;@kornysheva_human_2014] by scanning larger extent of human brain to measures sub-cortical activity including cerebellum, basal ganglia and lower temporal cortex.
-We also intend to measure changes induced by learning and consolidation by comparing MVPA performances between sequences at their early stages of these processes.
+Indeed, changes of activity level during learning [@dayan_neuroplasticity_2011] can reflect multiple processes but fine-grained changes in activity patterns [@wiestler_skill_2013] has the potential to better explain the evolution of localized networks encoding the skill excerpting subtle contribution of areas not visible using GLM analysis.
+For example, while motor execution related network activity is strongly lateralized to the cortex contralateral to the effector limb, ipsilateral finger specific neural patterns are also observed [@diedrichsen_two_2013] that might enable bi-manual coordination.
+
+  1. can we discriminate untrained sequences patterns during preparation and execution. (we "replicate" both [@wiestler_skill_2013] and [@nambu_decoding_2015], separating preparation and execution and exploring full brain
+  2. does fast-learning of new sequences induces changes in the representation's topography
+  3. does consolidated sequences (IntGroup) show changes in representation's topography
+
+Using these techniques we intend to map subnetwork showing sequence specific patterns of activity replicating and extend previous research [@wiestler_skill_2013;@kornysheva_human_2014] by scanning larger extent of human brain to measures sub-cortical activity including cerebellum, basal ganglia and lower temporal cortex.
+
+The current study also intend to measure changes induced by learning and sleep-dependent consolidation by comparing MVPA classifying performance between sequences at early stages of these processes.
 
 ##Method
 
@@ -48,20 +142,31 @@ Instruction compliance was controlled by non-dominant hand wrist actigraphy (Act
 
 The experiment was conducted over 3 consecutive days, at the end of the day, with all motor task performed in the scanner using an ergonomic MRI-compatible 4-keys response pad.
 
-1. In the first evening (D1), subjects were trained to perform with left-hand a 5 elements sequence (TSeq) for 14 blocks of 12 sequences or a maximum of 12x5=60 keypresses.
+#### First evening (D1)
+
+Subjects were trained to perform with left-hand a 5 elements sequence (TSeq) for 14 blocks of 12 sequences or a maximum of 12x5=60 keypresses.
 Subject were instructed to execute repeatedly as fast and as accurate as possible the sequence of keypresses and to start from the beginning of the sequences in case they noticed that they did an error.
+
 They were retested approximately 20 minutes later for an additional single block of 12 sequences.
 
-2. On the second evening (D2), subjects were tested for 1 block on TSeq.
-Then half of the subjects of "Interference" (Int) group were trained on an interfering sequences (IntSeq) of 5 elements with left-hand for 14 blocks of 12 sequences as for TSeq.
+#### Second evening (D2)
+
+Subjects were first tested for 1 block on TSeq, then half of the subjects of "Interference" (Int) group were trained on an interfering sequences (IntSeq) of 5 elements with left-hand for 14 blocks of 12 sequences as for TSeq.
 "No-Interference" (NoInt) group had scanned resting-state which duration was yoked to a IntGroup subject.
 
-3. On the last evening (D3) subjects first practised TSeq for 7 blocks x 12 repetitions for retest, then practised IntSeq for 7 blocks of 12 sequences, which was followed by a task specifically designed for MVPA analysis, that will be called "MVPA task" thereafter.
-This task was similar to [@wiestler_skill_2013], which rapidly alternates short blocks of practice of 4 different sequences.
-Significant differences are that 4 sequences were performed with the left hand four fingers excluding the thumb and no feedback was given regarding the correctness of performance and sequence was performed uninterruptedly.
-Each block, composed of an instruction period of 4 sec when 5 numbers (eg. 1-4-2-3-1) representing in reading order the sequence of finger to be pressed, was displayed followed by an execution period indicated by a green cross.
-Subject had to perform 5 times the sequence, or a maximum of 5x5=25 key-presses before being instructed to stop and rest when a red cross was displayed.
-Rest duration was variable and set to synchronize the beginning of each block with the same slice in the volume being acquired.
+#### Third evening (D3)
+
+Subjects first performed TSeq for 7 blocks of 12 repetitions for retest, then practised IntSeq for 7 blocks of 12 sequences. 
+
+This was followed by a task specifically designed for MVPA analysis, that will be called "MVPA task" thereafter.
+This task was similar to [@wiestler_skill_2013], rapidly alternating short blocks of practice of 4 different sequences.
+
+Significant differences are that 4 sequences were performed with the left hand four fingers excluding the thumb and no feedback was given regarding the correctness of performance. Also sequences were repeated uninterruptedly as in training, in order to probe the processes underlying automation of the skill.
+
+Each block, composed of an instruction period of 4 sec when was displayed 5 numbers (eg. 1-4-2-3-1) representing in reading order the sequence of fingers to be pressed, followed by an execution period indicated by a green cross.
+Subject had to perform 5 times the sequence, or a maximum of 5x5=25 key-presses before being instructed to stop and rest by displaying a red cross.
+
+Rest duration was variable and set to synchronize the beginning of each block with the same slice in the volume being acquired to allow study of dynamics as further described.
 
 Ordering of the sequences in blocks was chosen to include all possible successive pairs of the sequences using De Bruijn cycles [@aguirre_bruijn_2011] allowing unbiased analysis of dynamics described below. Given 4 sequences, a 2-length De Bruijn cycle would contains 16 blocks, repeated twice to give 8 repetitions of each of the 4 sequences which amounts to 32 blocks.
 
@@ -78,15 +183,18 @@ Consecutively fieldmap was obtained to measure B0 field inhomogeneity to allow r
 ### Preprocessing
 
 Custom pipeline was used to preprocess fMRI data prior to analysis.
-First, high-resolution anatomical T1 weighted image was preprocessed with Freesurfer [@dale_cortical_1999;@fischl_high-resolution_1999;@fischl_cortical_2008] to segment subcortical regions, reconstruct cortical surfaces and provide inter-subjects alignment of cortical folding patterns. Pial and grey/white matter interface surfaces were downsampled to match the 32k sampling of Human Connectome Project (HCP) [@glasser_minimal_2013] and we averaged pial and white surface to get coordinates at the half of the thickness of cortical sheet. HCP subcortical rois coordinates were warped onto individual T1 data using non-linear registration based on Ants software [@avants_symmetric_2008;@klein_evaluation_2009]. Combination of cortical and subcortical coordinates then corresponds to grayordinates of HCP datasets [@glasser_minimal_2013].
+First, high-resolution anatomical T1 weighted image was preprocessed with Freesurfer [@dale_cortical_1999;@fischl_high-resolution_1999;@fischl_cortical_2008] to segment subcortical regions, reconstruct cortical surfaces and provide inter-subjects alignment of cortical folding patterns. 
+Pial and grey/white matter interface surfaces were downsampled to match the 32k sampling of Human Connectome Project (HCP) [@glasser_minimal_2013] and we averaged pial and white surface to get coordinates at the half of the thickness of cortical sheet.
+HCP subcortical rois coordinates were warped onto individual T1 data using non-linear registration based on Ants software [@avants_symmetric_2008;@klein_evaluation_2009]. Combination of cortical and subcortical coordinates then corresponds to grayordinates of HCP datasets [@glasser_minimal_2013].
 
-fMRI data underwent estimation of subject motion [@roche_four-dimensional_2011] and coregistration to T1. Registration and motion parameters were used to interpolate Blood-Oxygen-Level-Dependent (BOLD) signal at anatomical grayordinates above-mentioned taking into account B0 inhomogeneity induced distortions using fieldmap acquisition.
+fMRI data underwent estimation of subject motion [@roche_four-dimensional_2011] and coregistration to T1.
+Registration and motion parameters were used to interpolate Blood-Oxygen-Level-Dependent (BOLD) signal at anatomical grayordinates above-mentioned taking into account B0 inhomogeneity induced distortions using fieldmap acquisition.
 
-BOLD signal was further processed to remove drifts and abrupt motion-related signal change.
+BOLD signal was further processed to remove drifts and motion-related abrupt signal change.
 
 Of note is that our preprocessing does not includes smoothing, even though interpolation inherent to any motion correction causes averaging of values of neighboring voxels. We intended to minimize blurring of data to preserve fine-grained patterns of activity, resolution of relevant patterns being hypothetically at columnar scale.
 
-### Multivariate Pattern Analysis
+### Multivariatctivity is analyzed in a voxel-wise manner as if each anatomically distinguishable region is independent (Marrelec et al., 2006 and Tamás Kincses et al., 2008), does not provide information on interregional interactions that are required to properly tee Pattern Analysis
 
 Similarly to [@wiestler_skill_2013] we aim to uncover activity patterns to predict the sequence being produced.
 We also aim to analyze the classification of trained sequences versus untrained one, however TSeq and IntSeq are probably still undergoing consolidation by the third day of the study, potentially lowering their pattern stability.
@@ -95,13 +203,13 @@ For this reason, we first aimed at classifying untrained sequences which are com
 
 Then TSeq and IntSeq are also analyzed separately in IntGroup mapping sequences consolidated on two separate nights of sleep.
 
-Morover, the instruction stimuli presented before each execution, enable disambiguation of the memory traces from explicit recall from that during execution of the motor plan.
+Moreover, the instruction stimuli presented before each execution, enable disambiguation of the memory traces from explicit recall from that during execution of the motor plan.
 
 The MVPA analysis was based on PyMVPA software [@hanke_pymvpa_2009] package with additional development of custom cross-validation scheme, Searchlight and measures to adapt to the study design and analyses.
 
 #### Samples
 
-Each blocks was modelled by having 2 boxcars, respectively instruction and execution phase, convolved with Hemodynamic Response Functions (HRF). Volumes (TRs) corresponding to HRF level above 50% of maximum response level were taken as samples for the performed sequence. Maximum value of instruction and execution regressors determine the TR to pertain to instruction or execution phase, for which HRF is overlapping.
+Each blocks was modeled by having 2 boxcars, respectively instruction and execution phase, convolved with Hemodynamic Response Functions (HRF). Volumes (TRs) corresponding to HRF level above 50% of maximum response level were taken as samples for the performed sequence. Maximum value of instruction and execution regressors determine the TR to pertain to instruction or execution phase, for which HRF is overlapping.
 A TR based approach was chosen to explore the fine dynamic of patterns related to the task, that model driven such as GLM cannot fully analyze at the cost of lower signal-to-noise ratio.
 
 Regular GLM-based approach was also performed using least-square separate (LS-S) regression of each event [@mumford_deconvolving_2012] shown to provide improved activation patterns estimates for MVPA. For each blocks, regressors for instruction and execution phases provided t-value maps that was further used as MVPA samples.
@@ -112,8 +220,8 @@ The De Bruijn cycles ordering of the sequence in the task aims at providing unbi
 
 Chosen cross-validation schema includes:
 
-- Leave-One-Chunk-Out (LOCO): each block is successively taken out of the dataset to be used in prediction. Classifier is trained on remaining data by randomly selecting balanced number of samples of the 4 sequences which are further than 60 secondes to the block of test data. Random selection of balanced data is performed 5 times for each of the 64 blocks amounting to 64*5 = 320 folds of cross-validation.
-- Leave-One-Scan-Out (LOSO): random balanced subset of samples from a scan is fed for training to the classifier which then predicts one the other scan the sequences. Random subset was selected 5 times for the 2 scans giving 10 cross-validation folds.
+- Leave-One-Chunk-Out (LOCO): each block is successively taken out of the dataset to be used in prediction. Classifier is trained on remaining data by randomly selecting balanced number of samples of the 4 sequences which are further than 60 seconds to the block of test data. Random selection of balanced data is performed 5 times for each of the 64 blocks amounting to 64*5 = 320 folds of cross-validation.
+- Leave-One-Scan-Out (LOSO): random balanced subset of samples from a scan is fed for training to the classifier which then predicts one the other scan the sequences. A random balanced subsets was selected 5 times for the 2 scans giving 10 cross-validation folds.
 
 #### Searchlight analysis
 
@@ -135,56 +243,55 @@ For both LOCO and LOSO cross-validation schema, we measured following accuracy s
 
 #### Searchlight Group Analysis
 
-Group searchlight maps were computed using mass-univariate one-sample T-test to find regions which consistently departed from chance level across subjects.
+Group searchlight maps were computed using mass-univariate one-sample one-tailed T-test to find regions which consistently departed from chance level across subjects.
 
-To further investigate the change in representation strenght and localization between trained and untrained sequences, we contrasted their accuracy maps in Int group only using a subject pair t-test. Then a conjunction with significant trained sequence accuracy using minimum t-value was computed to only extract representation enhancement reaching above chance level.
+A contrast of all subject's untrained sequences accuracy maps between the second and first "MVPA task" scans using conjunction with significant second scan accuracy using minimum t-value was computed to only extract representation enhancement during early learning reaching above chance level.
+
+To further investigate the change in representation strength and localization between trained and untrained sequences, we contrasted their accuracy maps in Int group only using a subject pair t-test in conjunction with significant trained sequence accuracy using minimum t-value to chance level.
 
 #### Dynamics analysis
 
-Also we complemented the analysis by taking TRs subsamples with similar delay from instruction time, ranging from -2 to 20 TRs, and then to discriminate the sequences in cross-validation schema. Having 64 blocks in total accross the 2 scans give 64 samples for each TR delay. This is similar to [@wiestler_skill_2013 fig.4,D-E] ROI based temporal analysis. 
+Also we complemented the analysis by taking TRs subsamples with similar delay from instruction time, ranging from -2 to 20 TRs, and then to discriminate the sequences in cross-validation schema. Having 64 blocks in total across the 2 scans give 64 samples for each TR delay. This is similar to [@wiestler_skill_2013 fig.4,D-E] ROI based temporal analysis. 
 
 Such analysis aims at uncovering the dynamics of motor sequence execution, as instruction phase might causes motor planning and simulation of sequence performance, while execution phase generally includes warm-up and then automation of repetition. 
 Furthermore, this method is independent of HRF model allowing potential non-hemodynamic related neurally-driven BOLD signal changes.
 
 While the rapid block design might hampers temporal disambiguation, De Bruijn cycle ordering imposes balanced successive blocks pairs in the dataset. Thus temporal leaking of BOLD activity of the previous sequence production is then balanced across the 4 sequences and should yield chance level prediction if no signal related to the present sequence is observable in the data, allowing unbiased analysis relative to the chance level.
 
-## ROI analyzes
+#### Region of Interest (ROI) analyzes
 
-A network of local neuronal populations has been shown to contribute to sequence production learning [@dayan_neuroplasticity_2011], with their activity [@albouy_hippocampus_2013,@barakat_sleep_2013] evolving in accordance theoretical models of consolidation [@born_system_2012]. To extract wether their activity independently encodes the spatio-temporal pattern of the sequence, we conducted ROI cross-validation using a priori atlas including:
+A network of local neuronal populations has been shown to contribute to sequence production learning [@dayan_neuroplasticity_2011], with their activity [@albouy_hippocampus_2013,@barakat_sleep_2013] evolving in accordance theoretical models of consolidation [@born_system_2012]. To extract whether their activity independently encodes the spatio-temporal pattern of the sequence, we conducted ROI cross-validation using a priori atlas including:
 
-- hippocampus and striatum including caudate nucleus and putamen 
+- hippocampus and striatum including caudate nucleus and putamen
 - cortical network including posterior parietal, primary motor, premotor, supplementary motor area and dorso-lateral prefrontal.
 
-hypotheses for ROI discriminating sequences/learning stages
+To assess the significance of each of these cross-validation accuracy measures, non-parametric permutation test [@stelzer_statistical_2013] of xxx repetitions was conducted for each subject and ROI to estimate chance level distribution of accuracy.
 
 ## Results
 
 ### Searchlight
 
-Non-consolidated additional sequences were analyzed separately to provide a localizer of early sequence representation (fig. ??). A very limited network emerges from both instruction and execution phase patterns, including bilateral hippocampi and right dorsolateral prefrontal cortex. This weaker representation of new sequence is in agreement with [@wiestler_skill_2013] but could be sourced in higher variability in motor production.
+![All subjects t-values threshold (p<.01) of untrained sequences classification accuracy during execution](../../../../analysis/core_mvpa/searchlight_group/CoRe_group_All_mvpa_all_mvpa_new_seqs_exec_loco_t0-5p0.010.png){#fig:all_subj_untrained_exec .slmap}
 
-Consolidated sequences in Int group has, despite lower number of subjects, an extended representation spanning over posterior parietal and premotor cortex, cerebellum, caudate and putamen bilateraly.
-When contrasted with the untrained sequences, only bilateral anterior putamen clusters contains significantly higher discrimination patterns relative to untrained sequences. [@fig]
+Non-consolidated additional sequences were analyzed separately to provide a localizer of early sequence representation (fig. @fig:all_subj_untrained_exec). A limited network emerges from both instruction and execution phase patterns, left hippocampus and primary motor and posterior parietal cortex, bilateral cerebellum and insular cortex. This weaker representation of new sequence is in agreement with [@wiestler_skill_2013] but could be sourced in higher variability in motor production for a part.
+
+![Int Group t-values threshold (p<.01) of trained sequences classification accuracy during execution](../../../../analysis/core_mvpa/searchlight_group/CoRe_group_Int_mvpa2_tseq_intseq_exec_loco_t0-5p0.010.png){#fig:intgroup_trained_exec .slmap} 
+
+Consolidated sequences in Int group has, despite lower number of subjects, an extended representation spanning over posterior parietal and premotor cortex, cerebellum, caudate and putamen bilaterally (fig @fig:intgroup_trained_exec).
+When contrasted with the untrained sequences (fig @fig:intgroup_trained_min_untrained_exec), only bilateral anterior putamen clusters contains significantly higher discrimination patterns relative to untrained sequences. 
+
+![Contrast trained-untrained classifier accuracy for Int group t-values (p<0.05)](../../results/slmaps/slmap_mvpa_acc_contrast_trained_untrained_intgroup_mvpa2.png){#fig:intgroup_trained_min_untrained_exec .slmap}
 
 ### ROIS
 
 
-
 ## Discussion
 
-### MVPA analyses
-
-Our study aimed at providing an "as unbiased as possible" mapping of sequences representation in the human brain.
-Compared to [@wiestler_skill_2013], the use of only one hand ensure that classification is not aided by lateralized activity level. However the task used differs in multiple aspects, including...
-
-While we didn't controlled for differences in execution force, velocity and other parameters for potential influence on activity patterns increasing classification accuracy, we controlled for more basic features of the task. Also these execution parameters are in fact inherent to the motor plan stabilized during learning and cannot be truly disentangled from the sequence specific memory trace.
-
-### Searchlight
-
-Using Searchlight even in a very controlled design gave individual maps with variabilities despite important common network found accross subjects as highlighted by group analysis. This raise an interest regarding potential causes of variable extended representation of sequences in each subject.
+Using Searchlight even in a very controlled design gave individual maps with variability despite important common network found across subjects as highlighted by group analysis (fig). This raise an interest regarding potential causes of variable extended representation of sequences in each subject. As the task requires switching between different sequences, different strategies could be used by the subject to maintain in working memory the sequence first shown on the screen then practised physically.
 
 Our group analysis revealed implication of a cortical network specific to sequences features, similar to [@wiestler_skill_2013], as well as subcortical contributions to this representation.
 
+TODO:
 
 - representation of sequences characteristics and ROIs: [@kornysheva_human_2014] 
 - address all limitation and confounds [@todd_confounds_2013; @etzel_searchlight_2013; @etzel_looking_2012] of MVPA and Searchlight
@@ -192,9 +299,10 @@ Our group analysis revealed implication of a cortical network specific to sequen
 comparison with [@wiestler_skill_2013]:
 
 - worst acquisition (12-channel, resolution...) but shorter TR.
-- sequences not trained using mvpa small-block design
+- sequences not trained using same rapid-block design
 - sequences not as intensively trained
-- sequences at different stages
+- sequences at different stages of training/consolidation
 - continuous execution of sequences
-- using TRs
-- cross-scan validation
+- using TRs (and GLM)
+
+## References
