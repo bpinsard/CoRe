@@ -130,33 +130,42 @@ import hrf_estimation as he
 def ds_from_ts(ts_file, design_file=None,
                remapping=None, seq_info=None, seq_idx=None,
                default_target='rest', tr=default_tr, data_path='FMRI/DATA',
-               mean_divide=False):
+               detrend=True,
+               mean_divide=False,
+               sg_filt=False,
+               sg_filt_win=210):
 
     ts = h5py.File(ts_file,'r')    
     ds = Dataset(np.transpose(ts[data_path]))
 
     print ds.shape
     
-    add_trend_chunk(ds)
-    if mean_divide:
-        for tc in np.unique(ds.sa.trend_chunks):
-            ds.samples[ds.sa.trend_chunks==tc] /= np.nanmean(ds.samples[ds.sa.trend_chunks==tc],0)
-    #ds.samples /= np.nanmean(ds.samples,0) # convert to pct change
+    add_trend_chunk(ds, min_time_per_chunk=16)
 
-    # convert to pct change per trend chunk
+    if mean_divide: # convert to pct change per trend chunk
+        #for tc in np.unique(ds.sa.trend_chunks):
+        #    ds.samples[ds.sa.trend_chunks==tc] /= np.nanmean(ds.samples[ds.sa.trend_chunks==tc],0)
+        ds.samples /= np.nanmean(ds.samples,0) # convert to pct change
+
     if np.count_nonzero(np.isnan(ds.samples)) > 0:
         print 'Warning : dataset contains NaN, replaced with 0 and created nans_mask'
         nans_mask = np.any(np.isnan(ds.samples), 0)
         ds.fa['nans'] = nans_mask
         ds.samples[:,nans_mask] = 0
-    sg_win = min(57, ((ds.nsamples/2)-1)*2+1)
-#    print sg_win
-#    ds.samples -= he.savitzky_golay.savgol_filter(ds.samples, sg_win, 3, axis=0)
 
+    if detrend:
+        polyord = (np.bincount(ds.sa.trend_chunks)>(64./tr)).astype(np.int)
+        print polyord
+        poly_detrend(ds, chunks_attr='trend_chunks', polyord=polyord)
 
-    polyord = (np.bincount(ds.sa.trend_chunks)>(64./tr)).astype(np.int)
-    poly_detrend(ds, chunks_attr='trend_chunks', polyord=polyord)
-    
+    if sg_filt:
+        sg_win = int(sg_filt_win/float(tr))
+        if not sg_win%2:
+            sg_win += 1
+        print sg_win
+        if ds.nsamples > sg_win:
+            ds.samples -= he.savitzky_golay.savgol_filter(ds.samples, sg_win, 3, axis=0)
+
     ds.fa['coordinates'] = ts['COORDINATES'][:]
     ds.a['triangles'] = np.vstack([
             ts['STRUCTURES/CORTEX_LEFT/TRIANGLES'],
@@ -227,13 +236,16 @@ def add_aparc_ba_fa(ds, subject, pproc_tpl):
     ds.fa['aparc'] = np.hstack([aparcs_surf, roi_aparc]).astype(np.int32)
         
     ba_32k = np.hstack([nb.gifti.read(os.path.join(pproc_path,'BA_resample/mapflow/_BA_resample%d/%sh.BA_exvivo.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))]).astype(np.int32)
+    
     ba_thresh_32k = np.hstack([nb.gifti.read(os.path.join(pproc_path,'BA_thresh_resample/mapflow/_BA_thresh_resample%d/%sh.BA_exvivo.thresh.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))]).astype(np.int32)
+    for ba in [ba_32k, ba_thresh_32k]:
+        ba[32492:2*32492] = ba[32492:2*32492]+1000*(ba[32492:2*32492]>0)
     ds.fa['ba'] = ba_32k
-    ds.fa['ba_thres'] = ba_thresh_32k
+    ds.fa['ba_thresh'] = ba_thresh_32k
 
-def add_trend_chunk(ds, tr=default_tr):
+def add_trend_chunk(ds, tr=default_tr, min_time_per_chunk=32):
     ds.sa['trend_chunks'] = np.zeros(ds.nsamples)
-    min_trend_chunk_len = 32./tr
+    min_trend_chunk_len = min_time_per_chunk/float(tr)
     newchunk = np.zeros(ds.nsamples,dtype=np.bool)
     diffmean = np.nanmean(np.abs(np.diff(ds.samples,1,0)),1)
     diffmean = np.hstack([0,diffmean])

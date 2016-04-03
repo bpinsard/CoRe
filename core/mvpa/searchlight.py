@@ -2,7 +2,7 @@ import numpy as np
 
 from mvpa2.support.nibabel.surf import Surface
 from mvpa2.misc.surfing.queryengine import SurfaceQueryEngine
-from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine, QueryEngine
+from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine, QueryEngine, CachedQueryEngine, idhash_
 from mvpa2.generators.partition import HalfPartitioner, NFoldPartitioner, CustomPartitioner
 from mvpa2.generators.resampling import NonContiguous
 from mvpa2.measures.searchlight import Searchlight, sphere_searchlight
@@ -164,7 +164,7 @@ class SurfVoxQueryEngine(QueryEngine):
                  surf_sl_radius=20,
                  vox_sl_radius=2.4,
                  max_feat=None):
-        QueryEngine.__init__(self)
+        QueryEngine.__init__(self, voxel_indices=Sphere(vox_sl_radius), coordinates=None)
         self._surf_sl_radius = surf_sl_radius
         self._vox_sl_radius = vox_sl_radius
         self._max_feat = max_feat
@@ -198,6 +198,39 @@ class SurfVoxQueryEngine(QueryEngine):
             ids = self._max_vertex+self._idx_qe.query_byid(fid-self._max_vertex)#[:self._max_feat]
         ids = np.asarray(ids)[self._include[ids]]
         return ids.tolist()
+
+class CachedQueryEngineAlt(CachedQueryEngine):
+    
+    def train(self, dataset):
+        """'Train' `CachedQueryEngineAlt`.
+
+        Raises
+        ------
+        ValueError
+          If `dataset`'s .fa were changed -- it would raise an
+          exception telling to `untrain` explicitly, since the idea is
+          to reuse CachedQueryEngine with the same engine and same
+          dataset (up to variation of .sa, such as labels permutation)
+        """
+        ds_fa_hash = 1
+#        ds_fa_hash = ':'.join([idhash_(dataset.fa[qo]) for qo in self._queryengine._queryobjs.keys()]) +\
+#                     ':%d' % dataset.fa._uniform_length
+        # ds_fa_hash = idhash_(dataset.fa) + ':%d' % dataset.fa._uniform_length
+        if self._trained_ds_fa_hash is None:
+            # First time is called
+            self._trained_ds_fa_hash = ds_fa_hash
+            self._queryengine.train(dataset)     # train the queryengine
+            self._lookup_ids = [None] * dataset.nfeatures # lookup for query_byid
+            self._lookup = {}           # generic lookup
+            self.ids = self.queryengine.ids # used in GNBSearchlight??
+        elif self._trained_ds_fa_hash != ds_fa_hash:
+            raise ValueError, \
+                  "Feature attributes of %s (idhash=%r) were changed from " \
+                  "what this %s was trained on (idhash=%r). Untrain it " \
+                  "explicitly if you like to reuse it on some other data." \
+                  % (dataset, ds_fa_hash, self, self._trained_ds_fa_hash)
+        else:
+            pass
 
 class GroupConfusionMatrixError(ConfusionMatrixError):
 
