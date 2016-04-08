@@ -3,7 +3,7 @@ import glob
 import numpy as np
 import os,sys
 from .. import behavior
-from ..pipelines.mvpa_pilot import SEQ_INFO
+from ..pipelines.preproc_pilot import SEQ_INFO
 import scipy.optimize
 
 

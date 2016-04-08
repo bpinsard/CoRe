@@ -16,35 +16,37 @@ class BalancedPartitions(Node):
     
     def _call(self,ds):
         ds.sa[self.get_space()] = ds.sa[self.partition_attr].value.copy()
-        ds.sa[self.get_space()].value[~ds.sa[self.balanced_attr].value] = 0
+        ds.sa[self.get_space()].value[~ds.sa[self.balanced_attr].value] = 3
         return ds
 
-prtnr_loco_cv = ChainNode([
-    NFoldPartitioner(attr='chunks'), 
-    NonContiguous(dist_attr='time',dist=60),
-    Balancer(
-        amount='equal',
-        attr='targets',
-        count=5,
-        apply_selection=False,
-        limit=dict(partitions=[1]),
-        include_offlimit=True),
-    BalancedPartitions()],
-    space='balanced_partitions')
-
+def prtnr_loco_cv(nrepeat=1):
+    return ChainNode([
+        NFoldPartitioner(attr='chunks'), 
+        NonContiguous(dist_attr='time',dist=60),
+        Balancer(
+            amount='equal',
+            attr='targets',
+            count=nrepeat,
+            apply_selection=False,
+            limit=dict(partitions=[1]),
+            include_offlimit=True),
+        BalancedPartitions()],
+        space='balanced_partitions')
+    
 prtnr_loco_delay = NFoldPartitioner(attr='chunks')
 
-prtnr_loso_cv = ChainNode([
-    NFoldPartitioner(attr='scan_id'),
-    Balancer(
-        amount='equal',
-        attr='targets',
-        count=5,
-        apply_selection=False,
-        limit=dict(partitions=[1]),
-        include_offlimit=True),
-    BalancedPartitions()],
-    space='balanced_partitions')
+def prtnr_loso_cv(nrepeat=1):
+    return ChainNode([
+        NFoldPartitioner(attr='scan_id'),
+        Balancer(
+            amount='equal',
+            attr='targets',
+            count=nrepeat,
+            apply_selection=False,
+            limit=dict(partitions=[1]),
+            include_offlimit=True),
+        BalancedPartitions()],
+        space='balanced_partitions')
 
 training_scans = ['d3_mvpa1','d3_mvpa2']
 
@@ -53,19 +55,20 @@ testing_scans = [
     'd2_resting1','d2_retest_TSeq_1block','d2_training_IntSeq','d2_resting2','d2_resting3',
     'd3_retest_TSeq','d3_retest_IntSeq','d3_resting1','d3_resting2']
 
-prtnr_d123_train_test = ChainNode([
-    CustomPartitioner(
-        [(training_scans, testing_scans)],
-        attr='scan_name'),
-    Balancer(
-        amount='equal',
-        attr='targets',
-        count=4,
-        apply_selection=False,
-        limit=dict(partitions=[1]),
-        include_offlimit=True),
-    BalancedPartitions()],
-    space='balanced_partitions')
+def prtnr_d123_train_test(nrepeat=1):
+    return ChainNode([
+        CustomPartitioner(
+            [(training_scans, testing_scans)],
+            attr='scan_name'),
+        Balancer(
+            amount='equal',
+            attr='targets',
+            count=nrepeat,
+            apply_selection=False,
+            limit=dict(partitions=[1]),
+            include_offlimit=True),
+        BalancedPartitions()],
+        space='balanced_partitions')
 
 class FeaturewiseConfusionMatrix(FeaturewiseMeasure):
 
@@ -106,7 +109,7 @@ class FeaturewiseConfusionMatrix(FeaturewiseMeasure):
 confmat_pass_attr_sa = [
     'scan_name','scan_id', 'blocks_idx','sequence','n_correct_sequences','n_failed_sequences','targets',]
 pass_attr_fa  = [
-    'ba_thres', 'ba', 'aparc', 'coordinates','nans','node_indices','voxel_indices', 'roi_sizes']
+    'ba_thresh', 'ba', 'aparc', 'coordinates','nans','node_indices','voxel_indices', 'roi_sizes']
 pass_attr_a = [
     'triangles']
 # split block in each scan

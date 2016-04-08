@@ -27,6 +27,7 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.5, tr=default_tr):
     ds.a['blocks_tr'] = np.round(np.asarray([b[2] for b in blocks])/tr).astype(np.int)
     ds.a['blocks_targets'] = [b[0] for b in blocks]
         
+    #"""
     par_exec = BlockParadigm(
         con_id = np.hstack([instrs[:,0], execs[:,0]]),
         onset = np.hstack([instrs[:,2], execs[:,2]]),
@@ -36,6 +37,15 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.5, tr=default_tr):
         con_id = np.hstack([instrs[:,0], gos[:,0]]),
         onset = np.hstack([instrs[:,2], gos[:,2]]),
         duration = np.hstack([instrs[:,3], gos[:,3]]))
+    """
+    par_exec = EventRelatedParadigm(
+        con_id = np.hstack([instrs[:,0], execs[:,0]]),
+        onset = np.hstack([instrs[:,2], execs[:,2]]))
+
+    par_stim = EventRelatedParadigm(
+        con_id = np.hstack([instrs[:,0], gos[:,0]]),
+        onset = np.hstack([instrs[:,2], gos[:,2]]))
+    """
     
     frametimes = ds.sa.time-ds.sa.time[0]
 
@@ -51,22 +61,24 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.5, tr=default_tr):
     ds.sa['regressors_stim'] = np.array(mtx_stim, dtype=[(n,np.float) for n in names_stim])
 
     targ_idx = np.argmax(mtx_exec[:,:-1],1)
+    rest_mask = mtx_exec[(np.arange(len(frametimes)),targ_idx)]<hrf_rest_thresh*mtx_exec[:,:-1].max()
     ds.sa['targets'] = np.asarray(['_'.join(names_exec[i].split('_')[2:]) for i in targ_idx])
-    ds.sa.targets[mtx_exec[(np.arange(len(frametimes)),targ_idx)]<hrf_rest_thresh] = 'rest'
+    ds.sa.targets[rest_mask] = 'rest'
     ds.sa['subtargets'] = np.asarray([names_exec[i].split('_')[0] for i in targ_idx])
-    ds.sa.subtargets[mtx_exec[(np.arange(len(frametimes)),targ_idx)]<hrf_rest_thresh] = 'rest'
+    ds.sa.subtargets[rest_mask] = 'rest'
     ds.sa['blocks_idx'] = np.asarray([int(names_exec[i].split('_')[1]) for i in targ_idx])
-    ds.sa.blocks_idx[mtx_exec[(np.arange(len(frametimes)),targ_idx)]<hrf_rest_thresh] = -1
+    ds.sa.blocks_idx[rest_mask] = -1
     ds.sa['sequence'] = np.asarray([''.join(blocks[i][1].astype(np.str)) for i in ds.sa.blocks_idx])
 
     ds.sa['n_correct_sequences'] = n_correct_sequences[ds.sa.blocks_idx]
     ds.sa['n_failed_sequences'] = n_failed_sequences[ds.sa.blocks_idx]
 
     targ_idx = np.argmax(mtx_stim[:,:-1],1)
+    rest_mask = mtx_stim[(np.arange(len(frametimes)),targ_idx)]<hrf_rest_thresh*mtx_stim[:,:-1].max()
     ds.sa['targets_stim'] = np.asarray(['_'.join(names_stim[i].split('_')[2:]) for i in targ_idx])
-    ds.sa.targets_stim[mtx_stim[(np.arange(len(frametimes)),targ_idx)]<hrf_rest_thresh] = 'rest'
+    ds.sa.targets_stim[rest_mask] = 'rest'
     ds.sa['subtargets_stim'] = np.asarray([names_stim[i].split('_')[0] for i in targ_idx])
-    ds.sa.subtargets_stim[mtx_stim[(np.arange(len(frametimes)),targ_idx)]<hrf_rest_thresh] = 'rest'
+    ds.sa.subtargets_stim[rest_mask] = 'rest'
 
     # add time from instruction
     ds.sa['delay_from_instruction'] = [np.nan]*ds.nsamples
@@ -113,23 +125,47 @@ seq_idx = [0]*7
 
 from mvpa2.datasets import Dataset
 from mvpa2.mappers.detrend import poly_detrend
+import hrf_estimation as he
 
 def ds_from_ts(ts_file, design_file=None,
                remapping=None, seq_info=None, seq_idx=None,
-               default_target='rest', tr=default_tr, data_path='FMRI/DATA'):
+               default_target='rest', tr=default_tr, data_path='FMRI/DATA',
+               detrend=True,
+               mean_divide=False,
+               sg_filt=False,
+               sg_filt_win=210):
 
     ts = h5py.File(ts_file,'r')    
     ds = Dataset(np.transpose(ts[data_path]))
+
+    print ds.shape
+    
+    add_trend_chunk(ds, min_time_per_chunk=16)
+
+    if mean_divide: # convert to pct change per trend chunk
+        #for tc in np.unique(ds.sa.trend_chunks):
+        #    ds.samples[ds.sa.trend_chunks==tc] /= np.nanmean(ds.samples[ds.sa.trend_chunks==tc],0)
+        ds.samples /= np.nanmean(ds.samples,0) # convert to pct change
+
     if np.count_nonzero(np.isnan(ds.samples)) > 0:
         print 'Warning : dataset contains NaN, replaced with 0 and created nans_mask'
         nans_mask = np.any(np.isnan(ds.samples), 0)
         ds.fa['nans'] = nans_mask
         ds.samples[:,nans_mask] = 0
 
-    add_trend_chunk(ds)
-    polyord = (np.bincount(ds.sa.trend_chunks)>(64./tr)).astype(np.int)
-    poly_detrend(ds, chunks_attr='trend_chunks', polyord=polyord)
-    
+    if detrend:
+        polyord = (np.bincount(ds.sa.trend_chunks)>(64./tr)).astype(np.int)
+        print polyord
+        poly_detrend(ds, chunks_attr='trend_chunks', polyord=polyord)
+
+    if sg_filt:
+        sg_win = int(sg_filt_win/float(tr))
+        if not sg_win%2:
+            sg_win += 1
+        print sg_win
+        if ds.nsamples > sg_win:
+            ds.samples -= he.savitzky_golay.savgol_filter(ds.samples, sg_win, 3, axis=0)
+
     ds.fa['coordinates'] = ts['COORDINATES'][:]
     ds.a['triangles'] = np.vstack([
             ts['STRUCTURES/CORTEX_LEFT/TRIANGLES'],
@@ -200,15 +236,18 @@ def add_aparc_ba_fa(ds, subject, pproc_tpl):
     ds.fa['aparc'] = np.hstack([aparcs_surf, roi_aparc]).astype(np.int32)
         
     ba_32k = np.hstack([nb.gifti.read(os.path.join(pproc_path,'BA_resample/mapflow/_BA_resample%d/%sh.BA_exvivo.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))]).astype(np.int32)
+    
     ba_thresh_32k = np.hstack([nb.gifti.read(os.path.join(pproc_path,'BA_thresh_resample/mapflow/_BA_thresh_resample%d/%sh.BA_exvivo.thresh.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))]).astype(np.int32)
+    for ba in [ba_32k, ba_thresh_32k]:
+        ba[32492:2*32492] = ba[32492:2*32492]+1000*(ba[32492:2*32492]>0)
     ds.fa['ba'] = ba_32k
-    ds.fa['ba_thres'] = ba_thresh_32k
+    ds.fa['ba_thresh'] = ba_thresh_32k
 
-def add_trend_chunk(ds, tr=default_tr):
+def add_trend_chunk(ds, tr=default_tr, min_time_per_chunk=32):
     ds.sa['trend_chunks'] = np.zeros(ds.nsamples)
-    min_trend_chunk_len = 32./tr
+    min_trend_chunk_len = min_time_per_chunk/float(tr)
     newchunk = np.zeros(ds.nsamples,dtype=np.bool)
-    diffmean = np.mean(np.abs(np.diff(ds.samples,1,0)),1)
+    diffmean = np.nanmean(np.abs(np.diff(ds.samples,1,0)),1)
     diffmean = np.hstack([0,diffmean])
     cutoff = diffmean.mean()+2*diffmean.std()
     ds.sa['diffmean'] = diffmean.copy()
@@ -236,10 +275,16 @@ def ds_tr2glm(ds, regressors_attr, group_regressors):
         max_ind.append(np.argmax(ds.sa[regressors_attr].value[:,reg_i].astype(np.float)))
 
         summed_regs = np.asarray([ds.sa[regressors_attr].value.astype(np.float)[:,np.asarray([(n.split('_')[0]==rt and n!=reg_name) for n in ds.sa[regressors_attr].value.dtype.names])].sum(1) for rt in group_regressors]).T
+#        summed_regs = ds.sa[regressors_attr].value.astype(np.float)[:,np.asarray([(n!=reg_name) for n in ds.sa[regressors_attr].value.dtype.names])].sum(1)
+
         mtx = np.hstack([ds.sa[regressors_attr].value[:,reg_i,np.newaxis].astype(np.float), summed_regs])
         glm = GeneralLinearModel(mtx)
-        glm.fit(ds.samples)
-        betas.append(np.squeeze(glm.get_beta(0)))
+        glm.fit(ds.samples, model='ols')
+        ctx_mtx = np.ones(mtx.shape[-1])
+        ctx_mtx[0] = 1
+        contrast = glm.contrast(ctx_mtx).stat()
+#        betas.append(np.squeeze(glm.get_beta(0)))
+        betas.append(contrast)
         del glm, mtx, summed_regs
         
     ds_glm = Dataset(np.asarray(betas), fa=ds.fa, a=ds.a)

@@ -3,7 +3,7 @@ import scipy.io
 
 def load_behavior(in_file, seq_info=None, seq_idx=None, remapping=None):
     
-    log = scipy.io.loadmat(in_file)    
+    log = scipy.io.loadmat(in_file)
     if 'seq_info' in log and len(log['seq_info'])>0 and seq_info is None:
         seq_info = [(str(seq['seq_desc'][0,0][0]), seq['seq'][0,0][0]) for seq in log['seq_info'][0]]
     if 'seq_matrx' in log and len(log['seq_matrx'])>0:
@@ -36,6 +36,7 @@ def load_behavior(in_file, seq_info=None, seq_idx=None, remapping=None):
             if evt_type=='START':
                 ttl_start = log_time
                 keys['time'] -= ttl_start # set key presses to scanner time
+                keys = keys[ie:]
             if evt_type=='STOP':
                 break
             if ttl_start is None:
