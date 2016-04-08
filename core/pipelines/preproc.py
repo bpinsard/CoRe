@@ -31,9 +31,10 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220]
 #subject_ids = subject_ids[:-1]
 #subject_ids = subject_ids[:1]
+subject_ids = [220]
 
 tr = 2.16
 echo_time = .03
@@ -158,6 +159,7 @@ def preproc_anat():
             niigz=True,
         ),
         name='compute_pvmaps')
+    n_compute_pvmaps.plugin_args = high_mem_queue_args
     
     
     ants_for_sbctx = generic_pipelines.fmri_surface.ants_for_subcortical()
@@ -552,7 +554,7 @@ def preproc_fmri():
             (w.get_node('all_func_dirs'),n_dataset_nofilt,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
             ])
-    noise_filt = False
+    noise_filt = True
     if noise_filt:
         w.connect([
             (n_convert_motion_par, n_noise_corr,[('motion','motion')]),

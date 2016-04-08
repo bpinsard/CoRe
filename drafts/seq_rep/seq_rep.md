@@ -34,8 +34,12 @@ date:
 
 ## Introduction
 
-Sequences of motor movements constructs the complex action repertoire of animal and human beings, acquired and evolving with their practice.
+- introduction on sequential motor skills
+		
+Sequences of motor movements constructs the complex action repertoire that animals and humans possesses, acquired and evolving with their practice.
 Motor sequence learning (MSL) is thus an adequate paradigm to study neural plasticity [@doyon_reorganization_2005] involved from initial fast learning to automation of a skill such as a temporally ordered succession of coordinated movements.
+
+- known motor sequence execution neocortical+subcortical circuits: striatum, cerebellum from GLM studies
 
 Sequential motor skills recruits an extended network of cerebral [@hardwick_quantitative_2013] and spinal regions [@vahdat_simultaneous_2015], which involvement evolves differently across learning stages [@dayan_neuroplasticity_2011].
 Many areas undergo non-linear changes in activity reflecting both increase implication of specialized circuits and decrease of non-specific support networks, thus lowering cognitive demand.
@@ -58,7 +62,11 @@ Increased activation of cerebellum dentate nuclei during learning further declin
 Model of cerebellar function hypothesize a major role in model-based prediction and sensory feedback processing [@tseng_sensory_2007], thus contributing to error-based learning refining motor production for optimal performance.
 This function, mainly studied in motor adaptation experiments, similarly optimize motor primitives and chunking patterns.
 
+- interest to identify representation of the sequences in more specific local networks emerging during learning or consolidation
+
 It is therefore of higher interest to study how subcortical structures including striatum, hippocampus and cerebellum progressively acquires sequence specific codes in the course of learning.
+
+- learning and consolidation related networks changes observed with GLM
 
 Physical practice engages a number of structures related to execution, however both preparation [@zang_functional_2003;@lee_subregions_1999], motor imagery[@hetu_neural_2013] and observation [@gazzola_observation_2009;@buccino_neural_2004] activates an overlapping network and induce behavioral performances and plastic changes.
 During preparation, representation of the whole sequence can be observed in contralateral premotor and supplementary motor cortex [@nambu_decoding_2015].
@@ -74,15 +82,22 @@ Active System Consolidation model hypothesize that large-scale motor network act
 While MSL aggregates cognitive abilities to improve performance of execution, the local or distributed network specifically encoding different features of the sequence is only partially known.
 Motor execution becomes less variable with automation of the skill, and subparts of the networks concurrently stabilize [@costa_differential_2004;@albouy_neural_2012;@peters_emergence_2014] as well as evoked BOLD fMRI activity patterns [@wiestler_skill_2013].
 
+- mvpa advantages over GLM: avoid unperfect control, identify discriminating regions ~ closer to neural code
+
 The goal of our study is to provide further insight in brain representation of motor sequence with Multivariate Pattern Analysis (MVPA).
 Indeed, changes of activity level during learning [@dayan_neuroplasticity_2011] can reflect multiple processes but fine-grained changes in activity patterns [@wiestler_skill_2013] has the potential to better explain the evolution of localized networks encoding the skill, also excerpting subtle contribution of areas not visible using GLM analysis.
 For example, while motor execution related network activity is strongly lateralized to the cortex contralateral to the effector limb, ipsilateral finger specific neural patterns are also observed [@diedrichsen_two_2013] that might enable bi-manual coordination.
+
+- questions:
+1. can we discriminate untrained sequences patterns during preparation and execution. (we "replicate" both (Wiestler and Diedrichsen 2013) and (Nambu et al. 2015), separating preparation and execution and exploring full brain)
+2. does fast-learning of new sequences induces changes in the representation's topography (contrast mvpa2-mvpa1)
+3. does consolidated sequences (IntGroup) show changes in representation's topography (contrast sequences AB with CD)
 
 Using these techniques we intend to map subnetwork showing sequence specific patterns of activity replicating and extending previous research [@wiestler_skill_2013;@kornysheva_human_2014] by scanning larger extent of human brain. This larger coverage will enable probing activity patterns in sub-cortical structures contributing to motor sequence learning including cerebellum, basal ganglia and lower temporal cortex.
 
 The dynamic of sequential movement planning to execution will also be decomposed to analyze instruction and execution phases separately, similarly to [@nambu_decoding_2015].
 
-The current study also intend to measure changes induced by learning and sleep-dependent consolidation by comparing MVPA classifying performance between sequences at different stages of these processes.
+The current study also intend to measure changes induced by learning and sleep-dependent consolidation by comparing MVPA classifying performance between sequences at differentn stages of these processes.
 
 ##Method
 

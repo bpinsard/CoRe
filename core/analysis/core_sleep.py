@@ -26,7 +26,7 @@ compression= 'gzip'
 
 subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195]
 #subject_ids = subject_ids[:-1]
-group_Int = [1,23,63,79,82,87,100,107,128,192]
+group_Int = [1,23,63,79,82,87,100,107,128,192,195]
 ulabels = ['CoReTSeq','CoReIntSeq','mvpa_CoReOtherSeq1','mvpa_CoReOtherSeq2','rest']
 #ulabels = ulabels[1:]
 
@@ -40,8 +40,6 @@ scan_groups = dict(
     mvpa1=['d3_mvpa1'],
     mvpa2=['d3_mvpa2'],
     mvpa_all=['d3_mvpa1','d3_mvpa2'])
-
-
 
 def searchlight_permutation(gnb,svqe,generator,splitter,npermutation=100):
     repeater = Repeater(count=npermutation)
@@ -58,6 +56,29 @@ def searchlight_permutation(gnb,svqe,generator,splitter,npermutation=100):
 
     return null_slght
     
+
+def searchlight_permutation_test(sid):
+
+    ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'glm_ds_%d.h5'%sid))
+    targets_num(ds_glm, ulabels)
+    mvpa_scan_names = [n for n in np.unique(ds_glm.sa.scan_name) if 'd3_mvpa' in n]
+    ds_glm_mvpa_exec = ds_glm[dict(scan_name=mvpa_scan_names,subtargets=['exec'],targets=seq_groups['tseq_intseq'])]
+    del ds_glm
+    poly_detrend(ds_glm_mvpa_exec, chunks_attr='scan_id', polyord=0)
+    
+    svqe = searchlight.SurfVoxQueryEngine(max_feat=128,vox_sl_radius=3.2,surf_sl_radius=20)
+    svqe_cached = searchlight.CachedQueryEngineAlt(svqe)
+
+    gnb = GNB(space='targets_num')
+    spltr = Splitter(attr='balanced_partitions', attr_values=[1,2])
+    slght_perm = searchlight_permutation(gnb,svqe_cached,mvpa_nodes.prtnr_loso_cv(),spltr,npermutation=100)
+
+    slmap_perms = slght_perm(ds_glm_mvpa_exec)
+    slmap_perms.sa['subject_id'] = [sid]*slmap_perms.nsamples
+    slmap_perms.sa['group'] = [sid in group_Int]*slmap_perms.nsamples
+    slmap_perms.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_exec_glm_loso_tseq_intseq_perms.h5'%sid),
+                     compression=compression)
+#    return slmap_perms
     
 
 def subject_searchlight_new(sid):
@@ -385,10 +406,9 @@ def confusion2acc(ds):
         a=ds.a)
 
 import scipy.stats
-import hcpview
 from matplotlib import pyplot
 def group_searchlight():
-    
+    import hcpview
     groupintmask = np.asarray([sid in group_Int for sid in subject_ids])
 
     groups = dict(
@@ -440,6 +460,7 @@ def group_searchlight():
 
 def group_contrast(contrast_name, sln1, sln2, group1, group2, tfunc=scipy.stats.ttest_ind,
                     t_range = [0,5], pvalue = 0.05, chance_level=.5):
+    import hcpview
     slmaps1 = Dataset.from_hdf5(os.path.join(proc_dir, 'searchlight_group','CoRe_group_%s_mean_acc.h5'%sln1))
     slmaps2 = slmaps1 if sln1 == sln2 else Dataset.from_hdf5(os.path.join(proc_dir, 'searchlight_group','CoRe_group_%s_mean_acc.h5'%sln2))
     t,p = tfunc(slmaps1[dict(groups=group1)].samples,slmaps2[dict(groups=group2)].samples)
@@ -485,4 +506,3 @@ def all_group_contrasts():
                    'mvpa_all_mvpa_new_seqs_exec_loso',
                    [True],[True],
                    scipy.stats.ttest_rel)
-    
