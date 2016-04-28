@@ -1,4 +1,22 @@
 
+@article{pereira_machine_2009,
+	title = {Machine learning classifiers and {fMRI}: {A} tutorial overview},
+	volume = {45},
+	issn = {1053-8119},
+	shorttitle = {Machine learning classifiers and {fMRI}},
+	url = {http://www.sciencedirect.com/science/article/pii/S1053811908012263},
+	doi = {16/j.neuroimage.2008.11.007},
+	abstract = {{\textless}p{\textgreater}{\textless}br/{\textgreater}Interpreting brain image experiments requires analysis of complex, multivariate data. In recent years, one analysis approach that has grown in popularity is the use of machine learning algorithms to train classifiers to decode stimuli, mental states, behaviours and other variables of interest from fMRI data and thereby show the data contain information about them. In this tutorial overview we review some of the key choices faced in using this approach as well as how to derive statistically significant results, illustrating each point from a case study. Furthermore, we show how, in addition to answering the question of [`]is there information about a variable of interest' (pattern discrimination), classifiers can be used to tackle other classes of question, namely [`]where is the information' (pattern localization) and [`]how is that information encoded' (pattern characterization).{\textless}/p{\textgreater}},
+	number = {1, Supplement 1},
+	urldate = {2011-07-27},
+	journal = {NeuroImage},
+	author = {Pereira, Francisco and Mitchell, Tom and Botvinick, Matthew},
+	month = mar,
+	year = {2009},
+	pages = {S199--S209},
+	file = {ScienceDirect Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/MG65GF8F/Pereira et al. - 2009 - Machine learning classifiers and fMRI A tutorial .pdf:application/pdf;ScienceDirect Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/QRBZ5AF6/S1053811908012263.html:text/html}
+}
+
 @article{kriegeskorte_information-based_2006,
 	title = {Information-based functional brain mapping},
 	volume = {103},
@@ -351,6 +369,35 @@
 	file = {ScienceDirect Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/HJWZQ55J/Stelzer et al. - 2013 - Statistical inference and multiple testing correct.pdf:application/pdf;ScienceDirect Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/KPFTCFWD/S1053811912009810.html:text/html}
 }
 
+@inproceedings{etzel_mvpa_2013,
+	title = {{MVPA} {Permutation} {Schemes}: {Permutation} {Testing} in the {Land} of {Cross}-{Validation}},
+	shorttitle = {{MVPA} {Permutation} {Schemes}},
+	doi = {10.1109/PRNI.2013.44},
+	abstract = {Permutation tests are widely used for significance testing in classification-based fMRI analyses, but the precise manner of relabeling varies, and is generally non-trivial for MVPA because of the complex data structure. Here, we describe two common means of carrying out permutation tests. In the first, which we call the "dataset-wise" scheme, the examples are relabeled prior to conducting the cross-validation, while in the second, the "fold-wise" scheme, each fold of the cross-validation is relabeled independently. While the dataset-wise scheme maintains more of the true dataset's structure, additional work is needed to determine which method should be preferred in practice, since the two methods often result in different null distributions (and so p-values).},
+	booktitle = {2013 {International} {Workshop} on {Pattern} {Recognition} in {Neuroimaging} ({PRNI})},
+	author = {Etzel, J. A. and Braver, T. S.},
+	month = jun,
+	year = {2013},
+	keywords = {Accuracy, biomedical MRI, classification, classification-based fMRI, cross-validation, dataset-wise scheme, fMRI, fold-wise scheme, image classification, Labeling, medical image processing, multivariate pattern analysis, MVPA, MVPA permutation testing, null distribution, Pattern analysis, Periodic structures, permutation, significance, Strips, Testing, Training},
+	pages = {140--143}
+}
+
+@article{allefeld_valid_2015,
+	title = {Valid population inference for information-based imaging: {Information} prevalence inference},
+	shorttitle = {Valid population inference for information-based imaging},
+	url = {http://arxiv.org/abs/1512.00810},
+	abstract = {In multivariate pattern analysis of neuroimaging data, 'second-level' inference is often performed by entering classification accuracies into a t-test vs chance level across subjects. We argue that while the random effects analysis implemented by the t-test does provide population inference if applied to activation differences, it fails to do so in the case of classification accuracy or other 'information-like' measures, because the true value of such measures can never be below chance level. This constraint changes the meaning of the population-level null hypothesis being tested, which becomes equivalent to the global null hypothesis that there is no effect in any subject in the population. Consequently, rejecting it only allows to infer that there are some subjects in which there is an information effect, but not that it generalizes. This statement is supported by theoretical arguments as well as simulations. We review possible alternative approaches to population inference for information-based imaging, converging on the idea that it should not target the mean, but the prevalence of the effect in the population. One method to do so, 'permutation-based information prevalence inference using the minimum statistic', is described in detail and applied to empirical data.},
+	urldate = {2016-04-22},
+	journal = {arXiv:1512.00810 [q-bio, stat]},
+	author = {Allefeld, Carsten and Görgen, Kai and Haynes, John-Dylan},
+	month = dec,
+	year = {2015},
+	note = {arXiv: 1512.00810},
+	keywords = {Quantitative Biology - Neurons and Cognition, Statistics - Applications},
+	annote = {Comment: submitted to NeuroImage on 2015-12-2},
+	file = {arXiv\:1512.00810 PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/H6K97Z5H/Allefeld et al. - 2015 - Valid population inference for information-based i.pdf:application/pdf;arXiv.org Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/C5VGH9S9/1512.html:text/html}
+}
+
 @article{beck_inventory_1961,
 	title = {An inventory for measuring depression},
 	volume = {4},
@@ -439,20 +486,6 @@ SIGNIFICANCE STATEMENT The ability to remember the order of life events depends 
 	pmid = {17507504},
 	pages = {54--62},
 	file = {Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/KRPN68UD/Tseng et al. - 2007 - Sensory Prediction Errors Drive Cerebellum-Depende.pdf:application/pdf;Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/6PA5GA8B/54.html:text/html}
-}
-
-@article{king_neural_2013,
-	title = {Neural correlates of the age-related changes in motor sequence learning and motor adaptation in older adults},
-	volume = {7},
-	url = {http://www.frontiersin.org/Human_Neuroscience/10.3389/fnhum.2013.00142/abstract},
-	doi = {10.3389/fnhum.2013.00142},
-	abstract = {As the world's population ages, a deeper understanding of the relationship between aging and motor learning will become increasingly relevant in basic research and applied settings. In this context, this review aims to address the effects of age on motor sequence learning (MSL) and motor adaptation (MA) with respect to behavioral, neurological, and neuroimaging findings. Previous behavioral research investigating the influence of aging on motor learning has consistently reported the following results. First, the initial acquisition of motor sequences is not altered, except under conditions of increased task complexity. Second, older adults demonstrate deficits in motor sequence memory consolidation. And, third, although older adults demonstrate deficits during the exposure phase of MA paradigms, the aftereffects following removal of the sensorimotor perturbation are similar to young adults, suggesting that the adaptive ability of older adults is relatively intact. This paper will review the potential neural underpinnings of these behavioral results, with a particular emphasis on the influence of age-related dysfunctions in the cortico-striatal system on motor learning.},
-	urldate = {2013-05-22},
-	journal = {Frontiers in Human Neuroscience},
-	author = {King, Bradley R. and Fogel, Stuart M. and Albouy, Geneviève and Doyon, Julien},
-	year = {2013},
-	keywords = {adaptation, Aging, cerebellum, consolidation, motor learning, neuroimaging, procedural memory, striatum},
-	pages = {142}
 }
 
 @article{born_system_2012,
@@ -1207,6 +1240,22 @@ Conclusions: These data indicate that cortical and striatal circuits exhibit rem
 	file = {Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/32UKM5H9/Wymbs and Grafton - 2015 - The Human Motor System Supports Sequence-Specific .pdf:application/pdf;Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/JG5JKCV7/4213.html:text/html}
 }
 
+@article{pan_sleep_2015,
+	title = {Sleep and motor learning: {Is} there room for consolidation?},
+	volume = {141},
+	copyright = {(c) 2015 APA, all rights reserved},
+	issn = {1939-1455(Electronic);0033-2909(Print)},
+	shorttitle = {Sleep and motor learning},
+	doi = {10.1037/bul0000009},
+	abstract = {It is widely believed that sleep is critical to the consolidation of learning and memory. In some skill domains, performance has been shown to improve by 20\% or more following sleep, suggesting that sleep enhances learning. However, recent work suggests that those performance gains may be driven by several factors that are unrelated to sleep consolidation, inviting a reconsideration of sleep’s theoretical role in the consolidation of procedural memories. Here we report the first comprehensive investigation of that possibility for the case of motor sequence learning. Quantitative meta-analyses involving 34 articles, 88 experimental groups and 1,296 subjects confirmed the empirical pattern of a large performance gain following sleep and a significantly smaller gain following wakefulness. However, the results also confirm strong moderating effects of 4 previously hypothesized variables: averaging in the calculation of prepost gain scores, build-up of reactive inhibition over training, time of testing, and training duration, along with 1 supplemental variable, elderly status. With those variables accounted for, there was no evidence that sleep enhances learning. Thus, the literature speaks against, rather than for, the enhancement hypothesis. Overall there was relatively better performance after sleep than after wakefulness, suggesting that sleep may stabilize memory. That effect, however, was not consistent across different experimental designs. We conclude that sleep does not enhance motor learning and that the role of sleep in the stabilization of memory cannot be conclusively determined based on the literature to date. We discuss challenges and opportunities for the field, make recommendations for improved experimental design, and suggest approaches to data analysis that eliminate confounds due to averaging over online learning.},
+	number = {4},
+	journal = {Psychological Bulletin},
+	author = {Pan, Steven C. and Rickard, Timothy C.},
+	year = {2015},
+	keywords = {*Motor Skills, *Perceptual Motor Learning, *Sleep, Learning},
+	pages = {812--834}
+}
+
 @article{rosenbaum_hierarchical_1983,
 	title = {Hierarchical control of rapid movement sequences},
 	volume = {9},
@@ -1348,6 +1397,23 @@ Motor chunking facilitates movement production by combining motor elements into 
 	pages = {100--105}
 }
 
+@article{tzvi_delineating_2014,
+	title = {Delineating the cortico-striatal-cerebellar network in implicit motor sequence learning},
+	volume = {94},
+	issn = {1053-8119},
+	url = {http://www.sciencedirect.com/science/article/pii/S1053811914001451},
+	doi = {10.1016/j.neuroimage.2014.03.004},
+	abstract = {Theoretical models and experimental evidence suggest that cortico-striatal-cerebellar networks play a crucial role in mediating motor sequence learning. However, how these different regions interact in order to mediate learning is less clear. In the present fMRI study, we used dynamic causal modeling to investigate effective connectivity within the cortico-striatal-cerebellar network while subjects performed a serial reaction time task. Using Bayesian model selection and family wise inference, we show that the cortico-cerebellar loop had higher model evidence than the cortico-striatal loop during motor learning. We observed significant negative modulatory effects on the connections from M1 to cerebellum bilaterally during learning. The results suggest that M1 causes the observed decrease in activity in the cerebellum as learning progresses. The current study stresses the significant role that the cerebellum plays in motor learning as previously suggested by fMRI studies in healthy subjects as well as behavioral studies in patients with cerebellar dysfunction. These results provide important insight into the neural mechanisms underlying motor learning.},
+	urldate = {2016-04-13},
+	journal = {NeuroImage},
+	author = {Tzvi, Elinor and Münte, Thomas F. and Krämer, Ulrike M.},
+	month = jul,
+	year = {2014},
+	keywords = {cerebellum, Dynamic causal modeling, Effective connectivity, fMRI, Motor sequence learning},
+	pages = {222--230},
+	file = {ScienceDirect Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/K5PTFGBJ/Tzvi et al. - 2014 - Delineating the cortico-striatal-cerebellar networ.pdf:application/pdf;ScienceDirect Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/733R6USE/S1053811914001451.html:text/html}
+}
+
 @article{boecker_role_2008,
 	title = {A role of the basal ganglia and midbrain nuclei for initiation of motor sequences},
 	volume = {39},
@@ -1399,6 +1465,26 @@ Motor chunking facilitates movement production by combining motor elements into 
 	pmid = {15556024},
 	keywords = {cerebellum, Humans, music, Nerve Net, Periodicity, Psychomotor Performance},
 	pages = {547--553}
+}
+
+@article{debas_brain_2010,
+	title = {Brain plasticity related to the consolidation of motor sequence learning and motor adaptation},
+	volume = {107},
+	issn = {0027-8424, 1091-6490},
+	url = {http://www.pnas.org/content/107/41/17839},
+	doi = {10.1073/pnas.1013176107},
+	abstract = {This study aimed to investigate, through functional MRI (fMRI), the neuronal substrates associated with the consolidation process of two motor skills: motor sequence learning (MSL) and motor adaptation (MA). Four groups of young healthy individuals were assigned to either (i) a night/sleep condition, in which they were scanned while practicing a finger sequence learning task or an eight-target adaptation pointing task in the evening (test) and were scanned again 12 h later in the morning (retest) or (ii) a day/awake condition, in which they were scanned on the MSL or the MA tasks in the morning and were rescanned 12 h later in the evening. As expected and consistent with the behavioral results, the functional data revealed increased test–retest changes of activity in the striatum for the night/sleep group compared with the day/awake group in the MSL task. By contrast, the results of the MA task did not show any difference in test–retest activity between the night/sleep and day/awake groups. When the two MA task groups were combined, however, increased test–retest activity was found in lobule VI of the cerebellar cortex. Together, these findings highlight the presence of both functional and structural dissociations reflecting the off-line consolidation processes of MSL and MA. They suggest that MSL consolidation is sleep dependent and reflected by a differential increase of neural activity within the corticostriatal system, whereas MA consolidation necessitates either a period of daytime or sleep and is associated with increased neuronal activity within the corticocerebellar system.},
+	language = {en},
+	number = {41},
+	urldate = {2016-01-19},
+	journal = {Proceedings of the National Academy of Sciences},
+	author = {Debas, Karen and Carrier, Julie and Orban, Pierre and Barakat, Marc and Lungu, Ovidiu and Vandewalle, Gilles and Tahar, Abdallah Hadj and Bellec, Pierre and Karni, Avi and Ungerleider, Leslie G. and Benali, Habib and Doyon, Julien},
+	month = oct,
+	year = {2010},
+	pmid = {20876115},
+	keywords = {Functional MRI, Memory consolidation, motor learning, sleep, Wakefulness},
+	pages = {17839--17844},
+	file = {Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/46RCFZX7/Debas et al. - 2010 - Brain plasticity related to the consolidation of m.pdf:application/pdf;Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/H33N2H8V/17839.html:text/html}
 }
 
 @article{walker_sleep_2003-1,
@@ -1680,6 +1766,156 @@ To locate activated foci during MI, MP, or both conditions, the time course of t
 	file = {Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/W8HEH6IX/Albouy et al. - 2013 - Interaction between Hippocampal and Striatal Syste.pdf:application/pdf;Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/KMXDM342/article.html:text/html}
 }
 
+@article{laventure_nrem2_2016,
+	title = {{NREM}2 and {Sleep} {Spindles} {Are} {Instrumental} to the {Consolidation} of {Motor} {Sequence} {Memories}},
+	volume = {14},
+	issn = {1545-7885},
+	url = {http://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.1002429},
+	doi = {10.1371/journal.pbio.1002429},
+	abstract = {Targeted reactivation of a motor sequence memory through re-exposure with a conditioned olfactory stimulus during the night reveals the specific role of stage 2 non-REM sleep and spindles in the consolidation process.},
+	number = {3},
+	urldate = {2016-04-20},
+	journal = {PLOS Biol},
+	author = {Laventure, Samuel and Fogel, Stuart and Lungu, Ovidiu and Albouy, Geneviève and Sévigny-Dupont, Pénélope and Vien, Catherine and Sayour, Chadi and Carrier, Julie and Benali, Habib and Doyon, Julien},
+	month = mar,
+	year = {2016},
+	keywords = {Analysis of Variance, Electroencephalography, Learning, Memory, Memory consolidation, Motor reactions, sleep, sleep disorders},
+	pages = {e1002429},
+	file = {Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/6BXGDSZE/Laventure et al. - 2016 - NREM2 and Sleep Spindles Are Instrumental to the C.pdf:application/pdf;Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/XSGF9A2H/article.html:text/html}
+}
+
+@article{debas_off-line_2014,
+	title = {Off-line consolidation of motor sequence learning results in greater integration within a cortico-striatal functional network},
+	volume = {99},
+	issn = {1053-8119},
+	url = {http://www.sciencedirect.com/science/article/pii/S1053811914003875},
+	doi = {10.1016/j.neuroimage.2014.05.022},
+	abstract = {The consolidation of motor sequence learning is known to depend on sleep. Work in our laboratory and others have shown that the striatum is associated with this off-line consolidation process. In this study, we aimed to quantify the sleep-dependent dynamic changes occurring at the network level using a measure of functional integration. We directly compared changes in connectivity before and after sleep or the simple passage of daytime. As predicted, the results revealed greater integration within the cortico-striatal network after sleep, but not an equivalent daytime period. Importantly, a similar pattern of results was also observed using a data-driven approach; the increase in integration being specific to a cortico-striatal network, but not to other known functional networks. These findings reveal, for the first time, a new signature of motor sequence consolidation: a greater between-regions interaction within the cortico-striatal system.},
+	urldate = {2016-04-21},
+	journal = {NeuroImage},
+	author = {Debas, Karen and Carrier, Julie and Barakat, Marc and Marrelec, Guillaume and Bellec, Pierre and Tahar, Abdallah Hadj and Karni, Avi and Ungerleider, Leslie G. and Benali, Habib and Doyon, Julien},
+	month = oct,
+	year = {2014},
+	keywords = {consolidation, fMRI, Functional connectivity, motor learning, Networks, sleep},
+	pages = {50--58},
+	file = {ScienceDirect Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/KNIJK6NX/Debas et al. - 2014 - Off-line consolidation of motor sequence learning .pdf:application/pdf;ScienceDirect Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/DAF3HADZ/S1053811914003875.html:text/html}
+}
+
+@article{barakat_fast_2011,
+	title = {Fast and slow spindle involvement in the consolidation of a new motor sequence},
+	volume = {217},
+	issn = {0166-4328},
+	url = {http://www.sciencedirect.com/science/article/pii/S0166432810006911},
+	doi = {10.1016/j.bbr.2010.10.019},
+	abstract = {This study aimed to determine the distinct contribution of slow (11–13 Hz) and fast (13–15 Hz) spindles in the consolidation process of a motor sequence learning task (MSL). Young subjects (n = 12) were trained on both a finger MSL task and a control (CTRL) condition, which were administered one week apart in a counterbalanced order. Subjects were asked to practice the MSL or CTRL task in the evening (approximately 9:00 p.m.) and their performance was retested on the same task 12 h later (approximately 9:00 a.m.). Polysomnographic (PSG) recordings were performed during the night following training on either task, and an automatic algorithm was used to detect fast and slow spindles and to quantify their characteristics (i.e., density, amplitude, and duration). Statistical analyses revealed higher fast (but not slow) spindle density after training on the MSL than after practice of the CTRL task. The increase in fast spindle density on the MSL task correlated positively with overnight performance gains on the MSL task and with difference in performance gain between the MSL and CTRL tasks. Together, these results suggest that fast sleep spindles help activate the cerebral network involved in overnight MSL consolidation, while slow spindles do not appear to play a role in this mnemonic process.},
+	number = {1},
+	urldate = {2016-04-21},
+	journal = {Behavioural Brain Research},
+	author = {Barakat, M. and Doyon, J. and Debas, K. and Vandewalle, G. and Morin, A. and Poirier, G. and Martin, N. and Lafortune, M. and Karni, A. and Ungerleider, L. G. and Benali, H. and Carrier, J.},
+	month = feb,
+	year = {2011},
+	keywords = {Fast sleep spindles, Memory consolidation, Motor sequence learning, sleep, Slow sleep spindles},
+	pages = {117--121},
+	file = {ScienceDirect Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/MUGKK9XF/Barakat et al. - 2011 - Fast and slow spindle involvement in the consolida.pdf:application/pdf;ScienceDirect Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/X4V7TBW2/S0166432810006911.html:text/html}
+}
+
+@article{morin_motor_2008,
+	title = {Motor {Sequence} {Learning} {Increases} {Sleep} {Spindles} and {Fast} {Frequencies} in {Post}-{Training} {Sleep}},
+	volume = {31},
+	issn = {0161-8105},
+	url = {http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2542961/},
+	abstract = {Study Objectives:
+To investigate polysomnographic (PSG) sleep and NREM sleep characteristics, including sleep spindles and spectral activity involved in offline consolidation of a motor sequence learning task.
+
+Design:
+Counterbalanced within-subject design.
+
+Setting:
+Three weekly visits to the sleep laboratory.
+
+Participants:
+Fourteen healthy participants aged between 20 and 30 years (8 women).
+
+Interventions:
+Motor sequence learning (MSL) task or motor control (CTRL) task before sleep.
+
+Measurements and Results:
+Subjects were trained on either the MSL or CTRL task in the evening and retested 12 hours later the following morning on the same task after a night of PSG sleep recording. Total number and duration of sleep spindles and spectral power between 0.5 and 24 Hz were quantified during NREM sleep. After performing the MSL task, subjects exhibited a large increase in number and duration of sleep spindles compared to after the CTRL task. Higher sigma (σ; 13 Hz) and beta (β; 18–20 Hz) spectral power during the post-training night's sleep were also observed after the MSL task.
+
+Conclusions:
+These results provide evidence that sleep spindles are involved in the offline consolidation of a new sequence of finger movements known to be sleep dependent. Moreover, they expand on prior findings by showing that changes in NREM sleep following motor learning are specific to consolidation (and learning), and not to nonspecific motor activity. Finally, these data demonstrate, for the first time, higher fast rhythms (β frequencies) during sleep after motor learning.
+
+Citation:
+Morin A; Doyon J; Dostie V; Barakat M; Tahar AH; Korman M; Benali H; Karni A; Ungerleider LG; Carrier J. Motor sequence learning increases sleep spindles and fast frequencies in post-training sleep. SLEEP 2008;31(8):1149-1156.},
+	number = {8},
+	urldate = {2016-04-21},
+	journal = {Sleep},
+	author = {Morin, Amélie and Doyon, Julien and Dostie, Valérie and Barakat, Marc and Tahar, Abdallah Hadj and Korman, Maria and Benali, Habib and Karni, Avi and Ungerleider, Leslie G. and Carrier, Julie},
+	month = aug,
+	year = {2008},
+	pmid = {18714787},
+	pmcid = {PMC2542961},
+	pages = {1149--1156},
+	file = {PubMed Central Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/VNM4ET6U/Morin et al. - 2008 - Motor Sequence Learning Increases Sleep Spindles a.pdf:application/pdf}
+}
+
+@article{miyachi_differential_2002,
+	title = {Differential activation of monkey striatal neurons in the early and late stages of procedural learning},
+	volume = {146},
+	issn = {0014-4819, 1432-1106},
+	url = {http://link.springer.com/article/10.1007/s00221-002-1213-7},
+	doi = {10.1007/s00221-002-1213-7},
+	abstract = {The basal ganglia is a key structure for procedural learning. To examine in what aspects of procedural learning the basal ganglia participate, we recorded from striatal neurons (phasically active neurons) in monkeys while the animals were performing a sequential button press task (the 2×5 task) and compared the neuronal activity between two conditions: (1) while learning new sequences and (2) while executing overlearned sequences. Among 147 neurons recorded in two monkeys, 45 neurons were activated preferentially for new sequences (new-preferring neurons), 34 for overlearned sequences (learned-preferring neurons), and 68 were activated non-selectively (non-selective neurons). New-preferring neurons were more abundant in the “association” region [association striatum (AS); caudate nucleus and rostral putamen anterior to the anterior commissure], while the learned-preferring neurons were more abundant in the “sensorimotor” region [sensorimotor striatum (SM); putamen posterior to the anterior commissure]. In addition to the learning dependency, the AS and SM neurons were activated in different task periods: many AS neurons were activated during the delay period, while the SM neurons were more activated with reaching and button presses. These data, together with the data from our previous blockade study, suggest that the “association” and “sensorimotor” regions of the basal ganglia contribute preferentially to the early and late stages of procedural learning, respectively.},
+	language = {en},
+	number = {1},
+	urldate = {2016-04-22},
+	journal = {Experimental Brain Research},
+	author = {Miyachi, Shigehiro and Hikosaka, Okihide and Lu, Xiaofeng},
+	month = jul,
+	year = {2002},
+	keywords = {Basal ganglia, Caudate, Extracellular recording, Neurology, Neurosciences, Putamen, Sequential movement},
+	pages = {122--126},
+	file = {Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/KEAT4EW3/Miyachi et al. - 2002 - Differential activation of monkey striatal neurons.pdf:application/pdf;Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/GFDKAZ8H/s00221-002-1213-7.html:text/html}
+}
+
+@article{graybiel_building_1995,
+	title = {Building action repertoires: memory and learning functions of the basal ganglia},
+	volume = {5},
+	issn = {0959-4388},
+	shorttitle = {Building action repertoires},
+	url = {http://www.sciencedirect.com/science/article/pii/0959438895801006},
+	doi = {10.1016/0959-4388(95)80100-6},
+	abstract = {Research on the basal ganglia suggests that they are critically involved in building up sequences of behavior into meaningful, goal-directed repertoires. Work on rodents, monkeys and humans suggests that the basal ganglia act as part of a distributed forebrain system that helps to encode such repertoires through behavioral learning, and that is engaged in the expression of such repertoires once they have been internalized. The basal ganglia also may be critical to the expression of innate behavioral routines. Experimental findings on reward-based learning suggest that neural activity in the striatum and substantia nigra, pars compacta changes during behavioral learning. New evidence also suggests extreme specificity in the neural connections interrelating the basal ganglia, cerebral cortex and thalamus. Adaptive control of behavior may centrally depend on these circuits and the evaluator—reinforcement circuits that modulate them.},
+	number = {6},
+	urldate = {2016-04-22},
+	journal = {Current Opinion in Neurobiology},
+	author = {Graybiel, Ann M},
+	month = dec,
+	year = {1995},
+	pages = {733--741},
+	file = {ScienceDirect Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/JVD9DJS8/Graybiel - 1995 - Building action repertoires memory and learning f.pdf:application/pdf;ScienceDirect Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/HQ6N6JW5/0959438895801006.html:text/html}
+}
+
+@article{orban_richness_2015,
+	title = {The {Richness} of {Task}-{Evoked} {Hemodynamic} {Responses} {Defines} a {Pseudohierarchy} of {Functionally} {Meaningful} {Brain} {Networks}},
+	volume = {25},
+	issn = {1047-3211, 1460-2199},
+	url = {http://cercor.oxfordjournals.org/content/25/9/2658},
+	doi = {10.1093/cercor/bhu064},
+	abstract = {Functional magnetic resonance imaging can measure distributed and subtle variations in brain responses associated with task performance. However, it is unclear whether the rich variety of responses observed across the brain is functionally meaningful and consistent across individuals. Here, we used a multivariate clustering approach that grouped brain regions into clusters based on the similarity of their task-evoked temporal responses at the individual level, and then established the spatial consistency of these individual clusters at the group level. We observed a stable pseudohierarchy of task-evoked networks in the context of a delayed sequential motor task, where the fractionation of networks was driven by a gradient of involvement in motor sequence preparation versus execution. In line with theories about higher-level cognitive functioning, this gradient evolved in a rostro-caudal manner in the frontal lobe. In addition, parcellations in the cerebellum and basal ganglia matched with known anatomical territories and fiber pathways with the cerebral cortex. These findings demonstrate that subtle variations in brain responses associated with task performance are systematic enough across subjects to define a pseudohierarchy of task-evoked networks. Such networks capture meaningful functional features of brain organization as shaped by a given cognitive context.},
+	language = {en},
+	number = {9},
+	urldate = {2016-04-22},
+	journal = {Cerebral Cortex},
+	author = {Orban, Pierre and Doyon, Julien and Petrides, Michael and Mennes, Maarten and Hoge, Richard and Bellec, Pierre},
+	month = sep,
+	year = {2015},
+	pmid = {24729172},
+	keywords = {clustering analysis, fMRI, Functional connectivity, motor preparation and execution, multiscale task-evoked networks},
+	pages = {2658--2669},
+	file = {Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/NZDEFCWV/Orban et al. - 2015 - The Richness of Task-Evoked Hemodynamic Responses .pdf:application/pdf;Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/6F9ZG9RV/2658.html:text/html}
+}
+
 @article{wiestler_skill_2013,
 	title = {Skill learning strengthens cortical representations of motor sequences},
 	volume = {2},
@@ -1793,6 +2029,60 @@ DOI: http://dx.doi.org/10.7554/eLife.03043.002},
 	file = {Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/Q763EBJ9/Nambu et al. - 2015 - Decoding sequential finger movements from preparat.pdf:application/pdf;Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/S89GXWR4/full.html:text/html}
 }
 
+@article{kadmonharpaz_scale-invariant_2014,
+	title = {Scale-{Invariant} {Movement} {Encoding} in the {Human} {Motor} {System}},
+	volume = {81},
+	issn = {0896-6273},
+	url = {http://www.sciencedirect.com/science/article/pii/S0896627313010313},
+	doi = {10.1016/j.neuron.2013.10.058},
+	abstract = {Summary
+How does the human motor system encode our incredibly diverse motor repertoire in an efficient manner? One possible way of encoding movements efficiently is to represent them according to their shape/trajectory without regard to their size, by using neural populations that are invariant across scale. To examine this hypothesis, we recorded movement kinematics and functional magnetic resonance imaging (fMRI) while subjects wrote three letters in two different scales. A classification algorithm was trained to identify each letter according to its associated voxel-by-voxel response pattern in each of several motor areas. Accurate decoding of letter identity was possible in primary motor cortex (M1) and anterior intraparietal sulcus (aIPS) regardless of the letter’s scale. These results reveal that large, distributed neural populations in human M1 and aIPS encode complex handwriting movements regardless of their particular dynamics and kinematics, in a scale-invariant manner.},
+	number = {2},
+	urldate = {2016-03-29},
+	journal = {Neuron},
+	author = {Kadmon Harpaz, Naama and Flash, Tamar and Dinstein, Ilan},
+	month = jan,
+	year = {2014},
+	pages = {452--462}
+}
+
+@article{krasovsky_differentiating_2014,
+	title = {Differentiating {Intended} {Sensory} {Outcome} from {Underlying} {Motor} {Actions} in the {Human} {Brain}},
+	volume = {34},
+	issn = {0270-6474, 1529-2401},
+	url = {http://www.jneurosci.org/content/34/46/15446},
+	doi = {10.1523/JNEUROSCI.5435-13.2014},
+	abstract = {To achieve a certain sensory outcome, multiple actions can be executed. For example, unlocking a door might require clockwise or counterclockwise key turns depending on regional norms. Using fMRI in healthy human subjects, we examined the neural networks that dissociate intended sensory outcome from underlying motor actions. Subjects controlled a figure on a computer screen by performing pen traces on an MR-compatible digital tablet. Our design allowed us to dissociate intended sensory outcome (moving the figure in a certain direction) from the underlying motor action (horizontal/vertical pen traces). Using multivoxel pattern analysis and a whole-brain searchlight strategy, we found that activity patterns in left (contralateral) motor and parietal cortex and also right (ipsilateral) motor cortex significantly discriminated direction of pen traces regardless of intended direction of figure movement. Conversely, activity patterns in right superior parietal lobule and premotor cortex, and also left frontopolar cortex, significantly discriminated intended direction of figure movement regardless of underlying direction of hand movement. Together, these results highlight the role of ipsilateral motor cortex in coding movement directions and point to a network of brain regions involved in high order representation of intended sensory outcome that is dissociated from specific motor plans.},
+	language = {en},
+	number = {46},
+	urldate = {2016-03-29},
+	journal = {The Journal of Neuroscience},
+	author = {Krasovsky, Ariel and Gilron, Roee and Yeshurun, Yehezkel and Mukamel, Roy},
+	month = nov,
+	year = {2014},
+	pmid = {25392511},
+	keywords = {fMRI, intention, motor system, visuomotor mapping},
+	pages = {15446--15454}
+}
+
+@article{fuentemilla_theta-coupled_2010,
+	title = {Theta-{Coupled} {Periodic} {Replay} in {Working} {Memory}},
+	volume = {20},
+	issn = {0960-9822},
+	url = {http://www.sciencedirect.com/science/article/pii/S0960982210001533},
+	doi = {10.1016/j.cub.2010.01.057},
+	abstract = {Summary
+Working memory allows information from transient events to persist as active neural representations [1] that can be used for goal-directed behaviors such as decision making and learning [2, 3]. Computational modeling based on neuronal firing patterns in animals suggests that one putative mechanism enabling working memory is periodic reactivation (henceforth termed “replay”) of the maintained information coordinated by neural oscillations at theta (4–8 Hz) and gamma (30–80 Hz) frequency [4–6]. To investigate this possibility, we trained multivariate pattern classifier decoding algorithms on oscillatory brain responses to images depicting natural scenes, recorded with high temporal resolution via magnetoencephalography. These classifiers were applied to brain activity recorded during the subsequent five second maintenance of the scenes. This decoding revealed replay during the entire maintenance interval. Replay was specific to whether an indoor or an outdoor scene was maintained and whether maintenance centered on configural associations of scene elements or just single scene elements. Replay was coordinated by the phase of theta and the amount of theta coordination was correlated with working memory performance. By confirming the predictions of a mechanistic model and linking these to behavioral performance in humans, these findings identify theta-coupled replay as a mechanism of working memory maintenance.},
+	number = {7},
+	urldate = {2016-03-31},
+	journal = {Current Biology},
+	author = {Fuentemilla, Lluís and Penny, Will D. and Cashdollar, Nathan and Bunzeck, Nico and Düzel, Emrah},
+	month = apr,
+	year = {2010},
+	pages = {606--612},
+	file = {ScienceDirect Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/B4ZUP4KZ/Fuentemilla et al. - 2010 - Theta-Coupled Periodic Replay in Working Memory.pdf:application/pdf;ScienceDirect Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/UNZ7XT4Z/S0960982210001533.html:text/html}
+}
+
 @article{cisek_neural_2005,
 	title = {Neural {Correlates} of {Reaching} {Decisions} in {Dorsal} {Premotor} {Cortex}: {Specification} of {Multiple} {Direction} {Choices} and {Final} {Selection} of {Action}},
 	volume = {45},
@@ -1828,4 +2118,18 @@ We show that while a primate chooses between two reaching actions, its motor sys
 	year = {2011},
 	pages = {310--318},
 	file = {ScienceDirect Full Text PDF:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/GF7ZRGRQ/Battaglia et al. - 2011 - The hippocampus hub of brain network communicatio.pdf:application/pdf;ScienceDirect Snapshot:/home/bpinsard/.mozilla/firefox/fhwe4uot.default/zotero/storage/WQPQF3A7/S1364661311000891.html:text/html}
+}
+
+@article{alexander_parallel_1986,
+	title = {Parallel organization of functionally segregated circuits linking basal ganglia and cortex},
+	volume = {9},
+	issn = {0147-006X},
+	doi = {10.1146/annurev.ne.09.030186.002041},
+	language = {eng},
+	journal = {Annual Review of Neuroscience},
+	author = {Alexander, G. E. and DeLong, M. R. and Strick, P. L.},
+	year = {1986},
+	pmid = {3085570},
+	keywords = {Animals, Basal ganglia, Behavior, Animal, Brain Mapping, Cats, Cerebral Cortex, Corpus Striatum, Haplorhini, Movement, Nervous System Diseases, Neural Pathways, Septum Pellucidum, Substantia nigra, thalamus, Visual Pathways},
+	pages = {357--381}
 }
