@@ -34,53 +34,58 @@ date:
 
 ## Introduction
 
-Sequences of motor movements constructs the complex action repertoire of animal and human beings, acquired and evolving with their practice.
-Motor sequence learning (MSL) is thus an adequate paradigm to study neural plasticity [@doyon_reorganization_2005] involved from initial fast learning to automation of a skill such as a temporally ordered succession of coordinated movements.
+- introduction on sequential motor skills and consolidation
+		
+Sequences of motor movements frame the complex evolving action repertoire that animals and humans possesses.
+Motor sequence learning (MSL), as acquisition of temporally ordered succession of coordinated movements, is thus an adequate paradigm to study neural plasticity [@doyon_reorganization_2005] occurring from initial fast learning to automation of a skill.
 
-Sequential motor skills recruits an extended network of cerebral [@hardwick_quantitative_2013] and spinal regions [@vahdat_simultaneous_2015], which involvement evolves differently across learning stages [@dayan_neuroplasticity_2011].
-Many areas undergo non-linear changes in activity reflecting both increase implication of specialized circuits and decrease of non-specific support networks, thus lowering cognitive demand.
+While training sessions induce critical plasticity changes [@ungerleider_imaging_2002;@doyon_reorganization_2005;], evidences of further offline reprocessing of acquired procedural memory have accumulated [@walker_sleep_2003;@press_time_2005;@hotermans_early_2006;@korman_daytime_2007;@morin_motor_2008;@debas_brain_2010;@barakat_sleep_2013;@cousins_cued_2014;@debas_off-line_2014;@gregory_resting_2014;@cellini_temporal_2015;@ramanathan_sleep-dependent_2015;@laventure_nrem2_2016] despite controversies regarding wake and sleep stages respective roles and interplay [@nettersheim_role_2015;@landry_effects_2016].
+Explicitly acquired sequential skills specifically benefit from off-line reprocessing [@doyon_contributions_2009], observed by either gains or maintenance of performance compared to a decay if no offline period is allowed to the subject [@nettersheim_role_2015]. Models of consolidation have hypothesize an underlying "rebalancing" between cerebral structures [@rasch_reactivation_2008;@born_system_2012;@albouy_hippocampus_2013;@dudai_consolidation_2015] encoding procedural memory.
 
-At the cerebral level, cortical networks are critical to sequence execution for which large-scale network is activated including primary sensorimotor and supplementary motor cortices as well as posterior parietal and dorso-lateral prefrontal cortices [@hardwick_quantitative_2013].
+- known motor sequence execution cortical+subcortical circuits: cerebellum, striatum from GLM studies
 
-Subcortical regions, hippocampus and striatum [@albouy_hippocampus_2013;@doyon_contributions_2009;@hikosaka_central_2002] were also identified as important players in the learning and consolidation of motor sequences.
-Hippocampus is a major structure for memory [@battaglia_hippocampus:_2011] that not only encodes episodic but also supports procedural memory acquisition in it's early stages [@albouy_both_2008] it's activity forecasting sequences long-term retention [@albouy_interaction_2013].
+Sequential motor skills recruits an extended network of cerebral [@hardwick_quantitative_2013], cerebellar and spinal regions [@vahdat_simultaneous_2015], which involvement evolves differently across learning stages [@dayan_neuroplasticity_2011].
 
-Among basal ganglia, striatal regions have been associated in selection, preparation and execution of free or instructed movement [@gerardin_distinct_2004].
-The striatum also participates in automation of sequences processing through reinforcement learning [@jin_basal_2014], but is not limited solely to procedural motor skills [@graybiel_striatum_2015].
-Automation is progressively attained through local optimization of transition achieved through chunking of sub-sequences [@rosenbaum_hierarchical_1983;@wymbs_differential_2012;@diedrichsen_motor_2015]. Variations are explored during learning process  then stabilizes [@albouy_neural_2012] and learning strategy influences the related implication of striatal structures [@lungu_striatal_2014].
-Progressive shift from associative and premotor to sensorimotor basal ganglia distributed network concurs automation of the skill [@lehericy_distinct_2005].
-
-In addition, subthalamic nuclei (STN), substantia nigra (SN) and pallidum were also reported to be activated differently in extended training over multiple days [@lehericy_distinct_2005;@boecker_role_2008].
+Primary sensorimotor and supplementary motor cortices as well as posterior parietal and dorso-lateral prefrontal cortices [@hardwick_quantitative_2013] are the major areas activated during motor sequence tasks.
+These cortical areas are parts of both cortico-cerebellar and cortico-striatal loop circuits which differently contributes to motor sequence learning [@doyon_reorganization_2005].
 
 Cerebellar cortex anatomical functions [@diedrichsen_cerebellar_2014] includes integration of sensory and motor ipsilateral finger representation in Lobule V [@wiestler_integration_2011], complex movements, including coordination, sequencing and spatial processing, recruiting bilateral lobule VI [@schlerf_evidence_2010] and Crus I in Lobule VII [@doyon_contributions_2009], being respectively connected to primary and premotor and supplementary cerebral cortices [@buckner_organization_2011].
 Lobule VIII also shows a somatotopicaly organized representation of the whole body, but weaker relatively to Lobule V/VI.
-Increased activation of cerebellum dentate nuclei during learning further decline parralleling increased implication of striatal-cortical network [@doyon_experience-dependent_2002].
-Model of cerebellar function hypothesize a major role in model-based prediction and sensory feedback processing [@tseng_sensory_2007], thus contributing to error-based learning refining motor production for optimal performance.
-This function, mainly studied in motor adaptation experiments, similarly optimize motor primitives and chunking patterns.
+It's function includes model-based prediction and sensory feedback processing [@tseng_sensory_2007], thus contributing to error-based learning which supports early MSL observable through an activation shift from cerebellar cortex to dentate nuclei [@doyon_experience-dependent_2002] with lowered activation in extended practice, paralleling striatal-cortical network increased recruitment.
 
-It is therefore of higher interest to study how subcortical structures including striatum, hippocampus and cerebellum progressively acquires sequence specific codes in the course of learning.
+Striatum have been associated in selection, preparation and execution of free or instructed movement [@hikosaka_central_2002;@gerardin_distinct_2004;@doyon_contributions_2009].
+The striatum also participates in automation of sequences processing through reinforcement learning [@jin_basal_2014], but is not limited solely to procedural motor skills [@graybiel_striatum_2015].
+Automation is progressively attained through local optimization of transition [@rosenbaum_hierarchical_1983;@wymbs_differential_2012;@diedrichsen_motor_2015], which variations explored during learning process then stabilizes [@albouy_neural_2012] amd is influenced by learning strategy [@lungu_striatal_2014].
+Progressive shift from associative and premotor to sensorimotor basal ganglia distributed network concurring to automation of the skill has been observed [@lehericy_distinct_2005].
 
-Physical practice engages a number of structures related to execution, however both preparation [@zang_functional_2003;@lee_subregions_1999], motor imagery[@hetu_neural_2013] and observation [@gazzola_observation_2009;@buccino_neural_2004] activates an overlapping network and induce behavioral performances and plastic changes.
-During preparation, representation of the whole sequence can be observed in contralateral premotor and supplementary motor cortex [@nambu_decoding_2015].
-These patterns likely reflect the loading of a motor plan [@cisek_neural_2005] independent of forthcoming execution's implementation.
-Multiple representation of the sequence could however co-exists encoding sequence in a hierarchical structures [@diedrichsen_motor_2015] from abstract to motor allocentric and egocentric spaces [@wiestler_effector-independent_2014] with both segregated and intertwined spatial and temporal codes [@kornysheva_human_2014].
+Hippocampus is a major structure for memory [@battaglia_hippocampus:_2011] that not only encodes episodic but also supports procedural memory acquisition in it's early stages [@albouy_both_2008] it's activity and interaction with striatum forecasting sequences long-term retention [@albouy_interaction_2013].
+... more here on Hc
 
-While training sessions induce critical changes in the networks, evidences of offline reprocessing of acquired procedural memory have accumulated [@walker_sleep_2003;@hotermans_early_2006;@barakat_sleep_2013;@cellini_temporal_2015;@cousins_cued_2014;@gregory_resting_2014;@korman_daytime_2007;@ramanathan_sleep-dependent_2015] despite controversies regarding wake and sleep stages respective roles [@nettersheim_role_2015;@landry_effects_2016].
+- interest to identify representation of the sequences in more specific local networks emerging during learning or consolidation
+- mvpa advantages over GLM: avoid unperfect control, identify discriminating regions ~ closer to neural code
 
-Sleep-supported consolidation restructures the trace of memory, alleviating the implication of hippocampus, while orthogonal increasing striatum's activation enables the skill to become automated [@albouy_hippocampus_2013], requiring lower cognitive load, and long-term retention of behavior.
-Congruent with models of consolidation [@born_system_2012], hippocampus acts as a buffer for recent memories, delaying selective transfer to cortical or specialized structures during offline period, enabling balanced plasticity versus stability, necessary for system homeostasis.
-Active System Consolidation model hypothesize that large-scale motor network activity undergo "transfer", or rather rebalancing, across days after learning, supported by offline processing notably during sleep [@born_system_2012].
+The abovementioned structures undergo non-linear changes of activation level along the course of learning [@dayan_neuroplasticity_2011], notably after consolidation [@debas_brain_2010;@debas_off-line_2014], reflecting both increased implication of specialized circuits and decreased non-specific support networks activation.
 
-While MSL aggregates cognitive abilities to improve performance of execution, the local or distributed network specifically encoding different features of the sequence is only partially known.
-Motor execution becomes less variable with automation of the skill, and subparts of the networks concurrently stabilize [@costa_differential_2004;@albouy_neural_2012;@peters_emergence_2014] as well as evoked BOLD fMRI activity patterns [@wiestler_skill_2013].
+While these large-scale activation changes excerpt the dynamic of network recruitment, if does not provide evidence for acquisition of motor sequence specific representation which can be however identified with Multivariate Pattern Analysis (MVPA). These set of techniques, recently adapted to neuroimaging, evaluates how local patterns of activity are able to discriminate between different items [@pereira_machine_2009].
 
-The goal of our study is to provide further insight in brain representation of motor sequence with Multivariate Pattern Analysis (MVPA).
-Indeed, changes of activity level during learning [@dayan_neuroplasticity_2011] can reflect multiple processes but fine-grained changes in activity patterns [@wiestler_skill_2013] has the potential to better explain the evolution of localized networks encoding the skill, also excerpting subtle contribution of areas not visible using GLM analysis.
-For example, while motor execution related network activity is strongly lateralized to the cortex contralateral to the effector limb, ipsilateral finger specific neural patterns are also observed [@diedrichsen_two_2013] that might enable bi-manual coordination.
+In a recent study focusing on upper cerebral cortex [@wiestler_skill_2013], classifier performance was evaluated on sets of sequences either trained or not, showing an potential increase of the representation strength with training.
+As preparation activates a network overlapping execution related one [@lee_subregions_1999;@zang_functional_2003;@orban_richness_2015], another study [@nambu_decoding_2015] specifically analyzed patterns of activity after instruction and prior to execution of extensively trained sequences.
+Patterns related to motor planning without contamination of motor execution or sensory feedback related activity were detected in a restricted network spanning only contralateral dorsal premotor and supplementary motor area, maybe related to use of dominant hand instead, and not in the basal ganglia.
+Using high-resolution imaging and averaging multiple trials, another study [@bednark_basal_2015] found activation differences in striatum between rhythmic and ordering motor sequences executions, whereas MVPA failed to find discriminating patterns. Both the fact that sequences were not trained and the use of cross-conditions classification of averaged trials could explains these negative findings.
 
-Using these techniques we intend to map subnetwork showing sequence specific patterns of activity replicating and extending previous research [@wiestler_skill_2013;@kornysheva_human_2014] by scanning larger extent of human brain. This larger coverage will enable probing activity patterns in sub-cortical structures contributing to motor sequence learning including cerebellum, basal ganglia and lower temporal cortex.
+Despite numerous neuroimaging [@hikosaka_central_2002;@albouy_both_2008;@orban_multifaceted_2010;@penhune_parallel_2012;@albouy_neural_2012] and neuronal level studies [@alexander_parallel_1986;@graybiel_building_1995;@miyachi_differential_2002] corroborating the implication of basal ganglia, notably the striatum, in acquisition of motor sequence, no evidence of representation have yet been found in human using fMRI MVPA, which could be partly accounted by the limited measurable signal level in these regions.
 
-The dynamic of sequential movement planning to execution will also be decomposed to analyze instruction and execution phases separately, similarly to [@nambu_decoding_2015].
+The goal of our study is to provide further insight in brain representation of motor sequence, combining MVPA and robust statistics to assess decoding significance [@stelzer_statistical_2013;@allefeld_valid_2015].
+
+- questions:
+1. can we discriminate untrained sequences patterns during preparation and execution. (we "replicate" both (Wiestler and Diedrichsen 2013) and (Nambu et al. 2015), separating preparation and execution and exploring full brain)
+2. does fast-learning of new sequences induces changes in the representation's topography (contrast mvpa2-mvpa1)
+3. does consolidated sequences (IntGroup) show changes in representation's topography (contrast sequences AB with CD)
+
+Using these techniques we intend to map subnetwork showing sequence specific patterns of activity replicating and extending previous research [@wiestler_skill_2013;@kornysheva_human_2014] by scanning larger extent of human brain.
+This larger coverage will enable probing activity patterns in sub-cortical structures contributing to MSL: cerebellum, basal ganglia including striatum and lower temporal cortex including hippocampus.
+
+The dynamic of sequential movement planning to execution will also be decomposed to analyze instruction and execution phases separately as was previously observed [@nambu_decoding_2015].
 
 The current study also intend to measure changes induced by learning and sleep-dependent consolidation by comparing MVPA classifying performance between sequences at different stages of these processes.
 
@@ -97,7 +102,7 @@ Subjects with BMI greater than 27, smokers, extreme chronotype, night-workers, h
 Sleep quality was assessed by Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989], and daytime sleepiness  (Epworth Sleepiness Scale [@johns_new_1991]) had to be lower or equal to 9.
 
 Subject were also instructed to abstain from caffeine, alcohol and nicotine, and have regular sleep schedule (bed-time 10PM-1AM, wake-time 7AM-10AM) and avoid taking daytime nap for the duration of the study.
-Instruction compliance was controlled by non-dominant hand wrist actigraphy (Actiwatch 2, Philips Respironics, Andover, MA, USA) for the week preceding the experiment.
+Instruction compliance was controlled by non-dominant hand wrist actigraphy (Actiwatch 2, Philips Respironics, Andover, MA, USA) for the week preceding and the duration of the experiment.
 
 ### Behavioral experiment
 
@@ -193,15 +198,17 @@ Gaussian Naive Bayes (GNB) linear classifier, optimized for Searchlight, was per
 Also GNB-based Searchlight have been argued to allow smoothness of generated maps [@raizada_smoothness_2013] despite unsmoothed data, allowing more-reliable cross-subject study and thus higher cross-scans generalization.
 
 Searchlight was configured to select for each grayordinate the 64 closest neighboring coordinates, using surface distance for cortical grayordinates, as the subset of features.
-Searchlight size has been shown to inflate the extent of significant clusters in searchlight analysis [@etzel_searchlight_2013; @viswanathan_geometric_2012] which motivated the small neighborhood for our analysis.
+Searchlight size has been shown to inflate the extent of significant clusters in searchlight analysis [@viswanathan_geometric_2012;@etzel_searchlight_2013] which motivated the small neighborhood for our analysis.
 
 For both cross-validation schema, confusion matrix was computed for each block of practice providing a more complete representation of classification performance and biases from which can be derived specific or global accuracy percentage.
 
 #### Searchlight Group Analysis
 
-TODO: change to permutation testing [@stelzer_statistical_2013]
+In order to obtain the cluster with significant prediction at the group level, we used non-parametric permutation based statistical approach as described in [@stelzer_statistical_2013]. Searchlight accuracy map were computed 100 times after permuting the labels, giving a null distribution of classification accuracy per spatial coordinate.
 
-Group searchlight maps were computed using mass-univariate one-sample one-tailed T-test to find regions which consistently departed from chance level across subjects.
+
+
+TODO: change to permutation testing [@stelzer_statistical_2013]
 
 A contrast of all subject's untrained sequences accuracy maps between the second and first "MVPA task" scans using conjunction with significant second scan accuracy using minimum t-value was computed to only extract representation enhancement during early learning reaching above chance level.
 

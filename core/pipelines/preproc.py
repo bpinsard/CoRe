@@ -31,9 +31,10 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223]
 #subject_ids = subject_ids[:-1]
 #subject_ids = subject_ids[:1]
+subject_ids = [223]
 
 tr = 2.16
 echo_time = .03
@@ -44,6 +45,11 @@ file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTi
 meta_tag_force=['PatientID','PatientName','SeriesDate','SeriesTime']
 
 high_mem_queue_args = {'qsub_args': '-q high_mem', 'overwrite': True}
+running_args = dict(
+    plugin='SGE', 
+    plugin_args={'template':os.path.join(os.path.dirname(__file__),'tpl.sh'),
+                 'qsub_args': '-q default'}
+)
 
 def dicom_dirs():
 
@@ -93,7 +99,7 @@ def dicom_dirs():
     func_dirs.iterables = [('day',[1,2,3])] # [('day',[1,2,3])]
 
     n_all_func_dirs = pe.JoinNode(
-        utility.IdentityInterface(fields=['fmri_all','fmri_fieldmap_all','fmri_pa_all']),
+        utility.IdentityInterface(fields=['fmri_all','fmri_fieldmap_all','fmri_pa_all','aa_scout_all']),
         joinsource = 'func_dirs',
         run_without_submitting=True,        
         name='all_func_dirs')
@@ -104,7 +110,8 @@ def dicom_dirs():
     w.connect([
             (func_dirs, n_all_func_dirs,[('fmri_all',)*2,
                                          ('fmri_fieldmap','fmri_fieldmap_all',),
-                                         ('fmri_pa','fmri_pa_all')]),
+                                         ('fmri_pa','fmri_pa_all'),
+                                         ('aa_scout','aa_scout_all')]),
             ])        
     return w
 
@@ -127,6 +134,13 @@ def preproc_anat():
             voxel_order='LAS'),
         name='convert_t1_12ch_2mm_iso_dicom')
     
+
+    n_n4_12ch_2mm = pe.Node(
+        ants.segmentation.N4BiasFieldCorrection(
+            dimension=3),
+        name='n4_12ch_2mm')
+    
+
     t1_pipeline = generic_pipelines.t1_new.t1_freesurfer_pipeline()
     t1_pipeline.inputs.freesurfer.args='-use-gpu'
     t1_pipeline.inputs.freesurfer.openmp = 8
@@ -158,6 +172,7 @@ def preproc_anat():
             niigz=True,
         ),
         name='compute_pvmaps')
+    n_compute_pvmaps.plugin_args = high_mem_queue_args
     
     
     ants_for_sbctx = generic_pipelines.fmri_surface.ants_for_subcortical()
@@ -179,15 +194,16 @@ def preproc_anat():
     
     w.base_dir = proc_dir
     w.connect([
-            (w.get_node('anat_dirs'),n_t1_convert,[('t1_mprage','dicom_files')]),
-            (w.get_node('anat_dirs'),n_t1_12ch_2mm_iso_convert,[('t1_mprage_12ch_2mm_iso','dicom_files')]),
-            (w.get_node('subjects_info'),t1_pipeline,[(('subject_id',wrap(str),[]),'inputspec.subject_id')]),
-            (n_t1_convert,t1_pipeline,[('nifti_file','inputspec.t1_file')]),
-            (t1_pipeline, wm_surface, [(('freesurfer.aparc_aseg',utility.select,0),'inputspec.aseg')]),
-            (t1_pipeline,n_fs32k_surf,[('freesurfer.subjects_dir','fs_source.base_directory'),]),
-            (w.get_node('subjects_info'),n_fs32k_surf,[('subject_id','fs_source.subject')]),
-            (t1_pipeline, ants_for_sbctx,[('crop_t1.out_file','inputspec.t1')]),
-       ])
+        (w.get_node('anat_dirs'),n_t1_convert,[('t1_mprage','dicom_files')]),
+        (w.get_node('anat_dirs'),n_t1_12ch_2mm_iso_convert,[('t1_mprage_12ch_2mm_iso','dicom_files')]),
+#        (n_t1_12ch_2mm_iso_convert, n_n4_12ch_2mm,[('nifti_file','input_image')]),
+        (w.get_node('subjects_info'),t1_pipeline,[(('subject_id',wrap(str),[]),'inputspec.subject_id')]),
+        (n_t1_convert,t1_pipeline,[('nifti_file','inputspec.t1_file')]),
+        (t1_pipeline, wm_surface, [(('freesurfer.aparc_aseg',utility.select,0),'inputspec.aseg')]),
+        (t1_pipeline,n_fs32k_surf,[('freesurfer.subjects_dir','fs_source.base_directory'),]),
+        (w.get_node('subjects_info'),n_fs32k_surf,[('subject_id','fs_source.subject')]),
+        (t1_pipeline, ants_for_sbctx,[('crop_t1.out_file','inputspec.t1')]),
+    ])
 
     return w
 
@@ -753,3 +769,56 @@ def repeat_fieldmaps(fmri_scans, fieldmaps, fieldmap_regs):
                 fmap_regs_out.append(fieldmap_regs[fmap_idx])
                 i += 1
     return fmaps_out, fmap_regs_out
+
+
+def preproc_eeg():
+    
+    w = dicom_dirs()
+    templates = dict(
+        subjects_dir=[['t1_preproc/_subject_id','subject_id','freesurfer']],
+        norm = [['t1_preproc/_subject_id','subject_id','freesurfer/*[!e]/mri/norm.mgz']],
+        white_matter_surface = [['extract_wm_surface/_subject_id','subject_id','surf_decimate/rlh.aparc+aseg_wm.nii_smoothed_mask.all']],
+        cropped_mask = [['t1_preproc/_subject_id','subject_id','autobox_mask_fs/*.nii.gz']],
+        cropped_t1 = [['t1_preproc/_subject_id','subject_id','crop_t1/*.nii.gz']],
+        pve_maps = [
+            ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.cortex.nii.gz'],
+            ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.subcort_gm.nii.gz'],
+            ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.wm.nii.gz'],
+            ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.csf.nii.gz']],
+        lowres_surf_lh = [
+            ['surface_32k/_subject_id','subject_id',
+             'white_resample_surf/mapflow/_white_resample_surf0/lh.white_converted.32k.gii'],
+            ['surface_32k/_subject_id','subject_id',
+             'pial_resample_surf/mapflow/_pial_resample_surf0/lh.pial_converted.32k.gii']],
+        lowres_surf_rh = [
+            ['surface_32k/_subject_id','subject_id',
+             'white_resample_surf/mapflow/_white_resample_surf1/rh.white_converted.32k.gii'],
+            ['surface_32k/_subject_id','subject_id',
+             'pial_resample_surf/mapflow/_pial_resample_surf1/rh.pial_converted.32k.gii']],
+        lowres_rois_coords = [['ants_for_subcortical/_subject_id','subject_id','coords_itk2nii/atlas_coords_nii.csv']],
+        )
+    n_anat_grabber = pe.Node(
+        nio.DataGrabber(
+            infields=['subject_id'],
+            outfields=templates.keys(),
+            sort_filelist=True,
+            raise_on_empty=False,
+            base_directory = proc_dir),
+        run_without_submitting=True,
+        name='anat_grabber')
+    n_anat_grabber.inputs.template = 'core_sleep/%s_%s/%s'
+    n_anat_grabber.inputs.template_args = templates
+
+
+    n_convert_scout_dicom = pe.MapNode(
+        np_dcmstack.DCMStackAnatomical(
+            meta_force_add=meta_tag_force,
+            out_file_format = 'scout'+file_pattern),
+        iterfield=['dicom_files'],
+        name='convert_scout_dicoms')
+    
+    w.connect(
+        (w.get_node('all_func_dirs'), n_convert_scout_dicom,[(('aa_scout_all',flatten_remove_none),'dicom_files')]),
+    )
+
+    return w

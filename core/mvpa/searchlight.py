@@ -378,3 +378,41 @@ class RSASurfVoxSearchlight(SurfVoxSearchlight):
         return slmap_pdist
 
 """
+
+from scipy.sparse.csgraph import connected_components
+from scipy.sparse.coo import coo_matrix
+
+def cluster_labels(thr_map, neigh):
+    keep_edges = np.logical_and(thr_map[neigh.col], thr_map[neigh.row])
+    neigh_thr = coo_matrix(
+        (neigh.data[keep_edges],
+         (neigh.row[keep_edges],
+          neigh.col[keep_edges])),
+        neigh.shape)
+    return connected_components(neigh_thr, directed=False)[1]
+
+def cluster_counts(thr_map, neigh):
+    cl_lbls = cluster_labels(thr_map, neigh)
+    labels, counts = np.unique(cl_lbls*thr_map, return_counts=True)
+    if labels[0] == 0:
+        counts = counts[1:]
+    return counts
+
+def clusterize(thr_map, neigh):
+    cl_lbls = cluster_labels(thr_map, neigh)
+    labels, counts = np.unique(cl_lbls*thr_map, return_counts=True)
+    if labels[0] == 0:
+        labels, counts = labels[1:], counts[1:]
+    # reassign labels
+    new_labels = np.zeros(cl_lbls.shape, dtype=np.uint)
+    for li,l in enumerate(labels):
+        new_labels[cl_lbls==l] = li+1
+    return new_labels
+    
+
+"""
+conn = scipy.sparse.coo_matrix((
+    np.ones(3*tris.shape[0]),
+    (np.hstack([tris[:,:2].T.ravel(),tris[:,1]]),
+     np.hstack([tris[:,1:].T.ravel(),tris[:,2]]))))
+"""
