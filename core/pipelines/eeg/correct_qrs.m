@@ -3,6 +3,7 @@ if nargin<3
     plot_hb = 0;
 end
 min_noutliers = inf;
+std_heartrate = inf;
 winsize = 20;
 for qrs_id=1:length(qrs_events)
     qrs_event = qrs_events{qrs_id};
@@ -12,7 +13,10 @@ for qrs_id=1:length(qrs_events)
             qrs_idx(end+1) = E;
            end
     end
-    qrs_times = [EEG.event(qrs_idx).latency];
+    if length(qrs_idx)<1
+        continue
+    end
+    qrs_times = [0 EEG.event(qrs_idx).latency EEG.pnts];
     heartrate = diff(qrs_times);
     %remove duplicate qrs
     qrs_times = qrs_times(heartrate>0);
@@ -57,6 +61,8 @@ for qrs_id=1:length(qrs_events)
     EEG.urevent(to_remove)=[];
     
     outliers(qrs_id).num_Outliers = sum(missing_qrs) + sum(false_pos);
+    outliers(qrs_id).std_heartrate = std(heartrate);
+    outliers(qrs_id).mean_heartrate = mean(heartrate);
     if min_noutliers > outliers(qrs_id).num_Outliers
         ecg_peaks = qrs_times;
         min_noutliers = outliers(qrs_id).num_Outliers;

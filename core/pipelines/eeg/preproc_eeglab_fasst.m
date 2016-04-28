@@ -23,6 +23,7 @@ if length(Trigs)==0
   Trigs=find_trig(EEG,'Stimulus');
   fprintf('%d Stimulus Triggers found\n',length(Trigs));
 end
+fprintf('trigger intervals in  [%d %d] \n',min(diff(Trigs)),max(diff(Trigs)));
 
 % add dummy triggers
 %Trigs = [linspace(-3,-1,3)*(EEG.srate*tr)+Trigs(1) Trigs Trigs(end)+EEG.srate*tr];
@@ -38,9 +39,13 @@ qrs_events = {};
 for i=1:EEG_qrs.nbchan
     chanlab = EEG_qrs.chanlocs(i).labels;
     if length(strfind(chanlab,'ECG')) > 0
-        qrs_event = ['qrs_' chanlab];
-        qrs_events{end+1} = qrs_event;
-        EEG_qrs=pop_fmrib_qrsdetect(EEG_qrs,i,qrs_event,'no');
+        try;
+           qrs_event = ['qrs_' chanlab];
+           EEG_qrs = pop_fmrib_qrsdetect(EEG_qrs,i,qrs_event,'no');
+           qrs_events{end+1} = qrs_event;
+        catch e;
+           disp(getReport(e));
+        end;
     end;
 end;
 
