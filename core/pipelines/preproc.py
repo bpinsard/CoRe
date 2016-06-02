@@ -31,10 +31,10 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268]
 #subject_ids = subject_ids[:-1]
 #subject_ids = subject_ids[:1]
-subject_ids = [223]
+subject_ids = [268]
 
 tr = 2.16
 echo_time = .03
