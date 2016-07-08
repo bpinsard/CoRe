@@ -20,15 +20,15 @@ import joblib
 preproc_dir = '/home/bpinsard/data/analysis/core_sleep'
 dataset_subdir = 'dataset_noisecorr'
 #dataset_subdir = 'dataset_smoothed'
-dataset_subdir = 'dataset_nofilt'
+dataset_subdir = 'dataset_mvpa_wd_interp'
 
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
-output_subdir = 'searchlight_new'
+output_subdir = 'searchlight_wd_interp'
 compression= 'gzip'
 
-subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195, 220, 223]
+subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195, 220, 223, 235, 268, 267,237]
 #subject_ids = subject_ids[:-1]
-group_Int = [1,23,63,79,82,87,100,107,128,192,195,220,223]
+group_Int = [1,23,63,79,82,87,100,107,128,192,195,220,223,235,268,267,237]
 ulabels = ['CoReTSeq','CoReIntSeq','mvpa_CoReOtherSeq1','mvpa_CoReOtherSeq2','rest']
 #ulabels = ulabels[1:]
 
@@ -46,7 +46,7 @@ scan_groups = dict(
 
 
 def searchlight_permutation(gnb,svqe,generator,splitter,npermutation=100):
-    permutator = AttributePermutator(gnb.space, count=npermutation, limit=['scan_id'])
+    permutator = AttributePermutator(gnb.space, count=npermutation, limit='scan_name')
 
     slght = searchlight.GNBSearchlightOpt(
         gnb,
@@ -60,11 +60,14 @@ def searchlight_permutation(gnb,svqe,generator,splitter,npermutation=100):
     return null_slght
 
 
-def do_single_slmap_perm(gnb, svqe, spltr, map_name, subset, prtnr, ds, npermutation=100):
+def do_single_slmap_perm(gnb, svqe, spltr, map_name, subset, prtnr, ds, npermutation=100, overwrite=True):
     import gc
     print map_name
     print subset
 
+    out_filename = os.path.join(proc_dir, output_subdir, map_name+'.h5')
+    if os.path.exists(out_filename) and not overwrite:
+        return
     ds_subset = ds[subset]
     del ds
     gc.collect()
@@ -74,25 +77,26 @@ def do_single_slmap_perm(gnb, svqe, spltr, map_name, subset, prtnr, ds, npermuta
     slmap_perms.sa['subject_id'] = [ds_subset.sa.subject_id[0]]*slmap_perms.nsamples
     slmap_perms.sa['group'] = [ds_subset.sa.group[0]]*slmap_perms.nsamples
     slmap_perms.save(
-        os.path.join(proc_dir, output_subdir, map_name+'.h5'),
+        out_filename,
         compression=compression)
     del slmap_perms, ds_subset, slght_perm
     gc.collect()
     
-def searchlight_permutation_test(sid):
+def subject_searchlight_permutation(sid):
 
     prtnrs = dict(
         loso = mvpa_nodes.prtnr_loso_cv(),
-#        loco = mvpa_nodes.prtnr_loco_cv()
+        loco = mvpa_nodes.prtnr_loco_cv()
     )
 
-#    block_phases = ['exec']
-    block_phases = ['exec','instr']
+    block_phases = ['instr']
+#    block_phases = ['exec','instr']
 
     ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'glm_ds_%d.h5'%sid))
     mvpa_scan_names = [n for n in np.unique(ds_glm.sa.scan_name) if 'd3_mvpa' in n]
     ds_glm_mvpa = ds_glm[dict(scan_name=mvpa_scan_names)]
     del ds_glm
+    
     targets_num(ds_glm_mvpa, ulabels)
     ds_glm_mvpa.sa['subject_id'] = [sid]*ds_glm_mvpa.nsamples
     ds_glm_mvpa.sa['group'] = [sid in group_Int]*ds_glm_mvpa.nsamples
@@ -106,13 +110,12 @@ def searchlight_permutation_test(sid):
     ds_mvpa.sa['group'] = [sid in group_Int]*ds_mvpa.nsamples
     del ds_all
 
+    targets_num(ds_mvpa, ulabels)
     poly_detrend(ds_mvpa, chunks_attr='scan_id', polyord=0)
     zscore(ds_mvpa, chunks_attr='scan_id', param_est=('targets','rest'))
 
-    targets_num(ds_mvpa, ulabels)
-
     sample_types = {
-        '': ds_mvpa,
+#        '': ds_mvpa,
         '_glm':ds_glm_mvpa
     }
 
@@ -137,22 +140,25 @@ def searchlight_permutation_test(sid):
     svqe_cached.train(ds_glm_mvpa)
     for i in xrange(ds_glm_mvpa.nfeatures): svqe_cached.query_byid(i)
     print 'compute permutations'
-    do_single_slmap_perm(gnb, svqe_cached, spltr, *slmaps[0])
-    joblib.Parallel(n_jobs=8)([joblib.delayed(do_single_slmap_perm)(gnb, svqe_cached, spltr, *args) for args in slmaps])
+    #do_single_slmap_perm(gnb, svqe_cached, spltr, *slmaps[0])
+    joblib.Parallel(n_jobs=8)(
+        [joblib.delayed(do_single_slmap_perm)(gnb, svqe_cached, spltr, *args, overwrite=False) for args in slmaps])
 
     del ds_mvpa, ds_glm_mvpa
     
 
 def group_cluster_threshold_analysis():
-#    debug.active += ["GCTHR"]
+    #debug.active += ["GCTHR"]
     prtnrs = dict(
         loso = mvpa_nodes.prtnr_loso_cv(),
         loco = mvpa_nodes.prtnr_loco_cv()
     )
     sample_types = ['_glm']
+    #sample_types = ['']
 
-    ftp = 1e-3
+    #ftp = 1e-3
     #ftp = 5e-4
+    ftp = 2e-4
 
     block_phases = ['exec','instr']
     #block_phases = ['instr']
@@ -162,8 +168,8 @@ def group_cluster_threshold_analysis():
         n_bootstrap=10000,
         feature_thresh_prob=ftp,
         chunk_attr='subject_id',
-        n_blocks=24,
-        n_proc=8,
+        n_blocks=32,
+        n_proc=8, 
         neighborhood=conn_all)
 
     slmaps = ['%s_%s_%s%s_%s'%(scan_group_name, sg_name, bp, sample_type, prtnr_name)
@@ -183,10 +189,19 @@ def group_cluster_threshold_analysis():
         slmaps_perm = [
             Dataset.from_hdf5(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_perms.h5'%(sid, slmap_name)))
             for sid in subject_ids]
-        slmaps = Dataset.from_hdf5(os.path.join(proc_dir, 'searchlight_group', 'CoRe_group_%s_mean_acc.h5'%slmap_name))
-        slmaps.sa['group'] = [sid in group_Int for sid in slmaps.sa.subject_id]
         all_slmap_perm = vstack(slmaps_perm)
         del slmaps_perm
+
+        slmaps_conf = [
+            Dataset.from_hdf5(os.path.join(proc_dir,'searchlight_new/CoRe_%03d_%s_confusion.h5'%(sid,slmap_name))) \
+            for sid in subject_ids]
+        slmaps_acc = [confusion2acc(sl) for sl in slmaps_conf]
+        del slmaps_conf
+        slmaps = Dataset(np.asarray([sl.samples.mean(0) for sl in slmaps_acc]).astype(np.float32))
+        slmaps.sa['subject_id'] = subject_ids
+        del slmaps_acc
+        #slmaps = Dataset.from_hdf5(os.path.join(proc_dir, 'searchlight_group', 'CoRe_group_%s_mean_acc.h5'%slmap_name))
+        slmaps.sa['group'] = [sid in group_Int for sid in slmaps.sa.subject_id]
         for group_name, group in groups.items():
             print slmap_name, group_name
             try:
@@ -198,10 +213,62 @@ def group_cluster_threshold_analysis():
                     compression=compression)
                 print gct_res.a.clusterstats[:1]
                 del gct_res
-            except:
+            except Exception as e:
                 print '%s for group %s failed' % (slmap_name,group_name)
-                
-        del all_slmap_perm
+                print e
+        del all_slmap_perm, slmaps
+
+
+def all_searchlight_2fold():
+    new_sids = [sid for sid in subject_ids if len(glob.glob(os.path.join(proc_dir,output_subdir,'CoRe_%03d_*confusion.h5'%sid)))==0]
+    print new_sids
+    joblib.Parallel(n_jobs=2)([joblib.delayed(subject_searchlight_2fold)(sid) for sid in new_sids])
+
+def subject_searchlight_2fold(sid):
+    print('______________   CoRe %03d   ___________'%sid)
+    ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'glm_ds_%d.h5'%sid))
+    ds = ds_glm 
+    #ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'ds_%d.h5'%sid))
+    #targets_num(ds, ulabels)
+    targets_num(ds_glm, ulabels)
+
+    mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
+    if len(mvpa_scan_names)==0:
+        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
+    svqe = searchlight.SurfVoxQueryEngine(max_feat=128,vox_sl_radius=3.2,surf_sl_radius=20)
+    svqe_cached = searchlight.CachedQueryEngineAlt(svqe)
+
+    gnb = GNB(space='targets_num')
+    spltr = Splitter(attr='partitions', attr_values=[1,2])
+    
+    slght_2fold = searchlight.GNBSearchlightOpt(
+        gnb,
+        mvpa_nodes.prtnr_2fold_sift,
+        svqe_cached,
+        splitter=spltr,
+        errorfx=None,
+        pass_attr=ds.sa.keys()+ds.fa.keys()+ds.a.keys()+[('ca.roi_sizes','fa')],
+        enable_ca=['roi_sizes'],
+        postproc=mvpa_nodes.scan_blocks_confmat)
+
+    mvpa_slght_subset = dict([('%s_%s_%s'%(scan_group, sg_name, bp),dict(targets=seqs,subtargets=[bp],scan_name=scans)) \
+                              for sg_name,seqs in seq_groups.items() \
+                              for bp in block_phases for scan_group,scans in scan_groups.items()])
+    
+    for subset_name, subset in mvpa_slght_subset.items():
+        #ds_subset = ds[subset]
+        #slmap_2fold = slght_2fold(ds_subset)
+        #slmap_2fold.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_2fold_confusion.h5'%(sid,subset_name)),
+        #                 compression=compression)
+        #del slmap_2fold
+
+        ds_glm_subset = ds_glm[subset]
+        slmap_glm_2fold = slght_2fold(ds_glm_subset)
+        slmap_glm_2fold.save(os.path.join(proc_dir, output_subdir,
+                                         'CoRe_%03d_%s_glm_2fold_confusion.h5'%(sid,subset_name)),
+                            compression=compression)
+        del slmap_glm_2fold
+
 
 def subject_searchlight_new(sid):
     print('______________   CoRe %03d   ___________'%sid)
@@ -283,7 +350,7 @@ def subject_searchlight_new(sid):
         ds_subset = ds_mvpa[subset]
         ds_subset.fa = ds_mvpa.fa # cheat CachedQueryEngine hashing
 
-        do_slmap_loco = False
+        do_slmap_loco = True
         if do_slmap_loco:
             slmap_loco = slght_loco(ds_subset)
             slmap_loco.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_loco_confusion.h5'%(sid,subset_name)),
@@ -423,7 +490,7 @@ from mvpa2.clfs.stats import MCNullDist
 def create_cv_nullhyp(clf, partitioner,splitter, nrepeat=200):
     repeater = Repeater(count=nrepeat)
     permutator = AttributePermutator('targets',
-                                     limit={'partitions': 1},
+                                     limit={'balanced_partitions': 1},
                                      count=1)
     null_cv = CrossValidation(
         clf,
@@ -575,7 +642,7 @@ def group_searchlight():
         mean_acc.sa['groups'] = groupintmask
 
         mean_acc.save(
-            os.path.join(proc_dir,'searchlight_group','CoRe_group_%s_mean_acc.h5'%sln),
+            os.path.join(proc_dir,'searchlight_group','CoRe_%s_mean_acc.h5'%sln),
             compression=compression)
 
         """

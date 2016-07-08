@@ -110,7 +110,11 @@ def data_for_lme_mri():
             subj_data.append(rt_all)
         subj_data = np.hstack(subj_data)
         subj_data['correct_seq_idx'] = np.asarray([
-            np.cumsum((np.ediff1d(subj_data['correct_seq_idx']*(subj_data['sequence']==seq),to_begin=[0])>0))*(subj_data['sequence']==seq) for seq in np.unique(subj_data['sequence'])]).sum(0)+1
+            np.cumsum(
+                (np.ediff1d(subj_data['correct_seq_idx']*(subj_data['sequence']==seq),
+                            to_begin=[0])!=0))* (subj_data['sequence']==seq) 
+            for seq in np.unique(subj_data['sequence'])]).sum(0)+1
         all_data.append(subj_data)
     return np.hstack(all_data)
 
+# 

@@ -1,5 +1,6 @@
 import numpy as np
 from mvpa2.generators.partition import HalfPartitioner, NFoldPartitioner, CustomPartitioner
+from mvpa2.generators.base import Sifter
 from mvpa2.generators.resampling import NonContiguous
 from mvpa2.base.node import ChainNode, Node
 from mvpa2.generators.resampling import Balancer
@@ -47,6 +48,15 @@ def prtnr_loso_cv(nrepeat=1):
             include_offlimit=True),
         BalancedPartitions()],
         space='balanced_partitions')
+
+prtnr_2fold_sift = ChainNode(
+    [ NFoldPartitioner(
+        attr='chunks',
+        cvtype=.5,
+        count=128,
+        selection_strategy='random'),
+      Sifter([('partitions', 2),('targets_num', dict(balanced=True)) ]) ],
+    space='partitions')
 
 training_scans = ['d3_mvpa1','d3_mvpa2']
 

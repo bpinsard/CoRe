@@ -27,14 +27,14 @@ project_dir = '/home/bpinsard/data/projects/CoRe'
 
 SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('CoReIntSeq', np.asarray([1,3,2,4,1])),
-            ('mvpa_CoReOtherSeq', np.asarray([1,3,4,2,1])),
-            ('mvpa_CoreEasySeq', np.asarray([4,3,2,1,4]))]
+            ('mvpa_CoReOtherSeq1', np.asarray([1,2,4,3,1])),
+            ('mvpa_CoReOtherSeq2', np.asarray([4,1,3,2,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268,267,237]
 #subject_ids = subject_ids[:-1]
 #subject_ids = subject_ids[:1]
-subject_ids = [268]
+#subject_ids = [267]
 
 tr = 2.16
 echo_time = .03
@@ -539,8 +539,16 @@ def preproc_fmri():
         name='dataset_noisecorr')
     n_dataset_noisecorr.plugin_args = high_mem_queue_args
 
-    n_dataset_nofilt = n_dataset_noisecorr.clone('dataset_nofilt')
-    n_dataset_nofilt.inputs.mean_divide=True
+    n_dataset_nofilt = pe.Node(
+        CreateDataset(tr=tr,
+                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
+                      design=os.path.join(project_dir,'data/mvpa_only.csv'),
+                      #design=os.path.join(project_dir,'data/design.csv'),
+                      median_divide=True,
+                      wavelet_despike=True,
+                      interp_bad_tss=True),
+        name='dataset_mvpa_wd_interp')
+    n_dataset_noisecorr.plugin_args = high_mem_queue_args
     
     n_dataset_smoothed = n_dataset_noisecorr.clone('dataset_smoothed')
 
@@ -622,7 +630,12 @@ class CreateDatasetInputSpec(BaseInterfaceInputSpec):
     design = File(exists=True,mandatory=True)
     behavioral_data_path=Directory()
     mean_divide = traits.Bool(False, usedefault=True)
+    median_divide = traits.Bool(False, usedefault=True)
+    detrend = traits.Bool(False, usedefault=True)
     
+    wavelet_despike = traits.Bool(False, usedefault=True)
+    
+    interp_bad_tss = traits.Bool(False, usedefault=True)
     tr = traits.Float(mandatory=True)
 
 class CreateDatasetOutputSpec(TraitedSpec):
@@ -694,7 +707,11 @@ class CreateDataset(BaseInterface):
                 ds = mvpa_dataset.ds_from_ts(ts_file, behavior_file,
                                              seq_info=seq_info, seq_idx=seq_idx,
                                              tr=self.inputs.tr,
-                                             mean_divide=self.inputs.mean_divide)
+                                             mean_divide=self.inputs.mean_divide,
+                                             median_divide=self.inputs.median_divide,
+                                             wav_despike=self.inputs.wavelet_despike)
+                if self.inputs.interp_bad_tss:
+                    ds = mvpa_dataset.interp_bad_ts(ds)
                 ds.sa['scan_name'] = [ses_name]*ds.nsamples
                 ds.sa['scan_id'] = [scan_id]*ds.nsamples
                 dss.append(ds)
@@ -740,9 +757,6 @@ class CreateDataset(BaseInterface):
         outputs['glm_stim_dataset'] = os.path.abspath('./glm_stim_ds_%s.h5'%self.inputs.subject_id)
         return outputs
 
-
-#def preproc_eeg():
-    
 
 
 def repeat_fieldmaps(fmri_scans, fieldmaps, fieldmap_regs):

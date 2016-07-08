@@ -6,8 +6,46 @@ from ..behavior import load_behavior
 from nipy.modalities.fmri.experimental_paradigm import BlockParadigm, EventRelatedParadigm
 from nipy.modalities.fmri.glm import GeneralLinearModel
 from nipy.modalities.fmri.design_matrix import dmtx_light
-
+from nipy.modalities.fmri.hemodynamic_models import _sample_condition
 default_tr = 2.16
+
+from mvpa2.misc.fx import single_gamma_hrf
+from scipy.interpolate import interp1d
+
+def events_to_mtx(evts, frametimes, hrf_func=single_gamma_hrf, tr=default_tr, oversampling=64, time_length=32):
+    dt = tr / oversampling
+    hkernel = hrf_func(np.linspace(0, time_length, time_length/dt))
+    hkernel /= hkernel.sum()
+    regressors = []
+    hr_regs = []
+    for evt in evts:
+        hr_regressor, hr_frametimes = _sample_condition(([evt[2]],evt[3],[1]), frametimes, oversampling=oversampling)
+        conv_reg = np.convolve(hr_regressor, hkernel)[:hr_regressor.size]
+
+        f = interp1d(hr_frametimes, conv_reg)
+        regressors.append(f(frametimes))
+    regs = np.asarray(regressors+[np.ones_like(regressors[0])], 
+                      dtype=[(evt[0],np.float) for evt in evts]+[('constant', np.float)]).T
+    return regs
+
+def blocks_to_regressors(ds, blocks, hrf_rest_thresh=.5, tr=default_tr):
+    # remove blocks out of scan range
+    scan_len_sec = ds.nsamples*tr
+    blocks = [b for b in blocks if b[3]<scan_len_sec and b[5]<scan_len_sec]
+    
+    instrs = [['instr_%03d_%s'%(bi,b[0]),b[0],b[2],b[3]-b[2],b[5]-b[2]] for bi,b in enumerate(blocks) if b[2]>0]
+    gos = [['go_%03d_%s'%(bi,b[0]),b[0],b[3],b[4]-b[3]] for bi,b in enumerate(blocks)]
+    execs = [['exec_%03d_%s'%(bi,b[0]),b[0],b[5],b[6]-b[5]] for bi,b in enumerate(blocks)]
+
+    frametimes = ds.sa.time - ds.sa.time[0]
+
+    ds.sa['regressors_execs'] = events_to_mtx(instrs+execs, frametimes)
+    ds.sa['regressors_stims'] = events_to_mtx(instrs+gos, frametimes)
+    
+    instrs_evt = [['instr_%03d_%s'%(bi,b[0]),b[0],b[2],0,b[5]-b[2]] for bi,b in enumerate(blocks) if b[2]>0]
+    execs_evt = [['exec_%03d_%s'%(bi,b[0]),b[0],b[5],0] for bi,b in enumerate(blocks)]
+    ds.sa['regressors_execs_evt'] = events_to_mtx(instrs_evt+execs_evt, frametimes)
+    
 
 def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.5, tr=default_tr):
     
@@ -126,12 +164,17 @@ seq_idx = [0]*7
 from mvpa2.datasets import Dataset
 from mvpa2.mappers.detrend import poly_detrend
 import hrf_estimation as he
+from ..pipelines.wavelet_despike import wavelet_despike_loop
 
 def ds_from_ts(ts_file, design_file=None,
                remapping=None, seq_info=None, seq_idx=None,
                default_target='rest', tr=default_tr, data_path='FMRI/DATA',
-               detrend=True,
+               detrend=False,
                mean_divide=False,
+               median_divide=False,
+               add_shift=None,
+               wav_despike=False,
+               threshold_wav_low=4,
                sg_filt=False,
                sg_filt_win=210):
 
@@ -142,10 +185,15 @@ def ds_from_ts(ts_file, design_file=None,
     
     add_trend_chunk(ds, min_time_per_chunk=16)
 
+    ds_mean = np.nanmean(ds.samples,0)
+    ds_median = np.nanmedian(ds.samples,0)
+
     if mean_divide: # convert to pct change per trend chunk
         #for tc in np.unique(ds.sa.trend_chunks):
         #    ds.samples[ds.sa.trend_chunks==tc] /= np.nanmean(ds.samples[ds.sa.trend_chunks==tc],0)
-        ds.samples /= np.nanmean(ds.samples,0) # convert to pct change
+        ds.samples /= ds_mean # convert to pct change
+    elif median_divide:
+        ds.samples /= ds_median
 
     if np.count_nonzero(np.isnan(ds.samples)) > 0:
         print 'Warning : dataset contains NaN, replaced with 0 and created nans_mask'
@@ -153,10 +201,16 @@ def ds_from_ts(ts_file, design_file=None,
         ds.fa['nans'] = nans_mask
         ds.samples[:,nans_mask] = 0
 
+    if add_shift!=None:
+        ds.samples += add_shift
+
     if detrend:
         polyord = (np.bincount(ds.sa.trend_chunks)>(64./tr)).astype(np.int)
         print polyord
         poly_detrend(ds, chunks_attr='trend_chunks', polyord=polyord)
+
+    if wav_despike:
+        ds.samples[:] = wavelet_despike_loop(ds.samples, threshold_wavelet_low=threshold_wav_low)
 
     if sg_filt:
         sg_win = int(sg_filt_win/float(tr))
@@ -265,7 +319,7 @@ def add_trend_chunk(ds, tr=default_tr, min_time_per_chunk=32):
                 
     ds.sa.trend_chunks = np.cumsum(np.ediff1d(ds.sa.trend_chunks,to_begin=[0])!=0)
 
-def ds_tr2glm(ds, regressors_attr, group_regressors):
+def ds_tr2glm(ds, regressors_attr, group_regressors, model='ols'):
     
     betas = []
     max_ind = []
@@ -279,11 +333,11 @@ def ds_tr2glm(ds, regressors_attr, group_regressors):
 
         mtx = np.hstack([ds.sa[regressors_attr].value[:,reg_i,np.newaxis].astype(np.float), summed_regs])
         glm = GeneralLinearModel(mtx)
-        glm.fit(ds.samples, model='ols')
+        glm.fit(ds.samples, model=model)
         ctx_mtx = np.ones(mtx.shape[-1])
         ctx_mtx[0] = 1
         contrast = glm.contrast(ctx_mtx).stat()
-#        betas.append(np.squeeze(glm.get_beta(0)))
+        #betas.append(np.squeeze(glm.get_beta(0)))
         betas.append(contrast)
         del glm, mtx, summed_regs
         
@@ -297,4 +351,43 @@ def ds_tr2glm(ds, regressors_attr, group_regressors):
     return ds_glm
 
 
+def ds_to_conn(ds):
+    import scipy.sparse
+    max_vertex = ds.a.triangles.max()+1
+    vox_idx = ds.fa.voxel_indices[max_vertex:]
+    row,col = [],[]
+    for i,vox in enumerate(vox_idx):
+        #sbset = (vox_idx == vox).sum(1) > 1
+        #sbset[sbset] = np.all(np.abs(vox_idx[sbset]-vox)<=1, 1)
+        sbset = np.abs(vox_idx-vox).sum(1) == 1
+        col.append(np.where(sbset)[0]+max_vertex)
+        row.append(np.ones(col[-1].size)*(i+max_vertex))
+    row = np.hstack(row)
+    col = np.hstack(col)
+    
 
+    conn = scipy.sparse.coo_matrix((
+        np.ones(3*ds.a.triangles.shape[0]+row.size),
+        (np.hstack([ds.a.triangles[:,:2].T.ravel(),ds.a.triangles[:,1],row]),
+         np.hstack([ds.a.triangles[:,1:].T.ravel(),ds.a.triangles[:,2],col]))))
+    conn = conn+conn.T
+    conn.data.fill(1)
+    return conn
+
+def interp_bad_ts(ds, smooth_size=4, ratio=1.5):
+    import surfer.utils as surfutils
+    conn = ds_to_conn(ds)
+    smooth_mat = surfutils.smoothing_matrix(np.arange(ds.nfeatures), conn, smooth_size)
+    conn_ext = (smooth_mat>0).astype(np.float)
+    
+    tss_std = ds.samples.std(0)
+    tss_std_locmean = np.asarray((conn_ext.dot(tss_std)+tss_std)/(np.squeeze(conn_ext.sum(1))+1))
+
+    good_vox = np.squeeze(tss_std < ratio*tss_std_locmean)
+    ds.fa['good_voxels'] = good_vox
+
+    smooth_mat = surfutils.smoothing_matrix(np.where(good_vox)[0], conn, smooth_size)
+    tss_sm = smooth_mat.dot(ds.samples[:,good_vox].T).T
+    tss_sm[:,good_vox]= ds.samples[:,good_vox]
+    return Dataset(tss_sm, a=ds.a, sa=ds.sa, fa=ds.fa)
+    
