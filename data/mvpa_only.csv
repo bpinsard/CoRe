@@ -1,0 +1,3 @@
+#day,scan_name,MRI,sequence,behavior_data,idx,option
+3,d3_mvpa1,BOLD_MVPA1,,mvpa-1-D-Three,-1,
+3,d3_mvpa2,BOLD_MVPA2,,mvpa-2-D-Three,-1,

@@ -18,17 +18,17 @@ import joblib
 
 
 preproc_dir = '/home/bpinsard/data/analysis/core_sleep'
-dataset_subdir = 'dataset_noisecorr'
+#dataset_subdir = 'dataset_noisecorr'
 #dataset_subdir = 'dataset_smoothed'
-dataset_subdir = 'dataset_mvpa_wd_interp'
+dataset_subdir = 'dataset_mvpa_wd_interp_hrf_gam1'
 
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
-output_subdir = 'searchlight_wd_interp'
+output_subdir = 'searchlight_wd_interp_hrf_gam1'
 compression= 'gzip'
 
-subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195, 220, 223, 235, 268, 267,237]
+subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195, 220, 223, 235, 268, 267,237,296]
 #subject_ids = subject_ids[:-1]
-group_Int = [1,23,63,79,82,87,100,107,128,192,195,220,223,235,268,267,237]
+group_Int = [1,23,63,79,82,87,100,107,128,192,195,220,223,235,268,267,237,296]
 ulabels = ['CoReTSeq','CoReIntSeq','mvpa_CoReOtherSeq1','mvpa_CoReOtherSeq2','rest']
 #ulabels = ulabels[1:]
 
@@ -37,11 +37,14 @@ seq_groups = {
     'tseq_intseq' : ulabels[:2],
 #    'all_seqs': ulabels[:4]
 }
-block_phases = ['instr','exec']
+block_phases = [
+    #'instr',
+    'exec'
+]
 scan_groups = dict(
     mvpa1=['d3_mvpa1'],
     mvpa2=['d3_mvpa2'],
-    mvpa_all=['d3_mvpa1','d3_mvpa2']
+#    mvpa_all=['d3_mvpa1','d3_mvpa2']
 )
 
 
@@ -222,7 +225,7 @@ def group_cluster_threshold_analysis():
 def all_searchlight_2fold():
     new_sids = [sid for sid in subject_ids if len(glob.glob(os.path.join(proc_dir,output_subdir,'CoRe_%03d_*confusion.h5'%sid)))==0]
     print new_sids
-    joblib.Parallel(n_jobs=2)([joblib.delayed(subject_searchlight_2fold)(sid) for sid in new_sids])
+    joblib.Parallel(n_jobs=3)([joblib.delayed(subject_searchlight_2fold)(sid) for sid in new_sids])
 
 def subject_searchlight_2fold(sid):
     print('______________   CoRe %03d   ___________'%sid)
@@ -235,26 +238,43 @@ def subject_searchlight_2fold(sid):
     mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
     if len(mvpa_scan_names)==0:
         mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
-    svqe = searchlight.SurfVoxQueryEngine(max_feat=128,vox_sl_radius=3.2,surf_sl_radius=20)
+    svqe = searchlight.SurfVoxQueryEngine(max_feat=64, vox_sl_radius=2.3, surf_sl_radius=20)
     svqe_cached = searchlight.CachedQueryEngineAlt(svqe)
 
     gnb = GNB(space='targets_num')
+#   gnb = GNB(space='sequence_type')
+
     spltr = Splitter(attr='partitions', attr_values=[1,2])
+#    ds_glm.sa['sequence_type'] = ds_glm.sa.targets_num/2
     
     slght_2fold = searchlight.GNBSearchlightOpt(
         gnb,
-        mvpa_nodes.prtnr_2fold_sift,
+        mvpa_nodes.prtnr_2fold_factpart,
         svqe_cached,
         splitter=spltr,
-        errorfx=None,
+        errorfx=mean_match_accuracy,
+        pass_attr=ds.fa.keys()+ds.a.keys()+[('ca.roi_sizes','fa')],
+        enable_ca=['roi_sizes'],
+        #postproc=mvpa_nodes.scan_blocks_confmat
+    )
+
+
+    slght_loso = searchlight.GNBSearchlightOpt(
+        gnb,
+        mvpa_nodes.prtnr_loso_cv(1),
+        svqe_cached,
+        splitter=spltr,
+        errorfx=mean_match_accuracy,
         pass_attr=ds.sa.keys()+ds.fa.keys()+ds.a.keys()+[('ca.roi_sizes','fa')],
         enable_ca=['roi_sizes'],
-        postproc=mvpa_nodes.scan_blocks_confmat)
+        #postproc=mvpa_nodes.scan_blocks_confmat
+    )
 
     mvpa_slght_subset = dict([('%s_%s_%s'%(scan_group, sg_name, bp),dict(targets=seqs,subtargets=[bp],scan_name=scans)) \
                               for sg_name,seqs in seq_groups.items() \
                               for bp in block_phases for scan_group,scans in scan_groups.items()])
-    
+
+    print mvpa_slght_subset
     for subset_name, subset in mvpa_slght_subset.items():
         #ds_subset = ds[subset]
         #slmap_2fold = slght_2fold(ds_subset)
@@ -268,6 +288,13 @@ def subject_searchlight_2fold(sid):
                                          'CoRe_%03d_%s_glm_2fold_confusion.h5'%(sid,subset_name)),
                             compression=compression)
         del slmap_glm_2fold
+
+        if len(ds_glm_subset.sa['scan_name'].unique) > 1 and False:
+            slmap_glm_loso = slght_loso(ds_glm_subset)
+            slmap_glm_loso.save(
+                os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_glm_loso_confusion.h5'%(sid,subset_name)),
+                compression=compression)
+            del slmap_glm_loso
 
 
 def subject_searchlight_new(sid):
@@ -440,8 +467,8 @@ bas_labels = {
     'BA45':3}
 
 fs_clt = np.loadtxt('/home/bpinsard/softs/freesurfer/FreeSurferColorLUT.txt',np.str)
-rois = np.hstack([np.asarray([46,29,70,69,28,4,3,7,8])+a for a in [11100,12100]]+[53,17,10,49,51,12,8,47,11,50])
-#rois = np.asarray([53,17,10,49,51,12,8,47,11,50])
+#rois = np.hstack([np.asarray([46,29,70,69,28,4,3,7,8])+a for a in [11100,12100]]+[53,17,10,49,51,12,8,47,11,50])
+rois = np.asarray([53,17,10,49,51,12,8,47,11,50])
 aparc_labels = dict([(fs_clt[fs_clt[:,0]==str(r)][0,1],r) for r in rois])
 
 bas_labels = dict([('%s_%s'%(l,h),k+hi*1000) for l,k in bas_labels.items() for hi,h in enumerate('lr')])
@@ -490,7 +517,7 @@ from mvpa2.clfs.stats import MCNullDist
 def create_cv_nullhyp(clf, partitioner,splitter, nrepeat=200):
     repeater = Repeater(count=nrepeat)
     permutator = AttributePermutator('targets',
-                                     limit={'balanced_partitions': 1},
+                                     limit={'partitions': 1},
                                      count=1)
     null_cv = CrossValidation(
         clf,
@@ -520,15 +547,16 @@ def subject_rois_analysis(subj, clf):
 
     mvpa_scan_names = [n for n in np.unique(ds_glm.sa.scan_name) if 'mvpa' in n]
     ds_glm_mvpa = ds_glm[dict(scan_name=mvpa_scan_names)]
+    targets_num(ds_glm_mvpa, ulabels)
     poly_detrend(ds_glm_mvpa, chunks_attr='scan_id', polyord=0)
-    zscore(ds_glm_mvpa,chunks_attr='scan_id')
 
     #ds_glm_mvpa.samples/=ds_glm_mvpa.samples.std(0)
     #ds_glm_mvpa.samples[np.isnan(ds_glm_mvpa.samples)]=0
     ds_mvpa = ds[dict(scan_name=mvpa_scan_names)]
-    if 'ba_thresh' not in ds_mvpa.sa:
+    targets_num(ds_mvpa, ulabels)
+    if 'ba_thresh' not in ds_mvpa.fa:
         ds_mvpa.fa['ba_thresh'] = ds_mvpa.fa.ba_thres
-    if 'ba_thresh' not in ds_glm_mvpa.sa:
+    if 'ba_thresh' not in ds_glm_mvpa.fa:
         ds_glm_mvpa.fa['ba_thresh'] = ds_glm_mvpa.fa.ba_thres
     poly_detrend(ds_mvpa, chunks_attr='scan_id', polyord=0)
     zscore(ds_mvpa,chunks_attr='scan_id')
@@ -554,11 +582,12 @@ def subject_rois_analysis(subj, clf):
                     for sg_name,seqs in seq_groups.items() \
                     for bp in block_phases])
 
-    spltr = Splitter(attr='balanced_partitions',attr_values=[1,2])
+    spltr = Splitter(attr='partitions',attr_values=[1,2])
 
     prtnrs = dict(
-        #loco=mvpa_nodes.prtnr_loco_cv,
-        loso=mvpa_nodes.prtnr_loso_glm_cv
+        #loco=mvpa_nodes.prtnr_loco_cv(1),
+        twofold=mvpa_nodes.prtnr_2fold_sift,
+        #loso=mvpa_nodes.prtnr_loso_cv(1)
     )
     
     for prtnr_name, prtnr in prtnrs.items():
@@ -584,13 +613,13 @@ def subject_rois_analysis(subj, clf):
                     pvalue = cvte.ca.null_prob.samples
                     glm_rois_stats[prtnr_name][subset_name][roi_name].stats['pvalue'] = pvalue
                     print('glm\t%s\t%s\t%s\tacc=%f\tp=%.5f'%(prtnr_name, roi_name, subset_name, glm_rois_stats[prtnr_name][subset_name][roi_name].stats['ACC'],pvalue))
-
+                    """
                     cv_res = cvte(ds_subset[:,{roi_fa:[roi_label]}])
                     tr_rois_stats[prtnr_name][subset_name][roi_name] = cvte.ca.stats
                     pvalue = cvte.ca.null_prob.samples
                     tr_rois_stats[prtnr_name][subset_name][roi_name].stats['pvalue'] = pvalue
                     print('tr\t%s\t%s\t%s\tacc=%f\tp=%.5f'%(prtnr_name, roi_name, subset_name, tr_rois_stats[prtnr_name][subset_name][roi_name].stats['ACC'],pvalue))
-
+                    """
     return glm_rois_stats, tr_rois_stats
     
 

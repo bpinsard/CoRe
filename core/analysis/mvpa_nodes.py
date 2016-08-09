@@ -1,5 +1,5 @@
 import numpy as np
-from mvpa2.generators.partition import HalfPartitioner, NFoldPartitioner, CustomPartitioner
+from mvpa2.generators.partition import HalfPartitioner, NFoldPartitioner, CustomPartitioner, FactorialPartitioner
 from mvpa2.generators.base import Sifter
 from mvpa2.generators.resampling import NonContiguous
 from mvpa2.base.node import ChainNode, Node
@@ -7,6 +7,7 @@ from mvpa2.generators.resampling import Balancer
 from mvpa2.generators.splitters import Splitter
 from mvpa2.measures.base import Measure, FeaturewiseMeasure, RepeatedMeasure
 from mvpa2.datasets import Dataset
+from mvpa2.clfs.gda import GDA
 
 class BalancedPartitions(Node):
     def __init__(self, partition_attr='partitions', balanced_attr='balanced_set',
@@ -53,10 +54,23 @@ prtnr_2fold_sift = ChainNode(
     [ NFoldPartitioner(
         attr='chunks',
         cvtype=.5,
-        count=128,
+        count=32,
         selection_strategy='random'),
-      Sifter([('partitions', 2),('targets_num', dict(balanced=True)) ]) ],
-    space='partitions')
+      Balancer(                                                                                                             
+          amount='equal',                                                                                                    
+          attr='targets',                                                                                                    
+          count=1,                                                      
+          apply_selection=False,                                                                                            
+          limit=['partitions'],
+          include_offlimit=True),
+      BalancedPartitions()],
+    space='balanced_partitions')
+
+prtnr_2fold_factpart = FactorialPartitioner(
+    NFoldPartitioner(cvtype=2,attr='chunks'),
+    attr='targets_num',
+    selection_strategy='equidistant',
+    count=32)
 
 training_scans = ['d3_mvpa1','d3_mvpa2']
 
@@ -159,3 +173,41 @@ delay_confmat = RepeatedMeasure(
             attr='targets',
             apply_selection=True),]))
 
+class LDAReg(GDA):
+    """Linear Discriminant Analysis.
+    """
+
+    __tags__ = GDA.__tags__ + ['linear', 'lda']
+
+
+    def _untrain(self):
+        self._w = None
+        self._b = None
+        super(LDAReg, self)._untrain()
+
+
+    def _train(self, dataset):
+        super(LDAReg, self)._train(dataset)
+        nlabels = len(self.ulabels)
+        # Sum and scale the covariance
+        self.cov = cov = \
+            np.sum(self.cov, axis=0) \
+            / (np.sum(self.nsamples_per_class) - nlabels)
+
+        # For now as simple as that -- see notes on top
+        shrinkage = .01
+        mu = np.trace(cov) / dataset.nfeatures
+        shrunk_cov = cov* (1-shrinkage)
+        shrunk_cov.flat[::dataset.nfeatures+1] += mu*shrinkage
+        covi = self._inv(shrunk_cov)
+
+        # Precompute and store the actual separating hyperplane and offset
+        self._w = np.dot(covi, self.means.T)
+        self._b = b = np.zeros((nlabels,))
+        for il in xrange(nlabels):
+            m = self.means[il]
+            b[il] = np.log(self.priors[il]) - 0.5 * np.dot(np.dot(m.T, covi), m)
+
+    def _g_k(self, data):
+        """Return decision function values"""
+        return np.dot(data, self._w) + self._b

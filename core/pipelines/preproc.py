@@ -6,6 +6,11 @@ from nipype.interfaces import spm, fsl, afni, nitime, utility, dcmstack as np_dc
 import nipype.pipeline.engine as pe
 import nipype.interfaces.io as nio
 import nibabel as nb
+import dicom
+import datetime
+
+from ..mvpa import dataset as mvpa_dataset
+import mvpa2.datasets
 
 fsl.FSLCommand.set_default_output_type('NIFTI_GZ')
 afni.base.AFNICommand.set_default_output_type('NIFTI_GZ')
@@ -31,10 +36,10 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
             ('mvpa_CoReOtherSeq2', np.asarray([4,1,3,2,4]))]
 
 
-subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268,267,237]
+subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268,267,237,283,296,319]
 #subject_ids = subject_ids[:-1]
 #subject_ids = subject_ids[:1]
-#subject_ids = [267]
+#subject_ids = [296]
 
 tr = 2.16
 echo_time = .03
@@ -226,6 +231,8 @@ def repeater(l,n):
 def preproc_fmri():
     
     w = dicom_dirs()
+    si = w.get_node('subjects_info')
+
     templates = dict(
         subjects_dir=[['t1_preproc/_subject_id','subject_id','freesurfer']],
         norm = [['t1_preproc/_subject_id','subject_id','freesurfer/*[!e]/mri/norm.mgz']],
@@ -331,33 +338,195 @@ def preproc_fmri():
 
     n_repeat_topup = pe.Node(
         utility.Function(
-            input_names = ['fmri_scans','fieldmaps','fieldmap_regs'],
-            output_names = ['fieldmaps','fieldmap_regs'],
+            input_names = ['fmri_scans','fieldmaps','arg_names','enc_file','appa','movpar','reg_file'],
+            output_names = ['fieldmaps','enc_file','appa','movpar','reg_file'],
             function = repeat_fieldmaps),
         run_without_submitting=True,
         name='repeat_topup')
+    n_repeat_topup.inputs.arg_names = n_repeat_topup.interface._input_names[3:]
+
+    n_mcflirt = pe.MapNode(
+        fsl.MCFLIRT(
+            ref_vol=0,
+            save_plots=True,
+        ),
+        iterfield = ['in_file','ref_file'],
+        name='mcflirt')
 
     n_applytopup = pe.MapNode(
-        fsl.ApplyTOPUP(in_index=[1],in_topup_movpar='/etc/issue'),
-        iterfield=['in_files','in_topup_fieldcoef','encoding_file'],
+        fsl.ApplyTOPUP(
+            in_index=[1],
+            method='jac'),
+        iterfield=['in_files','in_topup_fieldcoef','in_topup_movpar','encoding_file'],
         name='applytopup')
+    n_applytopup.plugin_args = high_mem_queue_args
 
-    topup = False
+
+    n_apply_registration = pe.MapNode(
+        utility.Function(
+            input_names = ['in_file','matrix'],
+            output_names = ['out_file'],
+            function = apply_affine),
+        iterfield = ['in_file','matrix'],
+        name='apply_registration'
+    )
+    
+
+    n_coords2fakesurf = pe.Node(
+        utility.Function(
+            input_names = ['in_file'],
+            output_names = ['out_file'],
+            function = coords2fakesurf),
+        name='coords2fakesurf'
+    )
+
+    n_volume2surface = pe.MapNode(
+        utility.Function(
+            input_names = ['in_file','surface','method','inner_surface','outer_surface'],
+            output_names = ['out_file'],
+            function = generic_pipelines.fmri_surface.wb_command_volume_to_surface_mapping
+        ),
+        iterfield=['in_file'],
+        name='volume2surface'
+    )
+    n_volume2surface_lh = n_volume2surface.clone('volume2surface_lh')
+    n_volume2surface_rh = n_volume2surface.clone('volume2surface_rh')
+    n_volume2surface_lh.interface.inputs.method = n_volume2surface_rh.interface.inputs.method = 'ribbon-constrained'
+    n_volume2surface_sc = n_volume2surface.clone('volume2surface_sc')
+    n_volume2surface_sc.interface.inputs.method = 'trilinear'
+
+
+    n_merge_gii = pe.Node(
+        utility.Function(
+            input_names = ['lh_tss','rh_tss','sc_tss'],
+            output_names = ['grouped_tss'],
+            function_str = 'def merge_gii(lh_tss,rh_tss,sc_tss): return [(l,r,s) for l,r,s in zip(lh_tss,rh_tss,sc_tss)]',
+        ),
+        name='merge_gii'
+    )
+
+    n_bbreg_epi_scale = pe.MapNode(
+        freesurfer.BBRegister(
+            contrast_type='t2',
+            reg_frame=0,
+            registered_file=True,
+            init='fsl',
+            args='--9'
+        ),
+        iterfield=['source_file'],
+        name='bbreg_epi_scale')
+
+    n_topup2t1_xfm = pe.MapNode(
+        freesurfer.preprocess.Tkregister(xfm_out='topup2t1.xfm',
+                                         freeview='freeview.mat',
+                                         fsl_reg_out='fsl_reg_out.mat',
+                                         lta_out='lta.mat',),
+        iterfield=['reg_file','mov'],
+        run_without_submitting=True,
+        name='topup2t1_xfm')
+
+    n_topup2t1_mat = pe.MapNode(
+        utility.Function(
+            input_names = ['xfm'],
+            output_names = ['mat'],
+            function=xfm2mat),
+        iterfield=['xfm'],
+        run_without_submitting=True,
+        name='topup2t1_mat')
+
+    n_dataset_wb = pe.Node(
+        CreateDatasetWB(tr=tr,
+                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
+                      #design=os.path.join(project_dir,'data/mvpa_only.csv'),
+                      design=os.path.join(project_dir,'data/design.csv'),
+                      median_divide=True,
+                      wavelet_despike=True),
+        name='dataset_wb_wd')
+    n_dataset_wb.plugin_args = high_mem_queue_args
+
+
+    topup = True
     if topup:
+
         w.connect([
             (n_fmri_convert, n_merge_appa,[('nifti_file','in_files')]),
             (n_merge_appa, n_topup,[('out_files','in_file')]),
             
+            (n_topup, n_bbreg_epi_scale, [('out_corrected','source_file')]),
+            (n_anat_grabber, n_bbreg_epi_scale, [('subjects_dir',)*2]),
+            (si, n_bbreg_epi_scale, [(('subject_id',wrap(str),[]),'subject_id')]),            
+
+
+
+            (n_topup,n_topup2t1_xfm,[('out_corrected','mov')]),
+            (n_bbreg_epi_scale, n_topup2t1_xfm,[('out_reg_file','reg_file')]),
+            (n_anat_grabber,n_topup2t1_xfm,[('norm','target')]),
+            (n_topup2t1_xfm, n_topup2t1_mat,[('xfm_out','xfm')]),
+        
+                
+            (n_topup2t1_mat, n_repeat_topup,[('mat','reg_file')]),
             (w.get_node('all_func_dirs'),n_repeat_topup,[('fmri_all','fmri_scans')]),
             (n_topup, n_repeat_topup,[
                 ('out_fieldcoef', 'fieldmaps'),
-                ('out_enc_file', 'fieldmap_regs')]),
-            (n_repeat_topup, n_applytopup,[('fieldmap_regs','encoding_file')]),
-            (n_repeat_topup, n_applytopup,[('fieldmaps','in_topup_fieldcoef')]),
-            (n_fmri_convert, n_applytopup,[('nifti_file','in_files')]),
+                ('out_movpar', 'movpar'),
+                ('out_enc_file', 'enc_file')]),
+            (n_merge_appa, n_repeat_topup,[('out_files','appa')]),
+
         ])
 
     ###############################################    ###############################################
+
+#    n_convert_motion_par_scale = generic_pipelines.fmri_surface.n_convert_motion_par.clone('convert_motion_par_scale')    
+
+    use_topup_fieldmap = True
+    if use_topup_fieldmap:
+        w.connect([
+            (n_fmri_convert, n_mcflirt, [('nifti_file','in_file')]),
+            (n_repeat_topup, n_mcflirt, [('appa','ref_file')]), #coregister to appa file closest
+
+            (n_mcflirt, n_applytopup,[('out_file','in_files')]),
+            (n_repeat_topup, n_applytopup,[
+                ('fieldmaps','in_topup_fieldcoef'),
+                ('movpar','in_topup_movpar'),
+                ('enc_file','encoding_file'),]),
+            (n_applytopup, n_apply_registration,[('out_corrected','in_file')]),
+            (n_repeat_topup, n_apply_registration,[('reg_file','matrix')]),
+
+        ])
+
+    workbench_interpolate = True
+    if workbench_interpolate:
+        w.connect([
+            (n_anat_grabber, n_coords2fakesurf,[('lowres_rois_coords','in_file')]),
+            (n_anat_grabber, n_volume2surface_lh,[
+                (('lowres_surf_lh',utility.select,0),'surface'),
+                (('lowres_surf_lh',utility.select,0),'inner_surface'),
+                (('lowres_surf_lh',utility.select,1),'outer_surface'),
+            ]),
+            (n_anat_grabber, n_volume2surface_rh,[
+                (('lowres_surf_rh',utility.select,0),'surface'),
+                (('lowres_surf_rh',utility.select,0),'inner_surface'),
+                (('lowres_surf_rh',utility.select,1),'outer_surface'),
+            ]),
+
+            (n_coords2fakesurf, n_volume2surface_sc,[('out_file','surface')]),
+            (n_volume2surface_lh, n_merge_gii,[('out_file','lh_tss')]),
+            (n_volume2surface_rh, n_merge_gii,[('out_file','rh_tss')]),
+            (n_volume2surface_sc, n_merge_gii,[('out_file','sc_tss')]),
+
+            (si, n_dataset_wb,[('subject_id',)*2]),
+            (n_merge_gii, n_dataset_wb,[('grouped_tss','ts_files')]),
+            (w.get_node('all_func_dirs'), n_dataset_wb,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
+
+
+            (n_anat_grabber, n_dataset_wb,[
+                (('lowres_surf_lh',utility.select,0),'lh_surf'),
+                (('lowres_surf_rh',utility.select,0),'rh_surf'),
+                ('lowres_rois_coords','sc_coords')]),
+        ])
+        for n in [n_volume2surface_lh,n_volume2surface_rh,n_volume2surface_sc]:
+            w.connect(n_apply_registration,'out_file',n,'in_file')
+        
 
     n_group_hemi_surfs = pe.Node(
         utility.Merge(2),
@@ -374,7 +543,12 @@ def preproc_fmri():
     n_st_realign.plugin_args = high_mem_queue_args
 
     n_bbreg_epi = pe.MapNode(
-        freesurfer.BBRegister(contrast_type='t2',reg_frame=0,registered_file=True,init='fsl'),
+        freesurfer.BBRegister(
+            contrast_type='t2',
+            reg_frame=0,
+            registered_file=True,
+            init='fsl',
+            args='--9'),
         iterfield=['source_file'],
         name='bbreg_epi')
 
@@ -402,11 +576,12 @@ def preproc_fmri():
 
     n_repeat_fieldmaps = pe.Node(
         utility.Function(
-            input_names = ['fmri_scans','fieldmaps','fieldmap_regs'],
+            input_names = ['fmri_scans','fieldmaps','arg_names','fieldmap_regs'],
             output_names = ['fieldmaps','fieldmap_regs'],
             function = repeat_fieldmaps),
         run_without_submitting=True,
         name='repeat_fieldmaps')
+    n_repeat_fieldmaps.inputs.arg_names = n_repeat_fieldmaps.interface._input_names[3:]
 
     n_convert_motion_par = generic_pipelines.fmri_surface.n_convert_motion_par
 
@@ -469,11 +644,10 @@ def preproc_fmri():
         name = 'smooth_bp_nofilt')
         """
 
-
+    
     bold_seqs = ['fmri_resting_state','fmri_seqA','fmri_seqB','fmri_mvpa','fmri_pa']
     
     w.base_dir = proc_dir
-    si = w.get_node('subjects_info')
     w.connect([
         (si, n_anat_grabber, [('subject_id',)*2]),
         
@@ -487,13 +661,7 @@ def preproc_fmri():
         (n_anat_grabber,n_bbreg_epi,[('subjects_dir',)*2]),
         (si,n_bbreg_epi,[(('subject_id',wrap(str),[]),'subject_id')]),
         (n_st_realign,n_bbreg_epi,[('out_file','source_file')]),
-        
-        
-        #(n_st_realign,n_bbreg2xfm,[(('out_file',generic_pipelines.utils.getitem_rec,0),'mov')]),
-        #(n_bbreg_epi, n_bbreg2xfm,[('out_reg_file','reg_file')]),
-        #(n_anat_grabber,n_bbreg2xfm,[('subjects_dir',)*2]),            
-        #(n_bbreg_epi,n_convert_motion_par,[('out_reg_file','epi2t1')]),
-        
+                
         (n_st_realign,n_epi2t1_bbreg2xfm,[('out_file','mov')]),
         (n_bbreg_epi, n_epi2t1_bbreg2xfm,[('out_reg_file','reg_file')]),
         (n_anat_grabber,n_epi2t1_bbreg2xfm,[('norm','target')]),
@@ -508,6 +676,8 @@ def preproc_fmri():
         (n_xfm2mat, n_repeat_fieldmaps, [('mat','fieldmap_regs')]),
         
         ])
+
+
 
     motion_corr = False
     if motion_corr:
@@ -547,13 +717,39 @@ def preproc_fmri():
                       median_divide=True,
                       wavelet_despike=True,
                       interp_bad_tss=True),
-        name='dataset_mvpa_wd_interp')
-    n_dataset_noisecorr.plugin_args = high_mem_queue_args
+        name='dataset_mvpa_wd_interp_hrf_gam1')
+
+    n_dataset_nofilt = pe.Node(
+        CreateDataset(tr=tr,
+                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
+                      #design=os.path.join(project_dir,'data/mvpa_only.csv'),
+                      design=os.path.join(project_dir,'data/design.csv'),
+                      median_divide=True,
+                      wavelet_despike=True,
+                      interp_bad_tss=True),
+        name='dataset_wd_interp_hrf_gam2')
+
+    n_dataset_nofilt.plugin_args = high_mem_queue_args
     
     n_dataset_smoothed = n_dataset_noisecorr.clone('dataset_smoothed')
 
-    nofilt_resample = True
+    nofilt_resample = False
+
     if nofilt_resample:
+
+        if use_topup_fieldmap:
+            n_surf_resample = n_surf_resample.clone('surf_resample_topup')
+            w.connect([
+                (n_repeat_topup, n_surf_resample,[('fieldmaps','fieldmap'),
+                                                  ('reg_file','fieldmap_reg')]),
+            ])
+        else:
+            w.connect([
+            (n_repeat_fieldmaps, n_surf_resample,[
+                    ('fieldmaps','fieldmap'),
+                    ('fieldmap_regs','fieldmap_reg')]),
+            ])
+        
         w.connect([
             (n_anat_grabber, n_surf_resample,[
                     ('norm','surfaces_volume_reference'),
@@ -562,9 +758,6 @@ def preproc_fmri():
                       '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
                      'resample_rois'),
                     ]),
-            (n_repeat_fieldmaps, n_surf_resample,[
-                    ('fieldmaps','fieldmap'),
-                    ('fieldmap_regs','fieldmap_reg')]),
 
             (n_convert_motion_par, n_surf_resample,[('motion','motion')]),
             (w.get_node('all_func_dirs'), n_surf_resample,[(('fmri_all', flatten_remove_none),'dicom_files')]),
@@ -619,8 +812,6 @@ from nipype.interfaces.base import (TraitedSpec, BaseInterface, traits,
                                     BaseInterfaceInputSpec, isdefined, File, Directory,
                                     InputMultiPath, OutputMultiPath)
 
-from ..mvpa import dataset as mvpa_dataset
-import mvpa2.datasets
 
 class CreateDatasetInputSpec(BaseInterfaceInputSpec):
     subject_id = traits.Int(mandatory=True)
@@ -701,15 +892,26 @@ class CreateDataset(BaseInterface):
             ts_files = [f for f in ts_files if f not in used_ts_files]
 
             for ts_file in ts_files:
+                used_ts_files.append(ts_file)                
+                #print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
+                #continue
+                ds = mvpa_dataset.ds_from_ts(
+                    ts_file,
+                    tr=self.inputs.tr)
+                mvpa_dataset.ds_set_attributes(
+                    behavior_file,
+                    seq_info=seq_info, seq_idx=seq_idx,
+                    tr=self.inputs.tr)
+                mvpa_dataset.preproc_ds(
+                    mean_divide=self.inputs.mean_divide,
+                    median_divide=self.inputs.median_divide,
+                    wav_despike=self.inputs.wavelet_despike,
+                    tr=self.inputs.tr)
+                del ts
+                if ds.nsamples <= 10:
+                    break
                 scan_id += 1
-#                print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
-#                continue
-                ds = mvpa_dataset.ds_from_ts(ts_file, behavior_file,
-                                             seq_info=seq_info, seq_idx=seq_idx,
-                                             tr=self.inputs.tr,
-                                             mean_divide=self.inputs.mean_divide,
-                                             median_divide=self.inputs.median_divide,
-                                             wav_despike=self.inputs.wavelet_despike)
+
                 if self.inputs.interp_bad_tss:
                     ds = mvpa_dataset.interp_bad_ts(ds)
                 ds.sa['scan_name'] = [ses_name]*ds.nsamples
@@ -717,15 +919,17 @@ class CreateDataset(BaseInterface):
                 dss.append(ds)
                 if beh is not None:
                     reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_exec.dtype.names])
-                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_exec', reg_groups)
+                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_exec', reg_groups,[])
                     dss_glm.append(ds_glm)
                     reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_stim.dtype.names])
                     ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_stim', reg_groups)
                     dss_glm_stim.append(ds_glm)
 
-                    del ds.sa['regressors_exec'], ds.sa['regressors_stim']
+                    for a in ['regressors_exec','regressors_stim','regressors_exec_evt']:
+                        if a in ds.sa:
+                            del ds.sa[a]
                 # used ts files to avoid repeating
-                used_ts_files.append(ts_file)
+                
         # stack all
         ds = mvpa2.datasets.vstack(dss)
         ds.a.update(dss[0].a)
@@ -759,12 +963,184 @@ class CreateDataset(BaseInterface):
 
 
 
-def repeat_fieldmaps(fmri_scans, fieldmaps, fieldmap_regs):
+class CreateDatasetWBInputSpec(CreateDatasetInputSpec):
+    subject_id = traits.Int(mandatory=True)
+    ts_files = traits.List(traits.Tuple(*([File(exists=True)]*3)))
+    dicom_dirs = traits.List(Directory(exists=True))
+    data_path = traits.Str('FMRI/DATA',usedefault=True,)
+    design = File(exists=True,mandatory=True)
+    behavioral_data_path=Directory()
+    mean_divide = traits.Bool(False, usedefault=True)
+    median_divide = traits.Bool(False, usedefault=True)
+    detrend = traits.Bool(False, usedefault=True)
+
+    lh_surf = File(exists=True)
+    rh_surf = File(exists=True)
+    sc_coords = File(exists=True)
+
+    wavelet_despike = traits.Bool(False, usedefault=True)
+    
+    interp_bad_tss = traits.Bool(False, usedefault=True)
+    tr = traits.Float(mandatory=True)
+
+
+class CreateDatasetWB(CreateDataset):
+
+    input_spec = CreateDatasetWBInputSpec
+    output_spec = CreateDatasetOutputSpec
+
+    def _run_interface(self, runtime):
+        dss = []
+        dss_glm = []
+        dss_glm_stim = []
+        scan_id = 0
+
+        subject_id = self.inputs.subject_id
+        used_ts_files = []
+
+        empty_to_none =lambda x: x if len(x) else None
+        design = np.atleast_2d(
+            np.loadtxt(
+                self.inputs.design,
+                dtype=np.object,
+                delimiter=',',
+                converters={0:int,1:str,2:str,3:empty_to_none,4:empty_to_none,5:empty_to_none,6:bool}))
+        scan_id=-1
+        for day,ses_name,mri_name,seq_name,beh,scan_idx,optional in design:
+            seq_idx = None
+            seq_info = None
+            if not seq_name is None and not beh is None:
+                seq_info = SEQ_INFO
+                seq_idx = [[s[0] for s in seq_info].index(seq_name)] * 14
+            behavior_file = None
+            if not beh is None:
+                # take the last behavioral file which matches in case of failed task
+                behavior_file = sorted(glob.glob(
+                    os.path.join(
+                        self.inputs.behavioral_data_path,
+                        'CoRe_%03d_D%d/CoRe_%03d_%s_?.mat'%(subject_id,day,subject_id,beh))))
+                if not len(behavior_file): 
+                    if optional:
+                        continue
+                    else:
+                        break # do not crash, in case we want to analyze for early boost...
+                        #raise RuntimeError('missing data')
+                behavior_file = behavior_file[-1]
+            # deal with multiple scans
+            select_ts = [('_D%d/'%day in dd and mri_name in dd) for dd in self.inputs.dicom_dirs]
+            ts_files = [f for f,sts in zip(self.inputs.ts_files,select_ts) if sts]
+            dicom_dirs = [d for d,sts in zip(self.inputs.dicom_dirs,select_ts) if sts]
+
+            if scan_idx is not None:
+                scan_idx = int(scan_idx)
+                if scan_idx >= len(ts_files):
+                    if optional:
+                        continue
+                    else:
+                        break
+                        #raise RuntimeError('missing data')
+                ts_files = [ts_files[int(scan_idx)]]
+            ts_files = [f for f in ts_files if f[0] not in used_ts_files]
+
+            for ts_file,dicom_dir in zip(ts_files,dicom_dirs):
+                used_ts_files.append(ts_file[0])
+                #print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
+                tss = np.hstack([np.asarray([da.data for da in nb.gifti.read(f).darrays]) for f in ts_file])
+                ds = mvpa2.datasets.Dataset(tss)
+
+                dcm = dicom.read_file(sorted(glob.glob(os.path.join(dicom_dir, '*')))[0])
+                dt = datetime.datetime.strptime(dcm.AcquisitionDate+':'+dcm.AcquisitionTime,'%Y%m%d:%H%M%S.%f')
+                tstp = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
+                ds.sa['time'] = tstp + np.arange(ds.nsamples)*tr
+
+                mvpa_dataset.ds_set_attributes(
+                    ds,
+                    behavior_file,
+                    seq_info=seq_info, seq_idx=seq_idx,
+                    tr=self.inputs.tr)
+                mvpa_dataset.preproc_ds(
+                    ds,
+                    mean_divide=self.inputs.mean_divide,
+                    median_divide=self.inputs.median_divide,
+                    wav_despike=self.inputs.wavelet_despike,
+                    tr=self.inputs.tr)
+                
+                
+                if ds.nsamples <= 10:
+                    break
+                scan_id += 1
+
+                if self.inputs.interp_bad_tss:
+                    ds = mvpa_dataset.interp_bad_ts(ds)
+                ds.sa['scan_name'] = [ses_name]*ds.nsamples
+                ds.sa['scan_id'] = [scan_id]*ds.nsamples
+                dss.append(ds)
+                if beh is not None:
+                    reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_exec.dtype.names])
+                    print reg_groups
+                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_exec', reg_groups,['constant'])
+                    dss_glm.append(ds_glm)
+                    reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_stim.dtype.names])
+                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_stim', reg_groups,['constant'])
+                    dss_glm_stim.append(ds_glm)
+
+                    for a in ['regressors_exec','regressors_stim','regressors_exec_evt']:
+                        if a in ds.sa:
+                            del ds.sa[a]
+                # used ts files to avoid repeating
+        # stack all
+        ds = mvpa2.datasets.vstack(dss)
+        ds.a.update(dss[0].a)
+        ds.sa['chunks'] = np.cumsum(np.ediff1d(ds.chunks, to_begin=[0])!=0)
+        ds_glm = mvpa2.datasets.vstack(dss_glm)
+        ds_glm.a.update(dss[0].a)
+        ds_glm.sa['chunks'] = np.cumsum(np.ediff1d(ds_glm.chunks, to_begin=[0])!=0)
+        ds_glm_stim = mvpa2.datasets.vstack(dss_glm_stim)
+        ds_glm_stim.a.update(dss[0].a)
+        ds_glm_stim.sa['chunks'] = np.cumsum(np.ediff1d(ds_glm_stim.chunks, to_begin=[0])!=0)
+
+
+        lh_gii = nb.gifti.read(self.inputs.lh_surf)
+        rh_gii = nb.gifti.read(self.inputs.rh_surf)
+        sc_coords = np.loadtxt(self.inputs.sc_coords, delimiter=',')
+        ds.fa['coordinates'] = np.vstack([
+            lh_gii.darrays[0].data,
+            rh_gii.darrays[0].data,
+            sc_coords[:,:3]])
+        ds.a['triangles'] = np.vstack([
+            lh_gii.darrays[1].data,
+            rh_gii.darrays[1].data + len(lh_gii.darrays[0].data)])
+
+        ds.fa['voxel_indices'] = np.empty((ds.nfeatures,3), dtype=np.int)
+        ds.fa.voxel_indices.fill(-1)
+        rois_offset = len(lh_gii.darrays[0].data) + len(rh_gii.darrays[0].data)
+        ds.fa.voxel_indices[rois_offset:] = sc_coords[:,3:6]
+
+
+        mvpa_dataset.add_aparc_ba_fa(
+            ds, self.inputs.subject_id,
+            pproc_tpl=os.path.join(proc_dir,'core_sleep/surface_32k/_subject_id_%s'))
+        ds_glm.fa = ds.fa
+        ds_glm_stim.fa = ds.fa
+        ds_glm.a = ds.a
+        ds_glm_stim.a = ds.a
+
+        
+        outputs = self._list_outputs()
+        ds.save(outputs['dataset'])
+        ds_glm.save(outputs['glm_dataset'])
+        ds_glm_stim.save(outputs['glm_stim_dataset'])
+
+        return runtime
+
+
+def repeat_fieldmaps(fmri_scans, fieldmaps, arg_names, **kwargs):
     from datetime import datetime
     import glob, os, re
     import dicom
     import numpy as np
     fmaps_out = []
+    args_out = dict([(a,[]) for a in arg_names])
     fmap_regs_out = []
     i = 0
     fieldmap_datetimes = [datetime.strptime(re.search('[0-9]{8}_[0-9]{6}',fmap).group(0),'%Y%m%d_%H%M%S') \
@@ -780,9 +1156,10 @@ def repeat_fieldmaps(fmri_scans, fieldmaps, fieldmap_regs):
                 if time_to_fmap[fmap_idx] > 3600*6: #more than 6 hours later!! only for PA usually
                     fmap_idx = fmap_idx-1
                 fmaps_out.append(fieldmaps[fmap_idx])
-                fmap_regs_out.append(fieldmap_regs[fmap_idx])
+                for argn,argv in kwargs.items():
+                    args_out[argn].append(argv[fmap_idx])
                 i += 1
-    return fmaps_out, fmap_regs_out
+    return (fmaps_out,)+tuple([args_out[argn] for argn in arg_names])
 
 
 def preproc_eeg():
@@ -836,3 +1213,34 @@ def preproc_eeg():
     )
 
     return w
+
+
+def apply_affine(in_file,matrix):
+    import os
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+    nii = nb.load(in_file)
+    out_filename = os.path.abspath(fname_presuffix(in_file, newpath='./', suffix='_reg'))
+    aff = np.loadtxt(matrix)
+    nb.Nifti1Image(nii.get_data(), aff.dot(nii.affine)).to_filename(out_filename) 
+    return out_filename
+
+
+def coords2fakesurf(in_file):
+    import os
+    import numpy as np
+    import nibabel as nb
+    from nipype.utils.filemanip import fname_presuffix
+    subcoords = np.loadtxt(in_file, delimiter=',', usecols=(0,1,2))
+    points_da = nb.gifti.GiftiDataArray(subcoords[:,:3].astype(np.float32), 'pointset')
+    points_da.ext_offset = ''
+    tris_da = nb.gifti.GiftiDataArray(np.arange(6,dtype=np.int32).reshape(-1,3),'triangle')
+    tris_da.ext_offset = ''
+    fake_surf = nb.gifti.GiftiImage(darrays=[points_da, tris_da])
+    out_fname = os.path.abspath(fname_presuffix(in_file, newpath='./', suffix='.gii', use_ext=False))
+    nb.gifti.write(fake_surf, out_fname)
+    return out_fname
+    
+    
+    

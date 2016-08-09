@@ -1,0 +1,4 @@
+#day,scan_name,MRI,sequence,behavior_data,idx,option
+1,d1_training_TSeq,BOLD_TSeq,CoReTSeq,Training-TSeq-D_One,-1,
+1,d1_retest_TSeq_1block,BOLD_Retest_TSeq_1block,CoReTSeq,TestBoost-TSeq-D_One,-1,
+2,d2_retest_TSeq_1block,BOLD_Retest_TSeq_1block,CoReTSeq,Reactivation-TSeq-D-Two,-1,
