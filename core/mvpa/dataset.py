@@ -37,15 +37,21 @@ def blocks_to_attributes_new(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     instrs = [['instr_%03d_%s'%(bi,b[0]),b[0],b[2],b[3]-b[2],b[5]-b[2]] for bi,b in enumerate(blocks) if b[2]>0]
     gos = [['go_%03d_%s'%(bi,b[0]),b[0],b[3],b[4]-b[3]] for bi,b in enumerate(blocks)]
     execs = [['exec_%03d_%s'%(bi,b[0]),b[0],b[5],b[6]-b[5]] for bi,b in enumerate(blocks)]
+    whole_blocks = [['block_%03d_%s'%(bi,b[0]),b[0],b[2],b[6]-b[2]] for bi,b in enumerate(blocks)]
+
 
     frametimes = ds.sa.time - ds.sa.time[0]
 
     ds.sa['regressors_exec'] = events_to_mtx(instrs+execs, frametimes)
     ds.sa['regressors_stim'] = events_to_mtx(instrs+gos, frametimes)
+    ds.sa['regressors_blocks'] = events_to_mtx(whole_blocks, frametimes)
     
     instrs_evt = [['instr_%03d_%s'%(bi,b[0]),b[0],b[2],0,b[5]-b[2]] for bi,b in enumerate(blocks) if b[2]>0]
     execs_evt = [['exec_%03d_%s'%(bi,b[0]),b[0],b[5],0] for bi,b in enumerate(blocks)]
+    gos_evt = [['exec_%03d_%s'%(bi,b[0]),b[0],b[3],0] for bi,b in enumerate(blocks)]
     ds.sa['regressors_exec_evt'] = events_to_mtx(instrs_evt+execs_evt, frametimes)
+    ds.sa['regressors_stim_evt'] = events_to_mtx(instrs_evt+gos_evt, frametimes)
+    
     
     n_correct_sequences = np.asarray([sum([np.sum(s['match'])==len(b[1]) for s in b[-1]]) for b in blocks]+[-1])
     n_failed_sequences = np.asarray([sum([np.all(~s['match']) for s in b[-1]]) for b in blocks]+[-1])
@@ -234,7 +240,9 @@ def preproc_ds(ds,
                median_divide=False,
                add_shift=None,
                wav_despike=False,
-               threshold_wav_low=6,
+               wav_threshold=2.5,
+               threshold_wav_low=5,
+               threshold_wav_high=None,
                sg_filt=False,
                sg_filt_win=210,
                tr=default_tr):
@@ -268,10 +276,15 @@ def preproc_ds(ds,
         # detrendind seems necessary to avoid border effects on wavelets
         poly_detrend(ds, chunks_attr=None, polyord=1)
         if ds.nsamples>500:
-            ds.samples[:] = wavelet_despike_loop(ds.samples, threshold=1.96, threshold_wavelet_low=threshold_wav_low)
+            ds.samples[:] = wavelet_despike_loop(
+                ds.samples, threshold=wav_threshold,
+                threshold_wavelet_low=threshold_wav_low,
+                threshold_wavelet_high=threshold_wav_high)
         else:
-            ds.samples[:] = wavelet_despike(ds.samples, threshold=1.96, threshold_wavelet_low=threshold_wav_low)
-
+            ds.samples[:] = wavelet_despike(
+                ds.samples, threshold=wav_threshold,
+                threshold_wavelet_low=threshold_wav_low,
+                threshold_wavelet_high=threshold_wav_high)
     if sg_filt:
         sg_win = int(sg_filt_win/float(tr))
         if not sg_win%2:
@@ -359,7 +372,6 @@ def ds_set_attributes(
                      'subtargets_no_delay',
                      'blocks_idx_no_delay']:
             ds.sa[attr] = [np.nan]*ds.nsamples
-    return ds
 
 def add_aparc_ba_fa(ds, subject, pproc_tpl):
     pproc_path = pproc_tpl%subject

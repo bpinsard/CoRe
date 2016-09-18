@@ -37,7 +37,9 @@ def wavelet_despike(tss,
                     boundary='periodic',
                     chsearch='moderate',
                     nscale='liberal',
-                    threshold_wavelet_low=None):
+                    threshold_wavelet_high=None,
+                    threshold_wavelet_low=None,
+                    min_n_neigh=2):
     out = np.empty(tss.shape)
     
     NJ = modwt_scales(len(tss), nscale, wavelet)
@@ -63,20 +65,22 @@ def wavelet_despike(tss,
     mn2 = np.logical_and(WJt<=ratio*mn, thr_cond)
     mx3 = np.logical_and(
         mx2,
-        scipy.ndimage.filters.convolve(mx2.astype(np.uint8),np.ones((3,1,5)),mode='constant')>=2)
+        scipy.ndimage.filters.convolve(mx2.astype(np.uint8),np.ones((3,1,5)),mode='constant')>=min_n_neigh)
     mn3 = np.logical_and(
         mn2,
-        scipy.ndimage.filters.convolve(mn2.astype(np.uint8),np.ones((3,1,5)),mode='constant')>=2)
+        scipy.ndimage.filters.convolve(mn2.astype(np.uint8),np.ones((3,1,5)),mode='constant')>=min_n_neigh)
     WJt[np.logical_or(mx3,mn3)] = 0
     #WJt[np.logical_or(mx2,mn2)] = 0
     # remove low frequencies
     if threshold_wavelet_low is not None:
         WJt[threshold_wavelet_low:] = 0
+    if threshold_wavelet_high is not None:
+        WJt[:threshold_wavelet_high] = 0
     for i in range(NJ):
         WJt[i] = np.roll(WJt[i], cshift[i], -1)
     for tsi in range(tss.shape[1]):
         out[:,tsi] = modwt.imodwt_details(dwtArray(WJt[:,tsi], info=WJtmp.info)).sum(0)
-    return out#, -mn3.astype(np.int8)+mx3.astype(np.int8), WJt
+    return out#, -mn3.astype(np.int8)+mx3.astype(np.int8), WJt, Wstd
 
 def wavelet_despike_loop(tss,
                          wavelet='d4',
@@ -85,7 +89,9 @@ def wavelet_despike_loop(tss,
                          boundary='periodic',
                          chsearch='moderate',
                          nscale='liberal',
-                         threshold_wavelet_low=None):
+                         threshold_wavelet_high=None,
+                         threshold_wavelet_low=None,
+                         min_n_neigh=2):
     out = np.empty(tss.shape)
     
     NJ = modwt_scales(len(tss), nscale, wavelet)
@@ -110,15 +116,17 @@ def wavelet_despike_loop(tss,
         
         mx3 = np.logical_and(
             mx2,
-            scipy.ndimage.filters.convolve(mx2.astype(np.int8),kern_conv,mode='constant')>=2)
+            scipy.ndimage.filters.convolve(mx2.astype(np.int8),kern_conv,mode='constant')>=min_n_neigh)
         mn3 = np.logical_and(
             mn2,
-            scipy.ndimage.filters.convolve(mn2.astype(np.int8),kern_conv,mode='constant')>=2)
+            scipy.ndimage.filters.convolve(mn2.astype(np.int8),kern_conv,mode='constant')>=min_n_neigh)
         WJt[np.logical_or(mx3,mn3)] = 0
         #WJt[np.logical_or(mx2,mn2)] = 0
         # remove low frequencies
         if threshold_wavelet_low is not None:
             WJt[threshold_wavelet_low:] = 0
+        if threshold_wavelet_high is not None:
+            WJt[:threshold_wavelet_high] = 0
         for i in range(NJ):
             WJt[i] = np.roll(WJt[i], cshift[i], -1)
         out[:,tsi] = modwt.imodwt_details(WJt).sum(0)

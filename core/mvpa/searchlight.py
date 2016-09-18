@@ -163,17 +163,20 @@ class SurfVoxQueryEngine(QueryEngine):
     def __init__(self,
                  surf_sl_radius=20,
                  vox_sl_radius=2.4,
-                 max_feat=None):
+                 max_feat=None,
+                 rois_fa='aparc'):
         QueryEngine.__init__(self, voxel_indices=Sphere(vox_sl_radius), coordinates=None)
         self._surf_sl_radius = surf_sl_radius
         self._vox_sl_radius = vox_sl_radius
         self._max_feat = max_feat
+        self._rois_fa = rois_fa
 
     def _train(self, ds):
 
         self._include = np.logical_and(~ds.fa.nans, (ds.samples==0).sum(0)==0)
 
         self._max_vertex = ds.a.triangles.max()+1
+        self._rois_labels = ds.fa[self._rois_fa].value
         
         self._surface = Surface(
             ds.fa.coordinates[:self._max_vertex],
@@ -196,6 +199,8 @@ class SurfVoxQueryEngine(QueryEngine):
             ids = self._sqe.query_byid(fid)
         else:
             ids = self._max_vertex+self._idx_qe.query_byid(fid-self._max_vertex)#[:self._max_feat]
+            ids = ids[self._rois_labels[ids]==self._rois_labels[fid]] # voxel in same ROI
+            
         ids = np.asarray(ids)[self._include[ids]]
         return ids.tolist()
 

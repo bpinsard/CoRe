@@ -1,8 +1,8 @@
 #day,scan_name,MRI,sequence,behavior_data,idx,option
-1,d1_resting1,BOLD_Resting_State,,,0,
+1,d1_resting1,BOLD_Resting_State,,,-3,
 1,d1_training_TSeq,BOLD_TSeq,CoReTSeq,Training-TSeq-D_One,-1,
-1,d1_resting2,BOLD_Resting_State,,,1,
-1,d1_resting3,BOLD_Resting_State,,,2,
+1,d1_resting2,BOLD_Resting_State,,,-2,
+1,d1_resting3,BOLD_Resting_State,,,-1,
 1,d1_retest_TSeq_1block,BOLD_Retest_TSeq_1block,CoReTSeq,TestBoost-TSeq-D_One,-1,
 1,d1_sleep,BOLD_Sleep,,,,
 2,d2_resting1,BOLD_Resting_State,,,0,

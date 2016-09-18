@@ -11,31 +11,33 @@ from mvpa2.mappers.fx import BinomialProportionCI
 from mvpa2.measures.base import RepeatedMeasure
 from mvpa2.clfs.gnb import GNB
 from mvpa2.misc.neighborhood import CachedQueryEngine
-from mvpa2.generators.partition import NFoldPartitioner
+from mvpa2.generators.partition import NFoldPartitioner, FactorialPartitioner
 from mvpa2.algorithms.group_clusterthr import GroupClusterThreshold
 from mvpa2 import debug
 import joblib
-
+import __builtin__
 
 preproc_dir = '/home/bpinsard/data/analysis/core_sleep'
 #dataset_subdir = 'dataset_noisecorr'
 #dataset_subdir = 'dataset_smoothed'
-dataset_subdir = 'dataset_mvpa_wd_interp_hrf_gam1'
+dataset_subdir = 'dataset_wb_wd'
 
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
-output_subdir = 'searchlight_wd_interp_hrf_gam1'
+output_subdir = 'searchlight_wb_wd'
 compression= 'gzip'
 
 subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195, 220, 223, 235, 268, 267,237,296]
 #subject_ids = subject_ids[:-1]
+#subject_ids = [296]
 group_Int = [1,23,63,79,82,87,100,107,128,192,195,220,223,235,268,267,237,296]
 ulabels = ['CoReTSeq','CoReIntSeq','mvpa_CoReOtherSeq1','mvpa_CoReOtherSeq2','rest']
 #ulabels = ulabels[1:]
 
+
 seq_groups = {
     'mvpa_new_seqs' : ulabels[2:4],
     'tseq_intseq' : ulabels[:2],
-#    'all_seqs': ulabels[:4]
+    'all_seqs': ulabels[:4]
 }
 block_phases = [
     #'instr',
@@ -118,7 +120,7 @@ def subject_searchlight_permutation(sid):
     zscore(ds_mvpa, chunks_attr='scan_id', param_est=('targets','rest'))
 
     sample_types = {
-#        '': ds_mvpa,
+        #        '': ds_mvpa,
         '_glm':ds_glm_mvpa
     }
 
@@ -163,7 +165,7 @@ def group_cluster_threshold_analysis():
     #ftp = 5e-4
     ftp = 2e-4
 
-    block_phases = ['exec','instr']
+    block_phases = ['exec']
     #block_phases = ['instr']
 
     conn_all = np.load(os.path.join(proc_dir,'connectivity_96k.npy')).tolist()
@@ -219,33 +221,37 @@ def group_cluster_threshold_analysis():
             except Exception as e:
                 print '%s for group %s failed' % (slmap_name,group_name)
                 print e
-        del all_slmap_perm, slmaps
+                del all_slmap_perm, slmaps
 
 
 def all_searchlight_2fold():
     new_sids = [sid for sid in subject_ids if len(glob.glob(os.path.join(proc_dir,output_subdir,'CoRe_%03d_*confusion.h5'%sid)))==0]
     print new_sids
-    joblib.Parallel(n_jobs=3)([joblib.delayed(subject_searchlight_2fold)(sid) for sid in new_sids])
+    new_sids = subject_ids
+    joblib.Parallel(n_jobs=4)([joblib.delayed(subject_searchlight_2fold)(sid) for sid in new_sids])
 
 def subject_searchlight_2fold(sid):
     print('______________   CoRe %03d   ___________'%sid)
     ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'glm_ds_%d.h5'%sid))
-    ds = ds_glm 
-    #ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'ds_%d.h5'%sid))
-    #targets_num(ds, ulabels)
+    ds = ds_glm
+    if 'node_indices' not in ds_glm.fa.keys():
+        ds_glm.fa['node_indices'] =  np.arange(ds_glm.nfeatures, dtype=np.uint)
+        #ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'ds_%d.h5'%sid))
+        #targets_num(ds, ulabels)
     targets_num(ds_glm, ulabels)
 
     mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
     if len(mvpa_scan_names)==0:
         mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
-    svqe = searchlight.SurfVoxQueryEngine(max_feat=64, vox_sl_radius=2.3, surf_sl_radius=20)
+
+    svqe = searchlight.SurfVoxQueryEngine(max_feat=128, vox_sl_radius=3.2, surf_sl_radius=25)
     svqe_cached = searchlight.CachedQueryEngineAlt(svqe)
 
     gnb = GNB(space='targets_num')
-#   gnb = GNB(space='sequence_type')
+    #   gnb = GNB(space='sequence_type')
 
     spltr = Splitter(attr='partitions', attr_values=[1,2])
-#    ds_glm.sa['sequence_type'] = ds_glm.sa.targets_num/2
+    #    ds_glm.sa['sequence_type'] = ds_glm.sa.targets_num/2
     
     slght_2fold = searchlight.GNBSearchlightOpt(
         gnb,
@@ -285,8 +291,8 @@ def subject_searchlight_2fold(sid):
         ds_glm_subset = ds_glm[subset]
         slmap_glm_2fold = slght_2fold(ds_glm_subset)
         slmap_glm_2fold.save(os.path.join(proc_dir, output_subdir,
-                                         'CoRe_%03d_%s_glm_2fold_confusion.h5'%(sid,subset_name)),
-                            compression=compression)
+                                          'CoRe_%03d_%s_glm_2fold_confusion.h5'%(sid,subset_name)),
+                             compression=compression)
         del slmap_glm_2fold
 
         if len(ds_glm_subset.sa['scan_name'].unique) > 1 and False:
@@ -383,12 +389,12 @@ def subject_searchlight_new(sid):
             slmap_loco.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_loco_confusion.h5'%(sid,subset_name)),
                             compression=compression)
             del slmap_loco
-        if len(ds_subset.sa['scan_name'].unique) > 1:
-            slmap_loso = slght_loso(ds_subset)
-            slmap_loso.save(
-                os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_loso_confusion.h5'%(sid,subset_name)),
-                compression=compression)
-            del slmap_loso
+            if len(ds_subset.sa['scan_name'].unique) > 1:
+                slmap_loso = slght_loso(ds_subset)
+                slmap_loso.save(
+                    os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_loso_confusion.h5'%(sid,subset_name)),
+                    compression=compression)
+                del slmap_loso
 
         ds_glm_subset = ds_glm_mvpa[subset]
         #zscore(ds_glm_subset, chunks_attr='scan_id')
@@ -400,12 +406,12 @@ def subject_searchlight_new(sid):
                                              'CoRe_%03d_%s_glm_loco_confusion.h5'%(sid,subset_name)),
                                 compression=compression)
             del slmap_glm_loco
-        if len(ds_glm_subset.sa['scan_name'].unique) > 1:
-            slmap_glm_loso = slght_loso(ds_glm_subset)
-            slmap_glm_loso.save(
-                os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_glm_loso_confusion.h5'%(sid,subset_name)),
-                compression=compression)
-            del slmap_glm_loso
+            if len(ds_glm_subset.sa['scan_name'].unique) > 1:
+                slmap_glm_loso = slght_loso(ds_glm_subset)
+                slmap_glm_loso.save(
+                    os.path.join(proc_dir, output_subdir, 'CoRe_%03d_%s_glm_loso_confusion.h5'%(sid,subset_name)),
+                    compression=compression)
+                del slmap_glm_loso
 
     return 
     slght_loco_delay = searchlight.GNBSearchlightOpt(
@@ -431,21 +437,21 @@ def subject_searchlight_new(sid):
             min_tr = scan_mask[0]
             max_tr = scan_mask[-1]
             delay_trs = delay_trs[np.logical_or(np.logical_and(delay_trs >= min_tr,delay_trs <= max_tr),~scan_trs)]
-        delay_ds = ds_mvpa[delay_trs]
-        delay_ds.targets = ds_mvpa.sa.targets_no_delay[delay_trs-d]
-        delay_ds.sa.targets_num = ds_mvpa.sa.targets_num[delay_trs-d+3]
-        delay_ds.chunks = np.arange(delay_ds.nsamples)
-        delay_ds.fa = ds_mvpa.fa # cheat CachedQueryEngine hashing
-        slmap_confmat = slght_loco_delay(delay_ds)
-        delay_slmaps_confusion.append(slmap_confmat)
-        del delay_ds
-    slmap_delay = vstack(delay_slmaps_confusion)
-    slmap_delay.fa = ds_mvpa.fa
-    slmap_delay.sa['delays']=delays
-    slmap_delay.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_delay_confusion.h5'%sid),
-                     compression=compression)
-    del delay_slmaps_confusion, slmap_delay
-    
+            delay_ds = ds_mvpa[delay_trs]
+            delay_ds.targets = ds_mvpa.sa.targets_no_delay[delay_trs-d]
+            delay_ds.sa.targets_num = ds_mvpa.sa.targets_num[delay_trs-d+3]
+            delay_ds.chunks = np.arange(delay_ds.nsamples)
+            delay_ds.fa = ds_mvpa.fa # cheat CachedQueryEngine hashing
+            slmap_confmat = slght_loco_delay(delay_ds)
+            delay_slmaps_confusion.append(slmap_confmat)
+            del delay_ds
+            slmap_delay = vstack(delay_slmaps_confusion)
+            slmap_delay.fa = ds_mvpa.fa
+            slmap_delay.sa['delays']=delays
+            slmap_delay.save(os.path.join(proc_dir, output_subdir, 'CoRe_%03d_delay_confusion.h5'%sid),
+                             compression=compression)
+            del delay_slmaps_confusion, slmap_delay
+            
 
 def targets_num(ds, utargets, targets_src='targets', targets_num_attr='targets_num'):
     targets2idx = dict([(t,i) for i,t in enumerate(utargets)])
@@ -467,8 +473,8 @@ bas_labels = {
     'BA45':3}
 
 fs_clt = np.loadtxt('/home/bpinsard/softs/freesurfer/FreeSurferColorLUT.txt',np.str)
-#rois = np.hstack([np.asarray([46,29,70,69,28,4,3,7,8])+a for a in [11100,12100]]+[53,17,10,49,51,12,8,47,11,50])
-rois = np.asarray([53,17,10,49,51,12,8,47,11,50])
+rois = np.hstack([np.asarray([46,29,70,69,28,4,3,7,8,26,27,16])+a for a in [11100,12100]]+[53,17,10,49,51,12,8,47,11,50,13,52])
+#rois = np.asarray([53,17,10,49,51,12,8,47,11,50])
 aparc_labels = dict([(fs_clt[fs_clt[:,0]==str(r)][0,1],r) for r in rois])
 
 bas_labels = dict([('%s_%s'%(l,h),k+hi*1000) for l,k in bas_labels.items() for hi,h in enumerate('lr')])
@@ -540,10 +546,9 @@ def create_cv_nullhyp(clf, partitioner,splitter, nrepeat=200):
 
 def subject_rois_analysis(subj, clf):
 
-    
     print('______________   %s   ___________'%subj)
     ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%s'%subj, dataset_subdir, 'glm_ds_%s.h5'%subj))
-    ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
+#    ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%s'%subj, dataset_subdir, 'ds_%s.h5'%subj))
 
     mvpa_scan_names = [n for n in np.unique(ds_glm.sa.scan_name) if 'mvpa' in n]
     ds_glm_mvpa = ds_glm[dict(scan_name=mvpa_scan_names)]
@@ -552,16 +557,17 @@ def subject_rois_analysis(subj, clf):
 
     #ds_glm_mvpa.samples/=ds_glm_mvpa.samples.std(0)
     #ds_glm_mvpa.samples[np.isnan(ds_glm_mvpa.samples)]=0
-    ds_mvpa = ds[dict(scan_name=mvpa_scan_names)]
+    #ds_mvpa = ds[dict(scan_name=mvpa_scan_names)]
+    """
     targets_num(ds_mvpa, ulabels)
     if 'ba_thresh' not in ds_mvpa.fa:
-        ds_mvpa.fa['ba_thresh'] = ds_mvpa.fa.ba_thres
-    if 'ba_thresh' not in ds_glm_mvpa.fa:
-        ds_glm_mvpa.fa['ba_thresh'] = ds_glm_mvpa.fa.ba_thres
-    poly_detrend(ds_mvpa, chunks_attr='scan_id', polyord=0)
-    zscore(ds_mvpa,chunks_attr='scan_id')
-    del ds_glm, ds
-
+        #ds_mvpa.fa['ba_thresh'] = ds_mvpa.fa.ba_thres
+        if 'ba_thresh' not in ds_glm_mvpa.fa:
+            ds_glm_mvpa.fa['ba_thresh'] = ds_glm_mvpa.fa.ba_thres
+            #poly_detrend(ds_mvpa, chunks_attr='scan_id', polyord=0)
+            #zscore(ds_mvpa,chunks_attr='scan_id')
+            del ds_glm, ds
+    """
     glm_rois_stats = dict()
     tr_rois_stats = dict()
 
@@ -576,20 +582,26 @@ def subject_rois_analysis(subj, clf):
 #        'all_seqs': ulabels[:4]
     }
     block_phases = [
-        'instr',
+        #'instr',
         'exec']
-    cvte_subsets = dict([('%s_%s'%(sg_name, bp),dict(targets=seqs,subtargets=[bp])) \
-                    for sg_name,seqs in seq_groups.items() \
-                    for bp in block_phases])
+    cvte_subsets = dict([('%s_%s_%s'%(sg_name, bp,scan_group_name),dict(targets=seqs,subtargets=[bp],scan_name=scans)) \
+                         for sg_name,seqs in seq_groups.items() \
+                         for bp in block_phases
+                         for scan_group_name,scans in scan_groups.items()])
 
     spltr = Splitter(attr='partitions',attr_values=[1,2])
 
     prtnrs = dict(
         #loco=mvpa_nodes.prtnr_loco_cv(1),
-        twofold=mvpa_nodes.prtnr_2fold_sift,
+        twofold=FactorialPartitioner(
+            NFoldPartitioner(cvtype=4,attr='chunks'),
+            attr='targets',
+            selection_strategy='equidistant',
+            count=16)
         #loso=mvpa_nodes.prtnr_loso_cv(1)
     )
-    
+    rois = Dataset.from_hdf5('/mnt/data/analysis/msl_rois.h5')
+
     for prtnr_name, prtnr in prtnrs.items():
         glm_rois_stats[prtnr_name] = {}
         tr_rois_stats[prtnr_name] = {}
@@ -597,15 +609,25 @@ def subject_rois_analysis(subj, clf):
         #    clf, prtnr, splitter=spltr, enable_ca=['stats'],
         #    #postproc=BinomialProportionCI(width=.95, meth='jeffreys')
         #)
-        cvte = create_cv_nullhyp(clf,prtnr,spltr)
+        cvte = create_cv_nullhyp(clf,prtnr,spltr,nrepeat=100)
         for subset_name, subset in cvte_subsets.items():
             print '_'*10,subset_name, subset,'_'*10
             glm_rois_stats[prtnr_name][subset_name] = {}
             tr_rois_stats[prtnr_name][subset_name] = {}
             ds_glm_subset = ds_glm_mvpa[subset]
-#            ds_glm_subset.samples/=ds_glm_subset.samples.std(0)
-#            ds_glm_subset.samples[np.isnan(ds_glm_subset.samples)]=0
-            ds_subset = ds_mvpa[subset]
+            #            ds_glm_subset.samples/=ds_glm_subset.samples.std(0)
+            #            ds_glm_subset.samples[np.isnan(ds_glm_subset.samples)]=0
+            #ds_subset = ds_mvpa[subset]
+            for ri,roi_name in enumerate(rois.a.roi_labels):
+                cv_glm_res = cvte(ds_glm_subset[:,rois.samples[0]==ri+1])
+                glm_rois_stats[prtnr_name][subset_name][roi_name] = cvte.ca.stats
+                pvalue = cvte.ca.null_prob.samples
+                glm_rois_stats[prtnr_name][subset_name][roi_name].stats['pvalue'] = pvalue
+                print('glm\t%s\t%s\t%s\tacc=%f\tp=%.5f'%(
+                    prtnr_name, roi_name, subset_name, 
+                    glm_rois_stats[prtnr_name][subset_name][roi_name].stats['ACC'],pvalue))
+                
+            """
             for roi_fa, rois_labels in rois_groups.items():
                 for roi_name, roi_label in rois_labels.items():
                     cv_glm_res = cvte(ds_glm_subset[:,{roi_fa:[roi_label],'nans':[False]}])
@@ -613,13 +635,16 @@ def subject_rois_analysis(subj, clf):
                     pvalue = cvte.ca.null_prob.samples
                     glm_rois_stats[prtnr_name][subset_name][roi_name].stats['pvalue'] = pvalue
                     print('glm\t%s\t%s\t%s\tacc=%f\tp=%.5f'%(prtnr_name, roi_name, subset_name, glm_rois_stats[prtnr_name][subset_name][roi_name].stats['ACC'],pvalue))
-                    """
+            
+
                     cv_res = cvte(ds_subset[:,{roi_fa:[roi_label]}])
                     tr_rois_stats[prtnr_name][subset_name][roi_name] = cvte.ca.stats
                     pvalue = cvte.ca.null_prob.samples
                     tr_rois_stats[prtnr_name][subset_name][roi_name].stats['pvalue'] = pvalue
                     print('tr\t%s\t%s\t%s\tacc=%f\tp=%.5f'%(prtnr_name, roi_name, subset_name, tr_rois_stats[prtnr_name][subset_name][roi_name].stats['ACC'],pvalue))
-                    """
+            """
+            
+                    
     return glm_rois_stats, tr_rois_stats
     
 
@@ -657,8 +682,8 @@ def group_searchlight():
 
     t_range = [0,5]
     pvalue = 0.01
-#    hv = hcpview.HCPViewer()
-#    hv.set_range(t_range)
+    #    hv = hcpview.HCPViewer()
+    #    hv.set_range(t_range)
 
     for sln, ch_acc in slmaps:
         print sln
@@ -692,7 +717,7 @@ def group_searchlight():
         del slmaps_acc, mean_acc
 
 def group_contrast(contrast_name, sln1, sln2, group1, group2, tfunc=scipy.stats.ttest_ind,
-                    t_range = [0,5], pvalue = 0.05, chance_level=.5):
+                   t_range = [0,5], pvalue = 0.05, chance_level=.5):
     import hcpview
     slmaps1 = Dataset.from_hdf5(os.path.join(proc_dir, 'searchlight_group','CoRe_group_%s_mean_acc.h5'%sln1))
     slmaps2 = slmaps1 if sln1 == sln2 else Dataset.from_hdf5(os.path.join(proc_dir, 'searchlight_group','CoRe_group_%s_mean_acc.h5'%sln2))
@@ -739,3 +764,168 @@ def all_group_contrasts():
                    'mvpa_all_mvpa_new_seqs_exec_loso',
                    [True],[True],
                    scipy.stats.ttest_rel)
+
+
+def subject_rsa_analysis(subject_id):
+#    ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%s'%subject_id, 
+#                                            dataset_subdir, 'glm_ds_%s.h5'%subject_id))
+    
+    ds_all = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%subject_id, dataset_subdir, 'ds_%d.h5'%subject_id))
+    zscore(ds_all, chunks_attr='scan_id', param_est=('subtargets','rest'))
+
+
+    pat = dict()
+    pat['training_end'] = ds_all[dict(scan_name=['d1_training_TSeq'],subtargets=['exec'],blocks_idx=range(7,14))].samples.mean(0)
+    """
+    for sn in ['d3_mvpa1', 'd3_mvpa2']:
+        for seq in ulabels[:4]:
+            pat['%s_%s'%(sn,seq)] = ds_all[dict(scan_name=[sn],targets=[seq],subtargets=['exec'])].samples.mean(0)
+    """
+#    del ds_glm
+
+    all_tvalues = dict()
+    all_pvalues = dict()
+    
+    rois = Dataset.from_hdf5('/mnt/data/analysis/msl_rois.h5')
+
+    for roi_id, roi_name in enumerate(rois.a.roi_labels):
+        roi_mask = rois.samples[0]==roi_id+1
+        ds_tmp = ds_all[:,roi_mask]
+#        ds_tmp.samples -= ds_tmp.samples.mean(1)[:,np.newaxis]
+        for patname, pat_data in pat.items():
+            print roi_name, patname
+            roi_pat = pat_data[roi_mask]
+            mtx = np.column_stack([roi_pat,np.ones(len(roi_pat))])
+
+            xx1 = np.linalg.inv(mtx.T.dot(mtx))
+            betas = xx1.dot(mtx.T).dot(ds_tmp.samples.T)
+            res = ds_tmp.samples-mtx.dot(betas).T
+            varb = res.var(1)*xx1[0,0]
+            
+            """
+            all_corrs['%s_%s'%(roi_name, patname)] = np.dot(
+                (ds_tmp.samples-ds_tmp.samples.mean(1)[:,np.newaxis])/ds_tmp.samples.std(1)[:,np.newaxis],
+                ((roi_pat-roi_pat.mean())/roi_pat.std())[:,np.newaxis]).ravel()/ds_tmp.nfeatures
+            """
+            all_tvalues['%s_%s'%(roi_name, patname)] = betas[0]/np.sqrt(varb)
+            all_pvalues['%s_%s'%(roi_name, patname)] = 2 * scipy.stats.distributions.t.sf(np.abs(all_tvalues['%s_%s'%(roi_name, patname)]),len(roi_pat)-2)
+            
+            del res
+        del ds_tmp
+    sas = ds_all.sa
+    del ds_all
+    return all_tvalues, all_pvalues, sas
+
+
+def all_subjects_rsa_analysis(shift=30):
+    pyplot.style.use('ggplot')
+    all_subject_tvalues = dict()
+    all_subject_corrs = dict()
+    sas = dict()
+    for s in subject_ids:
+        print '_'*20,s,'_'*20
+        all_subject_tvalues[s],all_subject_corrs[s],sas[s] = subject_rsa_analysis(s)
+        f,ax = pyplot.subplots(
+            1,1,
+            sharex=True,
+            figsize=(50,15),
+            gridspec_kw=dict(left=.04, right=.999,top=.99,bottom=.02))
+        roi_names = sorted(all_subject_tvalues[s].keys())
+        
+        scans_diff = sas[s].scan_name[1:]!=sas[s].scan_name[:-1]
+        scans_start = np.hstack([[0],np.where(scans_diff)[0]+1])
+        scans_length = np.bincount(np.cumsum(scans_diff))
+        
+        ax.bar(left=scans_start,
+               bottom=-shift*2,
+               width=scans_length,
+               height=[shift*len(roi_names)+shift*4]*len(scans_length),
+               color=[pyplot.rcParams['axes.color_cycle'][('sleep' in n or 'rest' in n)] \
+                      for n in sas[s].scan_name[scans_start]],
+               alpha=.1)
+
+        ax.plot(
+            np.asarray([all_subject_tvalues[s][r]+ri*shift for ri,r in enumerate(roi_names)]).T,
+            lw=.1)
+        ax.set_ylim(-shift*1,shift*(len(roi_names)+1))
+        ax.set_xlim(0,len(all_subject_tvalues[s].values()[0]))
+        ax.set_yticks((np.arange(len(roi_names))*shift+np.array([[-shift/2,0,shift/2]]).T).T.ravel())
+        ax.set_yticklabels(__builtin__.sum([[-shift/2,r,shift/2] for r in roi_names],[]))
+        f.savefig('/home/bpinsard/data/projects/CoRe/results/rsa/rsa_tvalues_%03d.pdf'%s)
+        pyplot.close(f)
+        #for ri,r in enumerate(sorted(all_subject_tvalues[s].keys())):
+        #    ax[ri].plot(all_subject_tvalues[s][r])
+    np.savez(os.path.join(proc_dir,'all_subjects_rsa.npy'),tvalues=all_subject_tvalues,corrs=all_subject_corrs, sas=sas)
+    return all_subject_tvalues, all_subject_corrs, sas
+            
+
+def create_rois():
+
+    hemis = 'lr'
+    subctx_rois = dict(
+        hip_l=17,
+        hip_r=53,
+        thal_l=10,
+        thal_r=49,
+        put_l=12,
+        put_r=51,
+        cer_l=8,
+        cer_r=47,
+        caud_l=11,
+        caud_r=50,
+        pal_l=13,
+        pal_r=52    
+    )
+    t_pat = Dataset.from_hdf5('/home/bpinsard/data/projects/CoRe/results/mean_task_pattern.h5')
+
+    bas = t_pat.fa.ba
+    parc = t_pat.fa.aparc
+    parcmod100 = np.mod(parc,100)
+
+    ctx_rois_masks = [
+#        ('dlpfc', np.logical_and(parcmod100==15,bas!=7)),
+        ('sma', np.logical_and(bas==7, parcmod100==16)),
+        ('pmd', np.logical_and(bas==7, np.logical_or(np.logical_or(parcmod100==70, parcmod100==55),parcmod100==29))),
+        ('m1', np.logical_and(np.logical_or(bas==5,bas==6),~np.logical_or(parcmod100==3,parcmod100==16))),
+        ('s1', np.logical_and(bas>0,bas<5)),
+        ('opj', parcmod100==27),
+        ('ips', parcmod100==57),
+    ]
+
+
+
+    svqe = searchlight.SurfVoxQueryEngine(vox_sl_radius=8, surf_sl_radius=25)
+    svqe.train(t_pat)
+    
+    idx=0
+    rois_mask = np.zeros(t_pat.nfeatures,dtype=np.int)
+    rois_labels = []
+    for hi,h in enumerate(hemis):
+        for roi_name, roi_mask in ctx_rois_masks:
+            print roi_name
+            idx+=1
+            tmp_mask = roi_mask.copy()
+            tmp_mask[(1-hi)*32492:(2-hi)*32492] = 0
+            tmp_mask[2*32492:] = 0
+            if roi_name in ['s1','m1','dlpfc']:
+                if roi_name=='s1':
+                    neighs = np.asarray(svqe.query_byid(7816+32492*hi))
+                elif roi_name=='m1':
+                    neighs = np.asarray(svqe.query_byid(8080+32492*hi))
+                elif roi_name=='dlpfc':
+                    neighs = np.asarray(svqe.query_byid(29972+32492*hi))
+                neighs = neighs[tmp_mask[neighs]]
+                rois_mask[neighs] = idx
+            else:
+                rois_mask[tmp_mask] = idx
+            rois_labels.append('%s_%s'%(roi_name,h))
+    for roi_name, roi_label in subctx_rois.items():
+        print roi_name
+        idx += 1
+        mask = (parc == roi_label)
+        neighs = np.asarray(svqe.query_byid(t_pat.fa.node_indices[mask][np.argmax(t_pat.samples[0,mask])]))
+        neighs = neighs[mask[neighs]]
+        rois_mask[neighs] = idx
+        rois_labels.append(roi_name)
+    return rois_mask, rois_labels
+            

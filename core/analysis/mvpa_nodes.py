@@ -67,7 +67,7 @@ prtnr_2fold_sift = ChainNode(
     space='balanced_partitions')
 
 prtnr_2fold_factpart = FactorialPartitioner(
-    NFoldPartitioner(cvtype=2,attr='chunks'),
+    NFoldPartitioner(cvtype=4,attr='chunks'),
     attr='targets_num',
     selection_strategy='equidistant',
     count=32)

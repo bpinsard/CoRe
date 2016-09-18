@@ -39,7 +39,7 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
 subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268,267,237,283,296,319]
 #subject_ids = subject_ids[:-1]
 #subject_ids = subject_ids[:1]
-#subject_ids = [296]
+subject_ids = [296]
 
 tr = 2.16
 echo_time = .03
@@ -172,7 +172,7 @@ def preproc_anat():
                               reg_header=True),
         'reg_crop')
     n_compute_pvmaps = pe.Node(
-        freesurfer.ComputeVolumeFractions(
+        freesurfer.utils.ComputeVolumeFractions(
             gm_file='pve.nii.gz',
             niigz=True,
         ),
@@ -243,7 +243,8 @@ def preproc_fmri():
             ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.cortex.nii.gz'],
             ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.subcort_gm.nii.gz'],
             ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.wm.nii.gz'],
-            ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.csf.nii.gz']],
+            ['t1_preproc/_subject_id','subject_id','compute_pvmaps/*.csf.nii.gz'],
+            ['t1_preproc/_subject_id','subject_id','compute_pvmaps/pve.nii.gz']],
         lowres_surf_lh = [
             ['surface_32k/_subject_id','subject_id',
              'white_resample_surf/mapflow/_white_resample_surf0/lh.white_converted.32k.gii'],
@@ -338,8 +339,8 @@ def preproc_fmri():
 
     n_repeat_topup = pe.Node(
         utility.Function(
-            input_names = ['fmri_scans','fieldmaps','arg_names','enc_file','appa','movpar','reg_file'],
-            output_names = ['fieldmaps','enc_file','appa','movpar','reg_file'],
+            input_names = ['fmri_scans','fieldmaps','arg_names','enc_file','appa','movpar','reg_file','pve'],
+            output_names = ['fieldmaps','enc_file','appa','movpar','reg_file','pve'],
             function = repeat_fieldmaps),
         run_without_submitting=True,
         name='repeat_topup')
@@ -370,7 +371,15 @@ def preproc_fmri():
         iterfield = ['in_file','matrix'],
         name='apply_registration'
     )
-    
+
+    n_epi_pvf = pe.MapNode(
+        freesurfer.utils.ComputeVolumeFractions(
+            gm_file='pve.nii.gz',
+            niigz=True,
+        ),
+        iterfield = ['in_file','reg_file'],
+        name='epi_pvf'
+    )
 
     n_coords2fakesurf = pe.Node(
         utility.Function(
@@ -382,11 +391,11 @@ def preproc_fmri():
 
     n_volume2surface = pe.MapNode(
         utility.Function(
-            input_names = ['in_file','surface','method','inner_surface','outer_surface'],
+            input_names = ['in_file','surface','method','inner_surface','outer_surface','mask'],
             output_names = ['out_file'],
             function = generic_pipelines.fmri_surface.wb_command_volume_to_surface_mapping
         ),
-        iterfield=['in_file'],
+        iterfield=['in_file','mask'],
         name='volume2surface'
     )
     n_volume2surface_lh = n_volume2surface.clone('volume2surface_lh')
@@ -394,6 +403,21 @@ def preproc_fmri():
     n_volume2surface_lh.interface.inputs.method = n_volume2surface_rh.interface.inputs.method = 'ribbon-constrained'
     n_volume2surface_sc = n_volume2surface.clone('volume2surface_sc')
     n_volume2surface_sc.interface.inputs.method = 'trilinear'
+    n_volume2surface_sc.iterfield = ['in_file']
+
+
+    n_surface_smoothing_lh = pe.MapNode(
+        utility.Function(
+            input_names = ['in_file', 'surface_file','smoothing_kernel','method'],
+            output_names = ['out_file'],
+            function = generic_pipelines.fmri_surface.wb_command_metric_smoothing
+        ),
+        iterfield=['in_file'],
+        name='surface_smoothing_lh'
+    )
+    n_surface_smoothing_lh.inputs.smoothing_kernel = 2
+    n_surface_smoothing_lh.inputs.method = 'GEO_GAUSS_AREA'
+    n_surface_smoothing_rh = n_surface_smoothing_lh.clone('surface_smoothing_rh')
 
 
     n_merge_gii = pe.Node(
@@ -415,6 +439,15 @@ def preproc_fmri():
         ),
         iterfield=['source_file'],
         name='bbreg_epi_scale')
+    
+
+    n_good_voxels = pe.MapNode(
+        utility.Function(
+            input_names = ['in_file', 'mask_file', 'mask_threshold', 'factor'],
+            output_names = ['good_voxels'],
+            function=generic_pipelines.fmri_surface.fmri_goodvox),
+        iterfield=['in_file','mask_file'],
+        name='good_voxels')
 
     n_topup2t1_xfm = pe.MapNode(
         freesurfer.preprocess.Tkregister(xfm_out='topup2t1.xfm',
@@ -436,11 +469,12 @@ def preproc_fmri():
 
     n_dataset_wb = pe.Node(
         CreateDatasetWB(tr=tr,
-                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
-                      #design=os.path.join(project_dir,'data/mvpa_only.csv'),
-                      design=os.path.join(project_dir,'data/design.csv'),
-                      median_divide=True,
-                      wavelet_despike=True),
+                        behavioral_data_path=os.path.join(data_dir,'Behavior'),
+                        #design=os.path.join(project_dir,'data/mvpa_only.csv'),
+                        design=os.path.join(project_dir,'data/design.csv'),
+                        median_divide=True,
+                        wavelet_despike=True
+                    ),
         name='dataset_wb_wd')
     n_dataset_wb.plugin_args = high_mem_queue_args
 
@@ -457,12 +491,16 @@ def preproc_fmri():
             (si, n_bbreg_epi_scale, [(('subject_id',wrap(str),[]),'subject_id')]),            
 
 
-
             (n_topup,n_topup2t1_xfm,[('out_corrected','mov')]),
             (n_bbreg_epi_scale, n_topup2t1_xfm,[('out_reg_file','reg_file')]),
             (n_anat_grabber,n_topup2t1_xfm,[('norm','target')]),
             (n_topup2t1_xfm, n_topup2t1_mat,[('xfm_out','xfm')]),
         
+            (n_bbreg_epi_scale, n_epi_pvf, [('out_reg_file','reg_file')]),
+            (n_topup, n_epi_pvf, [('out_corrected','in_file')]),
+            (n_anat_grabber,n_epi_pvf,[ ('subjects_dir',)*2]),
+
+            (n_epi_pvf,n_repeat_topup,[('partial_volume_maps','pve')]),
                 
             (n_topup2t1_mat, n_repeat_topup,[('mat','reg_file')]),
             (w.get_node('all_func_dirs'),n_repeat_topup,[('fmri_all','fmri_scans')]),
@@ -497,6 +535,10 @@ def preproc_fmri():
     workbench_interpolate = True
     if workbench_interpolate:
         w.connect([
+            
+            (n_repeat_topup, n_good_voxels,[(('pve',generic_pipelines.utils.getitem_rec,slice(0,None),0),'mask_file')]),
+            (n_apply_registration, n_good_voxels,[('out_file','in_file')]),
+            
             (n_anat_grabber, n_coords2fakesurf,[('lowres_rois_coords','in_file')]),
             (n_anat_grabber, n_volume2surface_lh,[
                 (('lowres_surf_lh',utility.select,0),'surface'),
@@ -509,23 +551,32 @@ def preproc_fmri():
                 (('lowres_surf_rh',utility.select,1),'outer_surface'),
             ]),
 
+            (n_anat_grabber, n_surface_smoothing_lh,[(('lowres_surf_lh',utility.select,0),'surface_file')]),
+            (n_anat_grabber, n_surface_smoothing_rh,[(('lowres_surf_rh',utility.select,0),'surface_file')]),
+            
+            (n_volume2surface_lh, n_surface_smoothing_lh,[('out_file','in_file')]),
+            (n_volume2surface_rh, n_surface_smoothing_rh,[('out_file','in_file')]),
+            
             (n_coords2fakesurf, n_volume2surface_sc,[('out_file','surface')]),
-            (n_volume2surface_lh, n_merge_gii,[('out_file','lh_tss')]),
-            (n_volume2surface_rh, n_merge_gii,[('out_file','rh_tss')]),
+            (n_surface_smoothing_lh, n_merge_gii,[('out_file','lh_tss')]),
+            (n_surface_smoothing_rh, n_merge_gii,[('out_file','rh_tss')]),
             (n_volume2surface_sc, n_merge_gii,[('out_file','sc_tss')]),
-
+            
             (si, n_dataset_wb,[('subject_id',)*2]),
             (n_merge_gii, n_dataset_wb,[('grouped_tss','ts_files')]),
             (w.get_node('all_func_dirs'), n_dataset_wb,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
-
-
+            
+            
             (n_anat_grabber, n_dataset_wb,[
                 (('lowres_surf_lh',utility.select,0),'lh_surf'),
                 (('lowres_surf_rh',utility.select,0),'rh_surf'),
                 ('lowres_rois_coords','sc_coords')]),
         ])
         for n in [n_volume2surface_lh,n_volume2surface_rh,n_volume2surface_sc]:
-            w.connect(n_apply_registration,'out_file',n,'in_file')
+            w.connect([
+                (n_apply_registration,n,[('out_file','in_file')]),
+                (n_good_voxels,n,[('good_voxels','mask')]),
+                ])
         
 
     n_group_hemi_surfs = pe.Node(
@@ -596,6 +647,21 @@ def preproc_fmri():
         iterfield = ['dicom_files','fieldmap','fieldmap_reg','init_reg'],
         overwrite=False,
         name = 'motion_correction')
+
+    n_moco_noco = pe.MapNode(
+        nipy.preprocess.OnlineRealign(
+            echo_time=echo_time,
+            echo_spacing=echo_spacing,
+            phase_encoding_dir=phase_encoding_dir,
+            middle_surface_position = middle_surface_position,
+            bias_correction=True,
+            bias_sigma=10,
+            interp_rbf_sigma=3,
+            resampled_first_frame='frame1.nii',
+            out_file_format='ts.h5'),
+        iterfield = ['dicom_files','fieldmap','fieldmap_reg'],
+        overwrite=False,
+        name = 'moco_noco')
 
     n_noise_corr = pe.MapNode(
         nipy.preprocess.OnlineFilter(
@@ -699,7 +765,26 @@ def preproc_fmri():
 
             (n_epi2t1_xfm2mat, n_motion_corr, [('mat','init_reg')])
         ])
-
+    moco_noco = True
+    if moco_noco:
+        w.connect([
+            (w.get_node('all_func_dirs'), n_moco_noco,[(('fmri_all', flatten_remove_none),'dicom_files')]),
+            
+            (n_anat_grabber, n_moco_noco,[
+                ('norm','surfaces_volume_reference'),
+                ('cropped_mask','mask'),
+                (('pve_maps', utility.select, -1),'gm_pve'),
+                (('pve_maps', utility.select, 1),'wm_pve'),
+                (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
+                  '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
+                 'resample_rois')]),
+            (n_repeat_fieldmaps, n_moco_noco,[
+                ('fieldmaps','fieldmap'),
+                ('fieldmap_regs','fieldmap_reg')]),
+            
+            (n_group_hemi_surfs, n_moco_noco,[('out','resample_surfaces')]),
+            (n_epi2t1_xfm2mat, n_moco_noco, [('mat','init_reg')])
+        ])
 
 
     n_dataset_noisecorr = pe.Node(
@@ -1044,8 +1129,11 @@ class CreateDatasetWB(CreateDataset):
 
             for ts_file,dicom_dir in zip(ts_files,dicom_dirs):
                 used_ts_files.append(ts_file[0])
-                #print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
-                tss = np.hstack([np.asarray([da.data for da in nb.gifti.read(f).darrays]) for f in ts_file])
+                print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
+                tss = np.hstack([np.asarray([da.data for da in nb.load(f).darrays]) for f in ts_file])
+                print tss.shape
+                if tss.shape[0] <= 10:
+                    continue
                 ds = mvpa2.datasets.Dataset(tss)
 
                 dcm = dicom.read_file(sorted(glob.glob(os.path.join(dicom_dir, '*')))[0])
@@ -1065,7 +1153,6 @@ class CreateDatasetWB(CreateDataset):
                     wav_despike=self.inputs.wavelet_despike,
                     tr=self.inputs.tr)
                 
-                
                 if ds.nsamples <= 10:
                     break
                 scan_id += 1
@@ -1084,7 +1171,8 @@ class CreateDatasetWB(CreateDataset):
                     ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_stim', reg_groups,['constant'])
                     dss_glm_stim.append(ds_glm)
 
-                    for a in ['regressors_exec','regressors_stim','regressors_exec_evt']:
+                    for a in ['regressors_exec','regressors_stim','regressors_exec_evt',
+                              'regressors_blocks','regressors_stim_evt']:
                         if a in ds.sa:
                             del ds.sa[a]
                 # used ts files to avoid repeating
@@ -1100,8 +1188,8 @@ class CreateDatasetWB(CreateDataset):
         ds_glm_stim.sa['chunks'] = np.cumsum(np.ediff1d(ds_glm_stim.chunks, to_begin=[0])!=0)
 
 
-        lh_gii = nb.gifti.read(self.inputs.lh_surf)
-        rh_gii = nb.gifti.read(self.inputs.rh_surf)
+        lh_gii = nb.load(self.inputs.lh_surf)
+        rh_gii = nb.load(self.inputs.rh_surf)
         sc_coords = np.loadtxt(self.inputs.sc_coords, delimiter=',')
         ds.fa['coordinates'] = np.vstack([
             lh_gii.darrays[0].data,
@@ -1115,7 +1203,7 @@ class CreateDatasetWB(CreateDataset):
         ds.fa.voxel_indices.fill(-1)
         rois_offset = len(lh_gii.darrays[0].data) + len(rh_gii.darrays[0].data)
         ds.fa.voxel_indices[rois_offset:] = sc_coords[:,3:6]
-
+        ds.fa['node_indices'] = np.arange(ds.nfeatures, dtype=np.uint)
 
         mvpa_dataset.add_aparc_ba_fa(
             ds, self.inputs.subject_id,
@@ -1239,7 +1327,7 @@ def coords2fakesurf(in_file):
     tris_da.ext_offset = ''
     fake_surf = nb.gifti.GiftiImage(darrays=[points_da, tris_da])
     out_fname = os.path.abspath(fname_presuffix(in_file, newpath='./', suffix='.gii', use_ext=False))
-    nb.gifti.write(fake_surf, out_fname)
+    nb.save(fake_surf, out_fname)
     return out_fname
     
     
