@@ -1,5 +1,6 @@
 import os,sys,glob,datetime
 import numpy as np
+import operator
 
 from nipype.interfaces import spm, fsl, afni, nitime, utility, dcmstack as np_dcmstack, freesurfer, nipy, ants
 
@@ -18,6 +19,7 @@ np_dcmstack.DCMStackBase.set_default_output_type('NIFTI_GZ')
 
 sys.path.insert(0,'/home/bpinsard/data/src/misc')
 import generic_pipelines
+import generic_pipelines.t1_new, generic_pipelines.fmri, generic_pipelines.fmri_surface
 from generic_pipelines.utils import wrap, fname_presuffix_basename, wildcard
 
 from nipype import config
@@ -39,7 +41,7 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
 subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268,267,237,283,296,319]
 #subject_ids = subject_ids[:-1]
 #subject_ids = subject_ids[:1]
-subject_ids = [296]
+#subject_ids = [1,11,23,22,63,50,296]
 
 tr = 2.16
 echo_time = .03
@@ -50,6 +52,8 @@ file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTi
 meta_tag_force=['PatientID','PatientName','SeriesDate','SeriesTime']
 
 high_mem_queue_args = {'qsub_args': '-q high_mem', 'overwrite': True}
+pe_queue_args = {'qsub_args': '-q parallel -pe smp 6', 'overwrite': True}
+
 running_args = dict(
     plugin='SGE', 
     plugin_args={'template':os.path.join(os.path.dirname(__file__),'tpl.sh'),
@@ -98,26 +102,28 @@ def dicom_dirs():
         localizer=[['subject_id','day','localizer_12Channel']],
         fmri_resting_state=[['subject_id','day','BOLD_Resting_State']],
         fmri_all = [['subject_id','day','BOLD_*']],
+        fmri_ap = [['subject_id','day','BOLD_[!(PA)]*']],
         fmri_pa=[['subject_id','day','BOLD_PA']],
         fmri_fieldmap=[['subject_id','day','gre_field_map_BOLD/*']],)
 
-    func_dirs.iterables = [('day',[1,2,3])] # [('day',[1,2,3])]
+    func_dirs.iterables = [('day',[1,2,3])]
 
     n_all_func_dirs = pe.JoinNode(
-        utility.IdentityInterface(fields=['fmri_all','fmri_fieldmap_all','fmri_pa_all','aa_scout_all']),
+        utility.IdentityInterface(fields=['fmri_all','fmri_fieldmap_all','fmri_ap_all','fmri_pa_all','aa_scout_all']),
         joinsource = 'func_dirs',
-        run_without_submitting=True,        
+        run_without_submitting=True,
         name='all_func_dirs')
     w = pe.Workflow(name='core_sleep')
     
     for n in [anat_dirs, func_dirs]:
         w.connect([(subjects_info,n,[('subject_id',)*2])])
     w.connect([
-            (func_dirs, n_all_func_dirs,[('fmri_all',)*2,
-                                         ('fmri_fieldmap','fmri_fieldmap_all',),
-                                         ('fmri_pa','fmri_pa_all'),
-                                         ('aa_scout','aa_scout_all')]),
-            ])        
+        (func_dirs, n_all_func_dirs,[('fmri_all',)*2,
+                                     ('fmri_fieldmap','fmri_fieldmap_all',),
+                                     ('fmri_pa','fmri_pa_all'),
+                                     ('fmri_ap','fmri_ap_all'),
+                                     ('aa_scout','aa_scout_all')]),
+    ])        
     return w
 
 def preproc_anat():
@@ -150,60 +156,21 @@ def preproc_anat():
     t1_pipeline.inputs.freesurfer.args='-use-gpu'
     t1_pipeline.inputs.freesurfer.openmp = 8
     wm_surface = generic_pipelines.t1_new.extract_wm_surface()
-    
-    n_crop_t1 = pe.Node(
-        nipy.Crop(out_file='%s_crop.nii.gz',
-                  outputtype='NIFTI_GZ'),
-        name='crop_t1')
-    t1_pipeline.connect([
-            (t1_pipeline.get_node('autobox_mask_fs'),n_crop_t1,
-             [('%s_%s'%(c,p),)*2 for c in 'xyz' for p in ('min','max')]),
-            (t1_pipeline.get_node('freesurfer'),n_crop_t1,
-             [('norm','in_file')])])
-    
+    t1_pipeline.get_node('compute_pvmaps').plugin_args = high_mem_queue_args
+
     n_fs32k_surf = generic_pipelines.fmri_surface.surface_32k()
     
-    n_reg_crop = pe.Node(
-        freesurfer.Tkregister(reg_file='reg_crop.dat',
-                              freeview='freeview.mat',
-                              fsl_reg_out='fsl_reg_out.mat',
-                              lta_out='lta.mat',
-                              xfm_out='xfm.mat',
-                              reg_header=True),
-        'reg_crop')
-    n_compute_pvmaps = pe.Node(
-        freesurfer.utils.ComputeVolumeFractions(
-            gm_file='pve.nii.gz',
-            niigz=True,
-        ),
-        name='compute_pvmaps')
-    n_compute_pvmaps.plugin_args = high_mem_queue_args
-    
-    
     ants_for_sbctx = generic_pipelines.fmri_surface.ants_for_subcortical()
-    ants_for_sbctx.inputs.inputspec.template = '/home/bpinsard/data/src/Pipelines/global/templates/MNI152_T1_1mm_brain.nii.gz'
+    ants_for_sbctx.inputs.inputspec.template ='/home/bpinsard/data/src/Pipelines/global/templates/MNI152_T1_1mm_brain.nii.gz'
     ants_for_sbctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__[0],'../data','Atlas_ROIs.csv')
-    
-    t1_pipeline.connect([
-            (t1_pipeline.get_node('freesurfer'),n_reg_crop,[
-                    ('norm','target'),('subject_id',)*2,('subjects_dir',)*2]),
-            (t1_pipeline.get_node('autobox_mask_fs'),n_reg_crop,[
-                    ('out_file','mov')]),
-            (n_reg_crop, n_compute_pvmaps, [
-                    ('reg_file',)*2]),
-            (t1_pipeline.get_node('autobox_mask_fs'), n_compute_pvmaps, [
-                    ('out_file','in_file')]),
-            (t1_pipeline.get_node('freesurfer'),n_compute_pvmaps,[
-                    ('subjects_dir',)*2]),            
-            ])
-    
+        
     w.base_dir = proc_dir
     w.connect([
         (w.get_node('anat_dirs'),n_t1_convert,[('t1_mprage','dicom_files')]),
         (w.get_node('anat_dirs'),n_t1_12ch_2mm_iso_convert,[('t1_mprage_12ch_2mm_iso','dicom_files')]),
 #        (n_t1_12ch_2mm_iso_convert, n_n4_12ch_2mm,[('nifti_file','input_image')]),
         (w.get_node('subjects_info'),t1_pipeline,[(('subject_id',wrap(str),[]),'inputspec.subject_id')]),
-        (n_t1_convert,t1_pipeline,[('nifti_file','inputspec.t1_file')]),
+        (n_t1_convert,t1_pipeline,[('nifti_file','inputspec.t1_files')]),
         (t1_pipeline, wm_surface, [(('freesurfer.aparc_aseg',utility.select,0),'inputspec.aseg')]),
         (t1_pipeline,n_fs32k_surf,[('freesurfer.subjects_dir','fs_source.base_directory'),]),
         (w.get_node('subjects_info'),n_fs32k_surf,[('subject_id','fs_source.subject')]),
@@ -367,7 +334,7 @@ def preproc_fmri():
         utility.Function(
             input_names = ['in_file','matrix'],
             output_names = ['out_file'],
-            function = apply_affine),
+            function = generic_pipelines.fmri_surface.apply_affine),
         iterfield = ['in_file','matrix'],
         name='apply_registration'
     )
@@ -375,12 +342,11 @@ def preproc_fmri():
     n_epi_pvf = pe.MapNode(
         freesurfer.utils.ComputeVolumeFractions(
             gm_file='pve.nii.gz',
-            niigz=True,
-        ),
+            niigz=True),
         iterfield = ['in_file','reg_file'],
         name='epi_pvf'
     )
-
+ 
     n_coords2fakesurf = pe.Node(
         utility.Function(
             input_names = ['in_file'],
@@ -429,16 +395,15 @@ def preproc_fmri():
         name='merge_gii'
     )
 
-    n_bbreg_epi_scale = pe.MapNode(
+    n_bbreg_epi_topup = pe.MapNode(
         freesurfer.BBRegister(
             contrast_type='t2',
             reg_frame=0,
             registered_file=True,
             init='fsl',
-            args='--9'
         ),
         iterfield=['source_file'],
-        name='bbreg_epi_scale')
+        name='bbreg_epi_topup')
     
 
     n_good_voxels = pe.MapNode(
@@ -450,10 +415,12 @@ def preproc_fmri():
         name='good_voxels')
 
     n_topup2t1_xfm = pe.MapNode(
-        freesurfer.preprocess.Tkregister(xfm_out='topup2t1.xfm',
-                                         freeview='freeview.mat',
-                                         fsl_reg_out='fsl_reg_out.mat',
-                                         lta_out='lta.mat',),
+        freesurfer.preprocess.Tkregister(
+            xfm_out='topup2t1.xfm',
+            freeview='freeview.mat',
+            fsl_reg_out='fsl_reg_out.mat',
+            lta_out='lta.mat',
+            no_edit=True),
         iterfield=['reg_file','mov'],
         run_without_submitting=True,
         name='topup2t1_xfm')
@@ -486,17 +453,18 @@ def preproc_fmri():
             (n_fmri_convert, n_merge_appa,[('nifti_file','in_files')]),
             (n_merge_appa, n_topup,[('out_files','in_file')]),
             
-            (n_topup, n_bbreg_epi_scale, [('out_corrected','source_file')]),
-            (n_anat_grabber, n_bbreg_epi_scale, [('subjects_dir',)*2]),
-            (si, n_bbreg_epi_scale, [(('subject_id',wrap(str),[]),'subject_id')]),            
+            (n_topup, n_bbreg_epi_topup, [('out_corrected','source_file')]),
+            (n_anat_grabber, n_bbreg_epi_topup, [('subjects_dir',)*2]),
+            (si, n_bbreg_epi_topup, [(('subject_id',wrap(str),[]),'subject_id')]),            
 
 
+            (n_anat_grabber, n_topup2t1_xfm, [('subjects_dir',)*2]),
             (n_topup,n_topup2t1_xfm,[('out_corrected','mov')]),
-            (n_bbreg_epi_scale, n_topup2t1_xfm,[('out_reg_file','reg_file')]),
-            (n_anat_grabber,n_topup2t1_xfm,[('norm','target')]),
+            (n_bbreg_epi_topup, n_topup2t1_xfm,[('out_reg_file','reg_file')]),
+            #(n_anat_grabber,n_topup2t1_xfm,[('norm','target')]),
             (n_topup2t1_xfm, n_topup2t1_mat,[('xfm_out','xfm')]),
         
-            (n_bbreg_epi_scale, n_epi_pvf, [('out_reg_file','reg_file')]),
+            (n_bbreg_epi_topup, n_epi_pvf, [('out_reg_file','reg_file')]),
             (n_topup, n_epi_pvf, [('out_corrected','in_file')]),
             (n_anat_grabber,n_epi_pvf,[ ('subjects_dir',)*2]),
 
@@ -516,7 +484,7 @@ def preproc_fmri():
 
 #    n_convert_motion_par_scale = generic_pipelines.fmri_surface.n_convert_motion_par.clone('convert_motion_par_scale')    
 
-    use_topup_fieldmap = True
+    use_topup_fieldmap = False
     if use_topup_fieldmap:
         w.connect([
             (n_fmri_convert, n_mcflirt, [('nifti_file','in_file')]),
@@ -598,8 +566,7 @@ def preproc_fmri():
             contrast_type='t2',
             reg_frame=0,
             registered_file=True,
-            init='fsl',
-            args='--9'),
+            init='fsl'),
         iterfield=['source_file'],
         name='bbreg_epi')
 
@@ -608,10 +575,12 @@ def preproc_fmri():
         name='mask2epi')
 
     n_epi2t1_bbreg2xfm = pe.MapNode(
-        freesurfer.preprocess.Tkregister(xfm_out='fmap2t1.xfm',
-                                         freeview='freeview.mat',
-                                         fsl_reg_out='fsl_reg_out.mat',
-                                         lta_out='lta.mat',),
+        freesurfer.preprocess.Tkregister(
+            xfm_out='fmap2t1.xfm',
+            freeview='freeview.mat',
+            fsl_reg_out='fsl_reg_out.mat',
+            lta_out='lta.mat',
+            no_edit=True),
         iterfield=['reg_file','mov'],
         run_without_submitting=True,
         name='epi2t1_bbreg2xfm')
@@ -636,45 +605,37 @@ def preproc_fmri():
 
     n_convert_motion_par = generic_pipelines.fmri_surface.n_convert_motion_par
 
-    n_motion_corr = pe.MapNode(
-        nipy.preprocess.OnlinePreprocessing(
-            echo_time=echo_time,
-            echo_spacing=echo_spacing,
-            phase_encoding_dir=phase_encoding_dir,
-            resampled_first_frame='frame1.nii',
-            out_file_format='ts.h5'
-        ),
-        iterfield = ['dicom_files','fieldmap','fieldmap_reg','init_reg'],
-        overwrite=False,
-        name = 'motion_correction')
-
     n_moco_noco = pe.MapNode(
         nipy.preprocess.OnlineRealign(
+            iekf_jacobian_epsilon = 1e-1,
+            iekf_convergence = 5e-3,
+            iekf_max_iter = 16,
+            iekf_min_nsamples_per_slab = 32,
+            iekf_observation_var = 1e4,
+            iekf_transition_cov = 1e-6,
+            iekf_init_state_cov = 1e-3,
             echo_time=echo_time,
-            echo_spacing=echo_spacing,
+            echo_spacing=echo_spacing * 2 * np.pi, # topup field in Hz * 2pi = rad/s
             phase_encoding_dir=phase_encoding_dir,
             middle_surface_position = middle_surface_position,
+            register_gradient=False,
             bias_correction=True,
-            bias_sigma=10,
+            bias_sigma=20,
             interp_rbf_sigma=3,
             resampled_first_frame='frame1.nii',
             out_file_format='ts.h5'),
-        iterfield = ['dicom_files','fieldmap','fieldmap_reg'],
+        iterfield = ['dicom_files','fieldmap','fieldmap_reg','init_reg'],
         overwrite=False,
-        name = 'moco_noco')
+        name = 'moco_noco_biascorr')
+    #not really using much memory, but better with multicore blas 
+    n_moco_noco.plugin_args = pe_queue_args
 
-    n_noise_corr = pe.MapNode(
-        nipy.preprocess.OnlineFilter(
-            echo_time=echo_time,
-            echo_spacing=echo_spacing,
-            phase_encoding_dir=phase_encoding_dir,
-            middle_surface_position = middle_surface_position,
-            resampled_first_frame='frame1.nii',
-            out_file_format='ts.h5',
-            white_matter_index=2),
-        iterfield = ['dicom_files','motion','fieldmap','fieldmap_reg'],
-        overwrite=False,
-        name = 'noise_correction')
+    n_moco_noco_mvpa = n_moco_noco.clone('moco_noco_mvpa')
+    n_moco_noco_mvpa_nobiascorr = n_moco_noco_mvpa.clone('moco_noco_mvpa_nobiascorr')
+    n_moco_noco_mvpa_nobiascorr.inputs.bias_correction = False
+    ### bug with cloning of mapnode
+    n_moco_noco_mvpa_nobiascorr.interface.inputs.bias_correction = False    
+
 
     n_smooth_bp = pe.MapNode(
         generic_pipelines.fmri_surface.GrayOrdinatesBandPassSmooth(
@@ -686,19 +647,7 @@ def preproc_fmri():
         iterfield = ['in_file'],
         name = 'smooth_bp')
 
-    n_surf_resample = pe.MapNode(
-        nipy.preprocess.SurfaceResampling(
-            echo_time=echo_time,
-            echo_spacing=echo_spacing,
-            phase_encoding_dir=phase_encoding_dir,
-            middle_surface_position = middle_surface_position,
-            resampled_first_frame='frame1.nii',
-            out_file_format='ts.h5'),
-        iterfield = ['dicom_files','motion','fieldmap','fieldmap_reg'],
-        overwrite=False,
-        name = 'surf_resample')
-    
-    """    
+    """
     n_smooth_bp_nofilt = pe.MapNode(
         generic_pipelines.fmri_surface.GrayOrdinatesBandPassSmooth(
             data_field = 'FMRI/DATA',
@@ -722,28 +671,28 @@ def preproc_fmri():
             (('lowres_surf_rh',name_struct,'CORTEX_RIGHT'),'in2')]),
         
         (w.get_node('all_func_dirs'),n_fmri_convert,[(('fmri_all',flatten_remove_none),'dicom_files')]),
-        
-        (n_fmri_convert,n_st_realign,[('nifti_file','in_file')]),
+        ])
+    """
+        #(n_fmri_convert,n_st_realign,[('nifti_file','in_file')]),
         (n_anat_grabber,n_bbreg_epi,[('subjects_dir',)*2]),
         (si,n_bbreg_epi,[(('subject_id',wrap(str),[]),'subject_id')]),
         (n_st_realign,n_bbreg_epi,[('out_file','source_file')]),
                 
         (n_st_realign,n_epi2t1_bbreg2xfm,[('out_file','mov')]),
         (n_bbreg_epi, n_epi2t1_bbreg2xfm,[('out_reg_file','reg_file')]),
-        (n_anat_grabber,n_epi2t1_bbreg2xfm,[('norm','target')]),
+        (n_anat_grabber,n_epi2t1_bbreg2xfm,[('subjects_dir',)*2]),
         (n_epi2t1_bbreg2xfm, n_epi2t1_xfm2mat,[('xfm_out','xfm')]),
         
-        (n_epi2t1_xfm2mat,n_convert_motion_par,[('mat','epi2t1')]),
-        (n_st_realign, n_convert_motion_par,[('par_file','motion')]),
-        (n_fmri_convert, n_convert_motion_par,[('nifti_file','matrix_file')]),
+        #(n_epi2t1_xfm2mat,n_convert_motion_par,[('mat','epi2t1')]),
+        #(n_st_realign, n_convert_motion_par,[('par_file','motion')]),
+        #(n_fmri_convert, n_convert_motion_par,[('nifti_file','matrix_file')]),
         
         (w.get_node('all_func_dirs'),n_repeat_fieldmaps,[('fmri_all','fmri_scans')]),
         (n_fieldmap_fmri_convert, n_repeat_fieldmaps, [('fieldmap_file','fieldmaps')]),
         (n_xfm2mat, n_repeat_fieldmaps, [('mat','fieldmap_regs')]),
         
         ])
-
-
+    """
 
     motion_corr = False
     if motion_corr:
@@ -765,26 +714,72 @@ def preproc_fmri():
 
             (n_epi2t1_xfm2mat, n_motion_corr, [('mat','init_reg')])
         ])
-    moco_noco = True
+
+    n_dataset_newmoco = pe.Node(
+        CreateDataset(tr=tr,
+                      behavioral_data_path=os.path.join(data_dir,'Behavior'),
+                      design=os.path.join(project_dir,'data/mvpa_only.csv'),
+                      #design=os.path.join(project_dir,'data/design.csv'),
+                      median_divide=True,
+                      wavelet_despike=True,
+                      interp_bad_tss=True),
+        name='dataset_mvpa_newmoco')
+
+    moco_noco = False
     if moco_noco:
         w.connect([
-            (w.get_node('all_func_dirs'), n_moco_noco,[(('fmri_all', flatten_remove_none),'dicom_files')]),
+            (w.get_node('all_func_dirs'), n_moco_noco,[(('fmri_ap_all', flatten_remove_none),'dicom_files')]),
             
             (n_anat_grabber, n_moco_noco,[
                 ('norm','surfaces_volume_reference'),
                 ('cropped_mask','mask'),
                 (('pve_maps', utility.select, -1),'gm_pve'),
-                (('pve_maps', utility.select, 1),'wm_pve'),
+                (('pve_maps', utility.select, 2),'wm_pve'),
                 (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
                   '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
                  'resample_rois')]),
-            (n_repeat_fieldmaps, n_moco_noco,[
-                ('fieldmaps','fieldmap'),
-                ('fieldmap_regs','fieldmap_reg')]),
+            (n_topup, n_moco_noco, [('out_field','fieldmap')]),
+            (n_topup2t1_mat, n_moco_noco, [('mat','fieldmap_reg')]),
+
+#            (n_repeat_fieldmaps, n_moco_noco,[
+#                ('fieldmaps','fieldmap'),
+#                ('fieldmap_regs','fieldmap_reg')]),
             
             (n_group_hemi_surfs, n_moco_noco,[('out','resample_surfaces')]),
-            (n_epi2t1_xfm2mat, n_moco_noco, [('mat','init_reg')])
+            (n_topup2t1_mat, n_moco_noco, [('mat','init_reg')])
+
+            #(si,n_dataset_newmoco,[('subject_id',)*2]),
+            #(n_moco_noco,n_dataset_newmoco,[('out_file','ts_files')]),
+            #(w.get_node('all_func_dirs'),n_dataset_newmoco,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
+
         ])
+
+    def select_mvpa(l):
+        if isinstance(l, list) and len(l)>0:
+            if isinstance(l[-1], list) and len(l[-1])>1:
+                return l[-1][-2:]
+        return []
+
+    moco_noco_mvpa = True
+    if moco_noco_mvpa:
+        for n in [n_moco_noco_mvpa,n_moco_noco_mvpa_nobiascorr]:
+            w.connect([
+                (w.get_node('all_func_dirs'), n,[(('fmri_ap_all', select_mvpa),'dicom_files')]),
+                
+                (n_anat_grabber, n,[
+                    ('norm','surfaces_volume_reference'),
+                    ('cropped_mask','mask'),
+                    (('pve_maps', utility.select, -1),'gm_pve'),
+                    (('pve_maps', utility.select, 2),'wm_pve'),
+                    (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
+                      '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
+                     'resample_rois')]),
+                (n_topup, n, [(('out_field',utility.select,slice(-2,None)),'fieldmap')]),
+                (n_topup2t1_mat, n, [(('mat',utility.select,slice(-2,None)),'fieldmap_reg')]),
+                
+                (n_group_hemi_surfs, n,[('out','resample_surfaces')]),
+                (n_topup2t1_mat, n, [(('mat',utility.select,slice(-2,None)),'init_reg')])
+            ])
 
 
     n_dataset_noisecorr = pe.Node(
@@ -1301,18 +1296,6 @@ def preproc_eeg():
     )
 
     return w
-
-
-def apply_affine(in_file,matrix):
-    import os
-    import numpy as np
-    import nibabel as nb
-    from nipype.utils.filemanip import fname_presuffix
-    nii = nb.load(in_file)
-    out_filename = os.path.abspath(fname_presuffix(in_file, newpath='./', suffix='_reg'))
-    aff = np.loadtxt(matrix)
-    nb.Nifti1Image(nii.get_data(), aff.dot(nii.affine)).to_filename(out_filename) 
-    return out_filename
 
 
 def coords2fakesurf(in_file):
