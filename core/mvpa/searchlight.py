@@ -4,7 +4,7 @@ from mvpa2.support.nibabel.surf import Surface
 from mvpa2.misc.surfing.queryengine import SurfaceQueryEngine
 from mvpa2.misc.neighborhood import Sphere, IndexQueryEngine, QueryEngine, CachedQueryEngine, idhash_
 from mvpa2.generators.partition import HalfPartitioner, NFoldPartitioner, CustomPartitioner
-from mvpa2.generators.resampling import NonContiguous
+#from mvpa2.generators.resampling import NonContiguous
 from mvpa2.measures.searchlight import Searchlight, sphere_searchlight
 from mvpa2.measures.base import CrossValidation
 from mvpa2.measures.gnbsearchlight import GNBSearchlight, sphere_gnbsearchlight
@@ -173,7 +173,7 @@ class SurfVoxQueryEngine(QueryEngine):
 
     def _train(self, ds):
 
-        self._include = np.logical_and(~ds.fa.nans, (ds.samples==0).sum(0)==0)
+        self._include = (ds.samples==0).sum(0)==0
 
         self._max_vertex = ds.a.triangles.max()+1
         self._rois_labels = ds.fa[self._rois_fa].value
@@ -195,6 +195,8 @@ class SurfVoxQueryEngine(QueryEngine):
         self._idx_qe.train(ds[:,self._max_vertex:])
 
     def query_byid(self, fid):
+        if not self._include[fid]:
+            return []
         if fid < self._max_vertex:
             ids = self._sqe.query_byid(fid)
         else:

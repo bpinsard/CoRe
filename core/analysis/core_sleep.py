@@ -1,18 +1,23 @@
 import sys, os, glob
 import numpy as np
+import scipy.stats, scipy.ndimage.measurements, scipy.sparse
 from ..mvpa import searchlight
+from ..mvpa import dataset as mvpa_ds
 from . import mvpa_nodes
 from mvpa2.datasets import Dataset, vstack
 from mvpa2.misc.errorfx import mean_mismatch_error, mean_match_accuracy
 from mvpa2.mappers.fx import mean_sample
 from mvpa2.mappers.detrend import poly_detrend
 from mvpa2.mappers.zscore import zscore
-from mvpa2.mappers.fx import BinomialProportionCI
+from mvpa2.mappers.fx import BinomialProportionCI, mean_sample, mean_group_sample
 from mvpa2.measures.base import RepeatedMeasure
 from mvpa2.clfs.gnb import GNB
 from mvpa2.misc.neighborhood import CachedQueryEngine
-from mvpa2.generators.partition import NFoldPartitioner, FactorialPartitioner
-from mvpa2.algorithms.group_clusterthr import GroupClusterThreshold
+from mvpa2.measures.rsa import CrossNobisSearchlight
+from mvpa2.generators.partition import NFoldPartitioner, FactorialPartitioner, CustomPartitioner
+from mvpa2.algorithms.group_clusterthr import (GroupClusterThreshold, Counter, 
+                                               get_cluster_sizes, _transform_to_pvals, _clusterize_custom_neighborhood)
+import statsmodels.stats.multitest as smm
 from mvpa2 import debug
 import joblib
 import __builtin__
@@ -20,10 +25,12 @@ import __builtin__
 preproc_dir = '/home/bpinsard/data/analysis/core_sleep'
 #dataset_subdir = 'dataset_noisecorr'
 #dataset_subdir = 'dataset_smoothed'
-dataset_subdir = 'dataset_wb_wd'
-
+dataset_subdir = 'dataset_wb_hptf'
+dataset_subdir = 'dataset_mvpa_moco_bc_hptf'
+            
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
-output_subdir = 'searchlight_wb_wd'
+#output_subdir = 'searchlight_wb_hptf'
+output_subdir = 'searchlight_cnbis_mnorm'
 compression= 'gzip'
 
 subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195, 220, 223, 235, 268, 267,237,296]
@@ -94,7 +101,7 @@ def subject_searchlight_permutation(sid):
         loco = mvpa_nodes.prtnr_loco_cv()
     )
 
-    block_phases = ['instr']
+    block_phases = ['exec']
 #    block_phases = ['exec','instr']
 
     ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'glm_ds_%d.h5'%sid))
@@ -109,6 +116,7 @@ def subject_searchlight_permutation(sid):
     poly_detrend(ds_glm_mvpa, chunks_attr='scan_id', polyord=0)
     zscore(ds_glm_mvpa, chunks_attr='scan_id')
 
+    """
     ds_all = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'ds_%d.h5'%sid))
     ds_mvpa = ds_all[dict(scan_name=mvpa_scan_names)]
     ds_mvpa.sa['subject_id'] = [sid]*ds_mvpa.nsamples
@@ -118,6 +126,7 @@ def subject_searchlight_permutation(sid):
     targets_num(ds_mvpa, ulabels)
     poly_detrend(ds_mvpa, chunks_attr='scan_id', polyord=0)
     zscore(ds_mvpa, chunks_attr='scan_id', param_est=('targets','rest'))
+    """
 
     sample_types = {
         #        '': ds_mvpa,
@@ -149,7 +158,7 @@ def subject_searchlight_permutation(sid):
     joblib.Parallel(n_jobs=8)(
         [joblib.delayed(do_single_slmap_perm)(gnb, svqe_cached, spltr, *args, overwrite=False) for args in slmaps])
 
-    del ds_mvpa, ds_glm_mvpa
+    # del ds_mvpa, ds_glm_mvpa
     
 
 def group_cluster_threshold_analysis():
@@ -223,6 +232,315 @@ def group_cluster_threshold_analysis():
                 print e
                 del all_slmap_perm, slmaps
 
+
+def subject_searchlight_rsa_euc(sid):
+    print('______________   CoRe %03d   ___________'%sid)
+    ds_glm = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'glm_ds_%d.h5'%sid))
+    ds = ds_glm
+    if 'node_indices' not in ds_glm.fa.keys():
+        ds_glm.fa['node_indices'] =  np.arange(ds_glm.nfeatures, dtype=np.uint)
+        #ds = Dataset.from_hdf5(os.path.join(preproc_dir, '_subject_id_%d'%sid, dataset_subdir, 'ds_%d.h5'%sid))
+        #targets_num(ds, ulabels)
+    targets_num(ds_glm, ulabels)
+
+    mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'd3_mvpa' in n]
+    if len(mvpa_scan_names)==0:
+        mvpa_scan_names = [n for n in np.unique(ds.sa.scan_name) if 'mvpa' in n]
+    ds_glm_mvpa = ds_glm[dict(scan_name=mvpa_scan_names)]
+    ds_glm_mvpa.sa['chunks'] = np.tile(np.arange(4)[:,np.newaxis],(2,16)).ravel()
+
+    svqe = searchlight.SurfVoxQueryEngine(max_feat=64, vox_sl_radius=2.4, surf_sl_radius=25)
+    svqe_cached = searchlight.CachedQueryEngineAlt(svqe)
+
+    part = CustomPartitioner([([a],[b]) for a in range(4) for b in range(a+1,4)],attr='chunks')
+    cnbis_sl = CrossNobisSearchlight(part, svqe_cached, space='targets', nproc=10)
+
+    mgs = mean_group_sample(attrs=['targets','chunks'])
+    block_phases = ['instr','exec']
+
+    for st in block_phases:
+        ds_tmp = mgs(ds_glm_mvpa[dict(subtargets=[st])])
+        slmap_cnbis = cnbis_sl(ds_tmp)
+        slmap_cnbis.save(os.path.join(proc_dir, output_subdir,'CoRe_%03d_%s_cnbis.h5'%(sid,st)),
+                         compression=compression)
+
+def subject_mvpa_ds_residuals(sid, hptf_thresh=8, reg_sa='regressors_exec'):
+
+    ts_files = [ os.path.join(preproc_dir, '_subject_id_%d'%sid, 'moco_bc_mvpa_aniso','mapflow',
+                              '_moco_bc_mvpa_aniso%d'%scan_id,'ts.h5') for scan_id in range(2)]
+    ds_mvpa = [mvpa_ds.ds_from_ts(f) for f in ts_files]
+    dss_mvpa = []
+    glm_ds_mvpa = []
+    residuals_mvpa = []
+    for dsi, ds in enumerate(ds_mvpa):
+        mvpa_ds.ds_set_attributes(
+            ds, sorted(glob.glob('/home/bpinsard/data/raw/UNF/CoRe/Behavior/CoRe_%03d_D3/CoRe_%03d_mvpa-%d-D-Three_*.mat'%(sid,sid,dsi+1)))[-1])
+        mvpa_ds.preproc_ds(ds, detrend=True, hptf=True, hptf_thresh=hptf_thresh)
+        mvpa_ds.add_aparc_ba_fa(ds,sid,os.path.join(preproc_dir, 'surface_32k', '_subject_id_%s'))
+        
+        regs = ds.sa[reg_sa].value.astype(np.float)
+        reg_names = ds.sa[reg_sa].value.dtype.names
+        exec15 = regs[:,32+15]
+        instr16 = regs[:,16]
+        last_part1 = np.where(np.abs(exec15) > 0)[0][-1]
+        first_part2 = np.where(np.abs(instr16) > 0)[0][0]
+
+        chunks = np.hstack([np.tile(np.asarray([-1,1]).repeat(16),2),[0]])
+
+        ds_part1 = ds[:last_part1]
+        ds_part1.sa[reg_sa] = regs[:last_part1, chunks<=0].astype(
+            [(n,np.float )for n,c in zip(reg_names,chunks) if c<=0])
+        glm_ds_part1, residuals_part1 = mvpa_ds.ds_tr2glm(
+            ds_part1,reg_sa,['instr','exec'],['constant'],
+            sample_type='betas', return_resid=True)#, hptf=hptf_thresh)
+        glm_ds_part1.sa.chunks = [dsi*2]*glm_ds_part1.nsamples
+        residuals_part1.sa['chunks'] = [dsi*2]*residuals_part1.nsamples
+        
+        dss_mvpa.append(ds_part1)
+        glm_ds_mvpa.append(glm_ds_part1)
+        residuals_mvpa.append(residuals_part1)
+
+        ds_part2 = ds[first_part2:]
+        ds_part2.sa[reg_sa] = regs[first_part2:,chunks>=0].astype(
+            [(n,np.float )for n,c in zip(reg_names,chunks) if c>=0])
+        glm_ds_part2, residuals_part2 = mvpa_ds.ds_tr2glm(
+            ds_part2,reg_sa,['instr','exec'],['constant'],
+            sample_type='betas',return_resid=True)#, hptf=hptf_thresh)
+        glm_ds_part2.sa['chunks'] = [dsi*2+1]*glm_ds_part1.nsamples
+        residuals_part2.sa['chunks'] = [dsi*2+1]*residuals_part2.nsamples
+        
+        dss_mvpa.append(ds_part2)
+        glm_ds_mvpa.append(glm_ds_part2)
+        residuals_mvpa.append(residuals_part2)
+
+        del ds_part1, ds_part2
+    del ds_mvpa
+
+    for res in residuals_mvpa:
+        for k in res.sa.keys():
+            if len(res.sa[k].value.dtype)>0:
+                del res.sa[k]
+
+    glm_ds_mvpa = vstack(glm_ds_mvpa, a='drop_nonunique')
+    residuals_mvpa = vstack(residuals_mvpa, a='drop_nonunique')
+    return glm_ds_mvpa, residuals_mvpa
+
+def subject_rois_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec'):
+    print('______________   CoRe %03d   ___________'%sid)
+
+    glm_ds_mvpa, residuals_mvpa = subject_mvpa_ds_residuals(sid, hptf_thresh, reg_sa=reg_sa)
+
+    rois = Dataset.from_hdf5(os.path.join(proc_dir,'msl_rois.h5'))
+    for ri,roi_name in enumerate(rois.a.roi_labels):
+        mask = rois.samples[0]==ri+1
+        res = residuals_mvpa.samples[:,mask]
+        res2
+    
+    
+
+def subject_searchlight_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec'):
+    print('______________   CoRe %03d   ___________'%sid)
+
+    glm_ds_mvpa, residuals_mvpa = subject_mvpa_ds_residuals(sid, hptf_thresh, reg_sa=reg_sa)
+
+    svqe = searchlight.SurfVoxQueryEngine(max_feat=128, vox_sl_radius=3.2, surf_sl_radius=15)
+    svqe_cached = searchlight.CachedQueryEngineAlt(svqe)
+    svqe_cached.train(glm_ds_mvpa)
+
+    part = CustomPartitioner([([a],[b]) for a in range(4) for b in range(a+1,4)],attr='chunks')
+    #part = CustomPartitioner([([a],[b]) for a in range(4) for b in range(4) if a!=b],attr='chunks')
+    cnbis_sl = CrossNobisSearchlight(part, svqe_cached, space='targets', nproc=2)
+
+    mgs = mean_group_sample(attrs=['targets','chunks'])
+    block_phases = ['exec','instr']
+    #block_phases = ['exec']
+    cnbis_sl.nproc=1
+    cnbis_sl.train(residuals_mvpa)
+    cnbis_sl.nproc=2
+    print('trained')
+
+    for st in block_phases:
+        print(st)
+        ds_tmp = glm_ds_mvpa[dict(subtargets=[st])]
+        slmap_cnbis = cnbis_sl(mgs(ds_tmp))
+        slmap_cnbis.save(os.path.join(proc_dir, output_subdir,'CoRe_%03d_%s_cnbis.h5'%(sid,st)),
+                         compression=compression)
+
+def block_argsort(data, idxes, axis=0):
+    idx = np.argsort(data, axis=axis, kind='quicksort')
+    return idx[idxes]
+
+def group_rsa_cnbis_cluster(block_phase='exec',groupInt=None,
+                            main_fxs=[0,5], contrasts=[(0,5)],
+                            nperm=1000, voxp=.001, fwe_rate=.01, multicomp_correction='fdr_bh',blocksize=10000):
+    
+    
+    if groupInt is not None:
+        files = [os.path.join(proc_dir, output_subdir,'CoRe_%03d_%s_cnbis.h5'%(sid,block_phase)) \
+                 for sid in subject_ids if sid in group_Int]
+    else:
+        files = [os.path.join(proc_dir, output_subdir,'CoRe_%03d_%s_cnbis.h5'%(sid,block_phase)) \
+                 for sid in subject_ids]    
+
+    sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(6,6,-1).mean(0).astype(np.float32) for f in files])
+    nsubj = len(sl_ress)
+
+    neighborhood = np.load(os.path.join(proc_dir,'connectivity_96k.npy')).tolist()
+    results = dict()
+    results['main_fx'] = dict()
+    nfeat = sl_ress.shape[-1]
+    permttest = np.empty((nperm, nfeat),dtype=np.float32)
+
+    thr_permidx = int(voxp*nperm)
+    if thr_permidx == 0:
+        raise ValueError('not enough permutation to compute this pvalue')
+
+    for main_fx in main_fxs:
+        print('main_fx',main_fx)
+        data = sl_ress[:,main_fx]
+        #t,p = scipy.stats.ttest_1samp(data, 0, 0)
+        t,p = data.mean(0), None
+        # include real contrast for lower-bound on p-values
+        for i in range(nperm-1):
+            sys.stdout.write('\r permutations: %d/%d' % (i,nperm))
+            sys.stdout.flush()
+            signs = np.random.randint(0,2,nsubj)*2-1
+            #permttest[i], _ = scipy.stats.ttest_1samp(data*signs[:,np.newaxis], 0, 0)
+            permttest[i] = reduce(lambda x,y: x+y[0]*y[1], zip(signs,data),0)/nsubj
+        sys.stdout.write(' done\n')
+        permttest[-1] = t
+        
+        sum_higher = (permttest > t).sum(0)
+        vox_pvalue = sum_higher/float(nperm)
+        
+        thridx = np.hstack([block_argsort(permttest[:,i*blocksize:(i+1)*blocksize], -thr_permidx) \
+                            for i in range(int(nfeat/blocksize+1))])
+        thr = permttest[thridx,np.arange(permttest.shape[1])]
+        labels, cluster_prob_raw, labels_fwe, cluster_prob_fwe = cluster_corr(t, thr, permttest, neighborhood,
+                                                                  fwe_rate, multicomp_correction)
+        results['main_fx'][main_fx] = (t, p, vox_pvalue, thr,
+                                       labels, cluster_prob_raw, labels_fwe, cluster_prob_fwe)
+        del data
+
+    results['contrasts'] = dict()
+    for contrast in contrasts:
+        print('contrast',contrast)
+        
+        #data = sl_ress[:,contrast]
+        #t,p = scipy.stats.ttest_rel(data[:,0],data[:,1])
+        data = sl_ress[:,contrast[0]]-sl_ress[:,contrast[1]]
+        t,p = data.mean(0),None
+
+        permutations = [ np.random.randint(0,2,nsubj, dtype=np.uint8) for i in xrange(nperm-1)]
+        perm_bool = [np.asarray([perm==0,perm==1]).T for perm in permutations]
+        # include real contrast for lower-bound on p-values
+        for i,perm in enumerate(perm_bool):
+            sys.stdout.write('\r permutations: %d/%d' % (i,nperm))
+            sys.stdout.flush()
+            #permttest[i],_ = scipy.stats.ttest_rel(data[perm],data[~perm])
+            signs = np.random.randint(0,2,nsubj)*2-1
+            permttest[i] = reduce(lambda x,y: x+y[0]*y[1], zip(signs,data),0)/nsubj
+        sys.stdout.write(' done\n')
+        permttest[-1] = t
+        
+
+        sum_higher = (permttest > t).sum(0)
+        sum_lower = (permttest < t).sum(0)
+        two_tailed_voxp = np.minimum(sum_higher, sum_lower)/float(nperm)
+
+        thridx_low, thridx = np.hstack([block_argsort(permttest[:,i*blocksize:(i+1)*blocksize],
+                                                      [thr_permidx, -thr_permidx]) \
+                                        for i in range(int(nfeat/blocksize+1))])
+        
+        thr_low = permttest[thridx_low,np.arange(permttest.shape[1])]
+        thr = permttest[thridx,np.arange(permttest.shape[1])]
+
+        labels, cluster_prob_raw, labels_fwe, cluster_prob_fwe = cluster_corr(
+            t, thr,
+            permttest, neighborhood, fwe_rate, multicomp_correction)
+
+        sc_idx = 2*32492
+        sc_labels, sc_cluster_prob_raw, sc_labels_fwe, sc_cluster_prob_fwe = cluster_corr(
+            t[sc_idx:], thr[sc_idx:],
+            permttest[:,sc_idx:], neighborhood.todok()[sc_idx:,sc_idx:].tocoo(), fwe_rate, multicomp_correction)
+
+        labels_low, cluster_prob_raw_low, labels_fwe_low, cluster_prob_fwe_low = cluster_corr(
+            t, thr_low,
+            permttest, neighborhood, fwe_rate, multicomp_correction,
+            neg=True)
+
+        results['contrasts'][contrast] = (t, p, two_tailed_voxp, thr,thr_low,
+                                          labels, cluster_prob_raw, labels_fwe, cluster_prob_fwe,
+                                          labels_low, cluster_prob_raw_low, labels_fwe_low, cluster_prob_fwe_low,
+                                          sc_labels, sc_cluster_prob_raw, sc_labels_fwe, sc_cluster_prob_fwe)
+        del data
+    del permttest
+    np.save('results_group_cluster_%s.npy'%block_phase,results)
+    return results
+        
+def tfce_map(map_, neighborhood, h, e, d=None):
+    max_value = map_.max()
+    if d is None:
+        d = max_value/100.
+    tfce = np.zeros_like(map_)
+    mask = np.zeros_like(map_, dtype=np.bool)
+    
+    for t in np.arange(d, max_value+d/2., d):
+        mask = map_ > t
+        keep_edges = np.logical_and(mask[neighborhood.col], mask[neighborhood.row])
+        neigh_thr = scipy.sparse.coo_matrix(
+            (neighborhood.data[keep_edges],
+             (neighborhood.row[keep_edges],
+              neighborhood.col[keep_edges])),
+            neighborhood.shape)
+        labels_map = (scipy.sparse.csgraph.connected_components(neigh_thr, directed=False)[1]+1)*mask
+        labels, labels_map, area = np.unique(labels_map,return_inverse=True,return_counts=True)
+
+        tfce_vals = d*(area**e)*(t**h)
+        
+        tfce[mask] += tfce_vals[labels_map[mask]]
+        del neigh_thr
+    return tfce
+    
+
+def cluster_corr(map_, thr, perms, neighborhood, fwe_rate,multicomp_correction='fdr_bh', neg=False):
+    counter_perms = Counter()
+    if neg:
+        thrd = map_ < thr
+        for tt in perms:
+            get_cluster_sizes(Dataset([tt<thr]), counter_perms, neighborhood)
+    else:
+        thrd = map_ > thr
+        for tt in perms:
+            get_cluster_sizes(Dataset([tt>thr]), counter_perms, neighborhood)
+
+    null_cluster_size = scipy.sparse.dok_matrix((1, len(map_) + 1), dtype=int)
+    for s in counter_perms:
+        null_cluster_size[0, s] = counter_perms[s]
+    del counter_perms
+
+    labels, num = _clusterize_custom_neighborhood(thrd, neighborhood)
+    area = scipy.ndimage.measurements.sum(thrd, labels, index=np.arange(1, num + 1)).astype(np.int)
+   
+    cluster_probs_raw = np.asarray(_transform_to_pvals(area, null_cluster_size.astype(np.float)))
+    
+    labels_raw = labels.copy()
+    for i, cp in enumerate(cluster_probs_raw):
+        if cp > fwe_rate:
+            labels_raw[labels == i + 1] = 0
+
+    rej, cluster_probs_corr = smm.multipletests(
+        cluster_probs_raw,
+        alpha=fwe_rate,
+        method=multicomp_correction)[:2]
+
+    labels_fwe = labels.copy()
+    for i, r in enumerate(rej):
+        if not r:
+            labels_fwe[labels == i + 1] = 0
+
+    return labels_raw, cluster_probs_raw, labels_fwe, cluster_probs_corr        
+    
 
 def all_searchlight_2fold():
     new_sids = [sid for sid in subject_ids if len(glob.glob(os.path.join(proc_dir,output_subdir,'CoRe_%03d_*confusion.h5'%sid)))==0]
@@ -600,7 +918,7 @@ def subject_rois_analysis(subj, clf):
             count=16)
         #loso=mvpa_nodes.prtnr_loso_cv(1)
     )
-    rois = Dataset.from_hdf5('/mnt/data/analysis/msl_rois.h5')
+    rois = Dataset.from_hdf5(os.path.join(proc_dir,'msl_rois.h5'))
 
     for prtnr_name, prtnr in prtnrs.items():
         glm_rois_stats[prtnr_name] = {}
@@ -687,7 +1005,7 @@ def group_searchlight():
 
     for sln, ch_acc in slmaps:
         print sln
-        slmaps_conf = [Dataset.from_hdf5(os.path.join(proc_dir,'searchlight_new/CoRe_%03d_%s_confusion.h5'%(s,sln))) \
+        slmaps_conf = [Dataset.from_hdf5(os.path.join(proc_dir,'searchlight_wb_hptf/CoRe_%03d_%s_confusion.h5'%(s,sln))) \
                        for s in subject_ids]
         slmaps_acc = [confusion2acc(sl) for sl in slmaps_conf]
         del slmaps_conf
@@ -929,3 +1247,4 @@ def create_rois():
         rois_labels.append(roi_name)
     return rois_mask, rois_labels
             
+

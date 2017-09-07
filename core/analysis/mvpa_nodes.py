@@ -133,7 +133,7 @@ class FeaturewiseConfusionMatrix(FeaturewiseMeasure):
 confmat_pass_attr_sa = [
     'scan_name','scan_id', 'blocks_idx','sequence','n_correct_sequences','n_failed_sequences','targets',]
 pass_attr_fa  = [
-    'ba_thresh', 'ba', 'aparc', 'coordinates','nans','node_indices','voxel_indices', 'roi_sizes']
+    'ba_thresh', 'ba', 'aparc', 'coordinates','node_indices','voxel_indices', 'roi_sizes']
 pass_attr_a = [
     'triangles']
 # split block in each scan

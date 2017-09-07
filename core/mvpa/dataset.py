@@ -1,5 +1,6 @@
 import sys, os
 import numpy as np
+from scipy.ndimage import gaussian_filter1d
 import nibabel as nb
 from ..behavior import load_behavior
 
@@ -26,7 +27,7 @@ def events_to_mtx(evts, frametimes, hrf_func=single_gamma_hrf, tr=default_tr, ov
         regressors.append(f(frametimes))
         #regressors[-1]/=regressors[-1].sum()
     regs = np.asarray(regressors+[np.ones_like(regressors[0])]).T.astype(
-                      dtype=[(evt[0],np.float) for evt in evts]+[('constant', np.float)])
+        dtype=[(evt[0],np.float) for evt in evts]+[('constant', np.float)])
     return regs
 
 def blocks_to_attributes_new(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
@@ -40,7 +41,7 @@ def blocks_to_attributes_new(ds, blocks, hrf_rest_thresh=.2, tr=default_tr):
     whole_blocks = [['block_%03d_%s'%(bi,b[0]),b[0],b[2],b[6]-b[2]] for bi,b in enumerate(blocks)]
 
 
-    frametimes = ds.sa.time - ds.sa.time[0]
+    frametimes = ds.sa.time - ds.sa.time[0]+tr/2
 
     ds.sa['regressors_exec'] = events_to_mtx(instrs+execs, frametimes)
     ds.sa['regressors_stim'] = events_to_mtx(instrs+gos, frametimes)
@@ -233,6 +234,7 @@ from mvpa2.datasets import Dataset
 from mvpa2.mappers.detrend import poly_detrend
 import hrf_estimation as he
 from ..pipelines.wavelet_despike import wavelet_despike_loop, wavelet_despike
+import scipy.ndimage
 
 def preproc_ds(ds,
                detrend=False,
@@ -245,6 +247,8 @@ def preproc_ds(ds,
                threshold_wav_high=None,
                sg_filt=False,
                sg_filt_win=210,
+               hptf=False,
+               hptf_thresh=32,
                tr=default_tr):
     add_trend_chunk(ds, min_time_per_chunk=16)
 
@@ -292,6 +296,8 @@ def preproc_ds(ds,
         print sg_win
         if ds.nsamples > sg_win:
             ds.samples -= he.savitzky_golay.savgol_filter(ds.samples, sg_win, 3, axis=0)
+    if hptf:
+        ds.samples -= scipy.ndimage.gaussian_filter1d(ds.samples,sigma=hptf_thresh,axis=0,truncate=2.5)
     
 
 def ds_from_ts(
@@ -381,12 +387,12 @@ def add_aparc_ba_fa(ds, subject, pproc_tpl):
         skiprows=1,
         delimiter=',')[:,-1].astype(np.int)
     
-    aparcs_surf = np.hstack([nb.gifti.read(os.path.join(pproc_path,'label_resample/mapflow/_label_resample%d/%sh.aparc.a2009s.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int)+11100+i*1000 for i,h in enumerate('lr')])
+    aparcs_surf = np.hstack([nb.load(os.path.join(pproc_path,'label_resample/mapflow/_label_resample%d/%sh.aparc.a2009s.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int)+11100+i*1000 for i,h in enumerate('lr')])
     ds.fa['aparc'] = np.hstack([aparcs_surf, roi_aparc]).astype(np.int32)
         
-    ba_32k = np.hstack([nb.gifti.read(os.path.join(pproc_path,'BA_resample/mapflow/_BA_resample%d/%sh.BA_exvivo.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))]).astype(np.int32)
+    ba_32k = np.hstack([nb.load(os.path.join(pproc_path,'BA_resample/mapflow/_BA_resample%d/%sh.BA_exvivo.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))]).astype(np.int32)
     
-    ba_thresh_32k = np.hstack([nb.gifti.read(os.path.join(pproc_path,'BA_thresh_resample/mapflow/_BA_thresh_resample%d/%sh.BA_exvivo.thresh.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))]).astype(np.int32)
+    ba_thresh_32k = np.hstack([nb.load(os.path.join(pproc_path,'BA_thresh_resample/mapflow/_BA_thresh_resample%d/%sh.BA_exvivo.thresh.annot_converted.32k.gii'%(i,h))).darrays[0].data.astype(np.int) for i,h in enumerate('lr')] + [np.zeros(len(roi_aparc))]).astype(np.int32)
     for ba in [ba_32k, ba_thresh_32k]:
         ba[32492:2*32492] = ba[32492:2*32492]+1000*(ba[32492:2*32492]>0)
     ds.fa['ba'] = ba_32k
@@ -414,15 +420,20 @@ def add_trend_chunk(ds, tr=default_tr, min_time_per_chunk=32):
                 
     ds.sa.trend_chunks = np.cumsum(np.ediff1d(ds.sa.trend_chunks,to_begin=[0])!=0)
 
-def ds_tr2glm(ds, regressors_attr, group_regressors, group_ignore=[], model='ols', sample_type='t_values'):
+def ds_tr2glm_st(ds, regressors_attr, group_regressors, group_ignore=[],
+              model='ols', sample_type='t_values', 
+              hptf=None, return_resid=False):
     
     betas = []
     max_ind = []
     targets = []
+    resid = None
     regs = ds.sa[regressors_attr].value.astype(np.float)
     reg_names = ds.sa[regressors_attr].value.dtype.names
     reg_groups = [n.split('_')[0] for n in reg_names]
     grouped = np.asarray([g in group_regressors for g in reg_groups])
+    if not hptf is None:
+        regs[:,grouped] -= gaussian_filter1d(regs[:,grouped], hptf, axis=0, truncate=2.5)
 
     for reg_i, reg_name in enumerate(reg_names):
         if reg_groups[reg_i] in group_ignore:
@@ -430,7 +441,8 @@ def ds_tr2glm(ds, regressors_attr, group_regressors, group_ignore=[], model='ols
         print 'fitting %s'%reg_name
         max_ind.append(np.argmax(ds.sa[regressors_attr].value[:,reg_i].astype(np.float)))
 
-        summed_regs = np.asarray([regs[:,np.asarray([(g==rt and n!=reg_name) for n,g in zip(reg_names, reg_groups)])].sum(1) for rt in group_regressors]).T
+        summed_regs = np.asarray([regs[:,np.asarray([(g==rt and n!=reg_name) for n,g in zip(reg_names, reg_groups)])].sum(1)
+                                  for rt in group_regressors]).T
 
         mtx = np.hstack([regs[:,reg_i,np.newaxis], summed_regs, regs[:,~grouped]])
         glm = GeneralLinearModel(mtx)
@@ -448,10 +460,70 @@ def ds_tr2glm(ds, regressors_attr, group_regressors, group_ignore=[], model='ols
         if 'regressor' in attr:
             continue
         ds_glm.sa[attr] = ds.sa[attr].value[max_ind]
-
     ds_glm.sa['chunks'] = np.arange(ds_glm.nsamples)
+
+    if return_resid and sample_type=='betas':
+        resid = ds.samples-np.dot(regs[:, grouped], ds_glm.samples)
+        resid -= resid.mean(0)
+        ds_resid = Dataset(resid, sa=ds.sa, fa=ds.fa, a=ds.a)
+        return ds_glm, ds_resid
     return ds_glm
 
+
+def ds_tr2glm(ds, regressors_attr, group_regressors, group_ignore=[],
+                  model='ols', sample_type='t_values', 
+                  hptf=None, return_resid=False,nproc=10):
+    
+    betas = []
+    max_ind = []
+    targets = []
+    resid = None
+    regs = ds.sa[regressors_attr].value.astype(ds.samples.dtype)
+    reg_names = ds.sa[regressors_attr].value.dtype.names
+    reg_groups = [n.split('_')[0] for n in reg_names]
+    grouped = np.asarray([g in group_regressors for g in reg_groups])
+    if not hptf is None:
+        regs[:,grouped] -= gaussian_filter1d(regs[:,grouped], hptf, axis=0, truncate=2.5)
+
+    def reg_glm(reg_i, reg_name):
+        print 'fitting %s'%reg_name
+
+        summed_regs = np.asarray([regs[:,np.asarray([(g==rt and n!=reg_name) for n,g in zip(reg_names, reg_groups)])].sum(1)
+                                  for rt in group_regressors]).T
+
+        mtx = np.hstack([regs[:,reg_i,np.newaxis], summed_regs, regs[:,~grouped]])
+        glm = GeneralLinearModel(mtx)
+        glm.fit(ds.samples, model=model)
+        ctx_mtx = np.zeros(mtx.shape[-1])
+        ctx_mtx[0] = 1
+        if sample_type == 't_values':
+            return glm.contrast(ctx_mtx).stat()
+        elif sample_type == 'betas':
+            return np.squeeze(glm.get_beta(0))
+
+    import pprocess
+    betas = pprocess.Map(limit=nproc)
+    compute = betas.manage(pprocess.MakeParallel(reg_glm))
+    for reg_i, reg_name in enumerate(reg_names):
+        if reg_groups[reg_i] in group_ignore:
+            continue
+        max_ind.append(np.argmax(ds.sa[regressors_attr].value[:,reg_i].astype(np.float)))
+        compute(reg_i, reg_name)
+
+    betas = [b for b in betas]
+    ds_glm = Dataset(np.asarray(betas, dtype=ds.samples.dtype), fa=ds.fa, a=ds.a)
+    for attr in ds.sa.keys():
+        if 'regressor' in attr:
+            continue
+        ds_glm.sa[attr] = ds.sa[attr].value[max_ind]
+    ds_glm.sa['chunks'] = np.arange(ds_glm.nsamples)
+
+    if return_resid and sample_type=='betas':
+        resid = ds.samples-np.dot(regs[:, grouped], ds_glm.samples)
+        resid -= resid.mean(0)
+        ds_resid = Dataset(resid.astype(ds.samples.dtype), sa=ds.sa, fa=ds.fa, a=ds.a)
+        return ds_glm, ds_resid
+    return ds_glm
 
 
 def ds_to_conn(ds):
@@ -477,6 +549,7 @@ def ds_to_conn(ds):
     conn.data.fill(1)
     return conn
 
+
 def interp_bad_ts(ds, smooth_size=4, ratio=1.5):
     import surfer.utils as surfutils
     conn = ds_to_conn(ds)
@@ -493,4 +566,26 @@ def interp_bad_ts(ds, smooth_size=4, ratio=1.5):
     tss_sm = smooth_mat.dot(ds.samples[:,good_vox].T).T
     tss_sm[:,good_vox]= ds.samples[:,good_vox]
     return Dataset(tss_sm, a=ds.a, sa=ds.sa, fa=ds.fa)
+    
+
+def split_mvpa(ds, regressors_attr):
+    regs_orig = ds.sa[regressors_attr].value
+    regs = regs_orig.astype(np.float)
+    regs_mask1 = np.ones(regs.shape[1],dtype=np.bool)
+    regs_mask1[:-1] = np.tile(np.arange(32),2) < 16
+    regs_mask2 = np.ones(regs.shape[1],dtype=np.bool)
+    regs_mask2[:-1] = np.logical_not(regs_mask1[:-1])
+    
+    regs_sum_split1 = np.abs(regs[:,regs_mask1]).sum(1)
+    split1_last_idx = np.argwhere(regs_sum_split1>1).flatten()[-1]+1
+    regs_sum_split2 = np.abs(regs[:,regs_mask2]).sum(1)
+    split2_first_idx = np.argwhere(regs_sum_split2>1).flatten()[0]-1
+
+    ds_split1 = ds[:split1_last_idx]
+    ds_split1.sa[regressors_attr] = regs[:split1_last_idx, regs_mask1].astype(
+        dtype=[(n,np.float) for n in np.asarray(regs_orig.dtype.names)[regs_mask1]])
+    ds_split2 = ds[split2_first_idx:]
+    ds_split2.sa[regressors_attr] = regs[split2_first_idx:, regs_mask2].astype(
+        dtype=[(n,np.float) for n in np.asarray(regs_orig.dtype.names)[regs_mask2]])
+    return ds_split1, ds_split2
     

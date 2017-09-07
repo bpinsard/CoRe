@@ -21,6 +21,7 @@ sys.path.insert(0,'/home/bpinsard/data/src/misc')
 import generic_pipelines
 import generic_pipelines.t1_new, generic_pipelines.fmri, generic_pipelines.fmri_surface
 from generic_pipelines.utils import wrap, fname_presuffix_basename, wildcard
+from generic_pipelines import moco_eval
 
 from nipype import config
 cfg = dict(execution={'stop_on_first_crash': False})
@@ -39,15 +40,16 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
 
 
 subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268,267,237,283,296,319]
-#subject_ids = subject_ids[:-1]
+subject_ids=[162]
 #subject_ids = subject_ids[:1]
+#subject_ids = subject_ids[1:]
 #subject_ids = [1,11,23,22,63,50,296]
 
 tr = 2.16
 echo_time = .03
 echo_spacing = .00053
 phase_encoding_dir = -1
-middle_surface_position = .2
+middle_surface_position = .5
 file_pattern = '_%(PatientName)s_%(SeriesDescription)s_%(SeriesDate)s_%(SeriesTime)s'
 meta_tag_force=['PatientID','PatientName','SeriesDate','SeriesTime']
 
@@ -174,7 +176,7 @@ def preproc_anat():
         (t1_pipeline, wm_surface, [(('freesurfer.aparc_aseg',utility.select,0),'inputspec.aseg')]),
         (t1_pipeline,n_fs32k_surf,[('freesurfer.subjects_dir','fs_source.base_directory'),]),
         (w.get_node('subjects_info'),n_fs32k_surf,[('subject_id','fs_source.subject')]),
-        (t1_pipeline, ants_for_sbctx,[('crop_t1.out_file','inputspec.t1')]),
+        (t1_pipeline, ants_for_sbctx,[('crop_brain.out_file','inputspec.t1')]),
     ])
 
     return w
@@ -346,44 +348,6 @@ def preproc_fmri():
         iterfield = ['in_file','reg_file'],
         name='epi_pvf'
     )
- 
-    n_coords2fakesurf = pe.Node(
-        utility.Function(
-            input_names = ['in_file'],
-            output_names = ['out_file'],
-            function = coords2fakesurf),
-        name='coords2fakesurf'
-    )
-
-    n_volume2surface = pe.MapNode(
-        utility.Function(
-            input_names = ['in_file','surface','method','inner_surface','outer_surface','mask'],
-            output_names = ['out_file'],
-            function = generic_pipelines.fmri_surface.wb_command_volume_to_surface_mapping
-        ),
-        iterfield=['in_file','mask'],
-        name='volume2surface'
-    )
-    n_volume2surface_lh = n_volume2surface.clone('volume2surface_lh')
-    n_volume2surface_rh = n_volume2surface.clone('volume2surface_rh')
-    n_volume2surface_lh.interface.inputs.method = n_volume2surface_rh.interface.inputs.method = 'ribbon-constrained'
-    n_volume2surface_sc = n_volume2surface.clone('volume2surface_sc')
-    n_volume2surface_sc.interface.inputs.method = 'trilinear'
-    n_volume2surface_sc.iterfield = ['in_file']
-
-
-    n_surface_smoothing_lh = pe.MapNode(
-        utility.Function(
-            input_names = ['in_file', 'surface_file','smoothing_kernel','method'],
-            output_names = ['out_file'],
-            function = generic_pipelines.fmri_surface.wb_command_metric_smoothing
-        ),
-        iterfield=['in_file'],
-        name='surface_smoothing_lh'
-    )
-    n_surface_smoothing_lh.inputs.smoothing_kernel = 2
-    n_surface_smoothing_lh.inputs.method = 'GEO_GAUSS_AREA'
-    n_surface_smoothing_rh = n_surface_smoothing_lh.clone('surface_smoothing_rh')
 
 
     n_merge_gii = pe.Node(
@@ -439,10 +403,12 @@ def preproc_fmri():
                         behavioral_data_path=os.path.join(data_dir,'Behavior'),
                         #design=os.path.join(project_dir,'data/mvpa_only.csv'),
                         design=os.path.join(project_dir,'data/design.csv'),
-                        median_divide=True,
-                        wavelet_despike=True
+                        #median_divide=True,
+                        #wavelet_despike=True
+                        hptf=True,
+                        hptf_thresh=4
                     ),
-        name='dataset_wb_wd')
+        name='dataset_wb_hptf')
     n_dataset_wb.plugin_args = high_mem_queue_args
 
 
@@ -484,7 +450,7 @@ def preproc_fmri():
 
 #    n_convert_motion_par_scale = generic_pipelines.fmri_surface.n_convert_motion_par.clone('convert_motion_par_scale')    
 
-    use_topup_fieldmap = False
+    use_topup_fieldmap = True
     if use_topup_fieldmap:
         w.connect([
             (n_fmri_convert, n_mcflirt, [('nifti_file','in_file')]),
@@ -502,49 +468,26 @@ def preproc_fmri():
 
     workbench_interpolate = True
     if workbench_interpolate:
+        wb_pipe = generic_pipelines.fmri_surface.workbench_pipeline()
         w.connect([
-            
-            (n_repeat_topup, n_good_voxels,[(('pve',generic_pipelines.utils.getitem_rec,slice(0,None),0),'mask_file')]),
-            (n_apply_registration, n_good_voxels,[('out_file','in_file')]),
-            
-            (n_anat_grabber, n_coords2fakesurf,[('lowres_rois_coords','in_file')]),
-            (n_anat_grabber, n_volume2surface_lh,[
-                (('lowres_surf_lh',utility.select,0),'surface'),
-                (('lowres_surf_lh',utility.select,0),'inner_surface'),
-                (('lowres_surf_lh',utility.select,1),'outer_surface'),
+            (n_anat_grabber,wb_pipe,[
+                ('lowres_rois_coords','inputspec.lowres_rois_coords'),
+                ('lowres_surf_lh','inputspec.lowres_surf_lh'),
+                ('lowres_surf_rh','inputspec.lowres_surf_rh'),
             ]),
-            (n_anat_grabber, n_volume2surface_rh,[
-                (('lowres_surf_rh',utility.select,0),'surface'),
-                (('lowres_surf_rh',utility.select,0),'inner_surface'),
-                (('lowres_surf_rh',utility.select,1),'outer_surface'),
-            ]),
-
-            (n_anat_grabber, n_surface_smoothing_lh,[(('lowres_surf_lh',utility.select,0),'surface_file')]),
-            (n_anat_grabber, n_surface_smoothing_rh,[(('lowres_surf_rh',utility.select,0),'surface_file')]),
-            
-            (n_volume2surface_lh, n_surface_smoothing_lh,[('out_file','in_file')]),
-            (n_volume2surface_rh, n_surface_smoothing_rh,[('out_file','in_file')]),
-            
-            (n_coords2fakesurf, n_volume2surface_sc,[('out_file','surface')]),
-            (n_surface_smoothing_lh, n_merge_gii,[('out_file','lh_tss')]),
-            (n_surface_smoothing_rh, n_merge_gii,[('out_file','rh_tss')]),
-            (n_volume2surface_sc, n_merge_gii,[('out_file','sc_tss')]),
+            (n_apply_registration, wb_pipe,[('out_file','inputspec.in_files')]),
+        #(n_repeat_topup, n_good_voxels,[(('pve',generic_pipelines.utils.getitem_rec,slice(0,None),0),'mask_file')]),
+        #(n_apply_registration, n_good_voxels,[('out_file','in_file')]),
             
             (si, n_dataset_wb,[('subject_id',)*2]),
-            (n_merge_gii, n_dataset_wb,[('grouped_tss','ts_files')]),
+            (wb_pipe, n_dataset_wb,[('merge_gii.grouped_tss','ts_files')]),
             (w.get_node('all_func_dirs'), n_dataset_wb,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
-            
             
             (n_anat_grabber, n_dataset_wb,[
                 (('lowres_surf_lh',utility.select,0),'lh_surf'),
                 (('lowres_surf_rh',utility.select,0),'rh_surf'),
                 ('lowres_rois_coords','sc_coords')]),
         ])
-        for n in [n_volume2surface_lh,n_volume2surface_rh,n_volume2surface_sc]:
-            w.connect([
-                (n_apply_registration,n,[('out_file','in_file')]),
-                (n_good_voxels,n,[('good_voxels','mask')]),
-                ])
         
 
     n_group_hemi_surfs = pe.Node(
@@ -608,33 +551,36 @@ def preproc_fmri():
     n_moco_noco = pe.MapNode(
         nipy.preprocess.OnlineRealign(
             iekf_jacobian_epsilon = 1e-1,
-            iekf_convergence = 5e-3,
+            iekf_convergence = 1e-2,
             iekf_max_iter = 16,
             iekf_min_nsamples_per_slab = 32,
-            iekf_observation_var = 1e4,
-            iekf_transition_cov = 1e-6,
-            iekf_init_state_cov = 1e-3,
+            iekf_observation_var = 1e5,
+            iekf_transition_cov = 1e-4,
+            iekf_init_state_cov = 1e-4,
             echo_time=echo_time,
             echo_spacing=echo_spacing * 2 * np.pi, # topup field in Hz * 2pi = rad/s
             phase_encoding_dir=phase_encoding_dir,
             middle_surface_position = middle_surface_position,
             register_gradient=False,
             bias_correction=True,
-            bias_sigma=20,
-            interp_rbf_sigma=3,
+            bias_sigma=15,
+            interp_rbf_sigma=2,
+            interp_cortical_anisotropic_kernel=True,
             resampled_first_frame='frame1.nii',
-            out_file_format='ts.h5'),
+            out_file_format='ts.h5',
+            fieldmap_recenter_values=False,
+            fieldmap_unmask=True),
         iterfield = ['dicom_files','fieldmap','fieldmap_reg','init_reg'],
         overwrite=False,
         name = 'moco_noco_biascorr')
     #not really using much memory, but better with multicore blas 
     n_moco_noco.plugin_args = pe_queue_args
 
-    n_moco_noco_mvpa = n_moco_noco.clone('moco_noco_mvpa')
-    n_moco_noco_mvpa_nobiascorr = n_moco_noco_mvpa.clone('moco_noco_mvpa_nobiascorr')
-    n_moco_noco_mvpa_nobiascorr.inputs.bias_correction = False
+    n_moco_bc_mvpa = n_moco_noco.clone('moco_bc_mvpa_aniso')
+    n_moco_mvpa = n_moco_bc_mvpa.clone('moco_mvpa_aniso')
+    n_moco_mvpa.inputs.bias_correction = False
     ### bug with cloning of mapnode
-    n_moco_noco_mvpa_nobiascorr.interface.inputs.bias_correction = False    
+    n_moco_mvpa.interface.inputs.bias_correction = False    
 
 
     n_smooth_bp = pe.MapNode(
@@ -694,38 +640,25 @@ def preproc_fmri():
         ])
     """
 
-    motion_corr = False
-    if motion_corr:
-        w.connect([
-            (w.get_node('all_func_dirs'), n_motion_corr,[(('fmri_all', flatten_remove_none),'dicom_files')]),
-            
-            (n_anat_grabber, n_motion_corr,[
-                ('norm','surfaces_volume_reference'),
-                ('cropped_mask','mask'),
-                ('white_matter_surface','reference_boundary'),
-                (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
-                  '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
-                 'resample_rois')]),
-            (n_repeat_fieldmaps, n_motion_corr,[
-                ('fieldmaps','fieldmap'),
-                ('fieldmap_regs','fieldmap_reg')]),
-            
-            (n_group_hemi_surfs, n_motion_corr,[('out','resample_surfaces')]),
-
-            (n_epi2t1_xfm2mat, n_motion_corr, [('mat','init_reg')])
-        ])
-
-    n_dataset_newmoco = pe.Node(
+    n_dataset_mvpa_moco = pe.Node(
         CreateDataset(tr=tr,
                       behavioral_data_path=os.path.join(data_dir,'Behavior'),
                       design=os.path.join(project_dir,'data/mvpa_only.csv'),
                       #design=os.path.join(project_dir,'data/design.csv'),
-                      median_divide=True,
-                      wavelet_despike=True,
-                      interp_bad_tss=True),
-        name='dataset_mvpa_newmoco')
+                      detrend=False,
+                      median_divide=False,
+                      wavelet_despike=False,
+                      interp_bad_tss=False),
+        name='dataset_mvpa_moco')
+    n_dataset_mvpa_moco.plugin_args = high_mem_queue_args
+    n_dataset_mvpa_moco_bc = n_dataset_mvpa_moco.clone('dataset_mvpa_moco_bc_hptf')
+    n_dataset_mvpa_moco_bc.inputs.hptf=True
+    n_dataset_mvpa_moco_bc.inputs.hptf_thresh=4
+    
+    n_dataset_newmoco = n_dataset_mvpa_moco_bc.clone('dataset_moco_bc')
+    n_dataset_newmoco.inputs.design = os.path.join(project_dir,'data/design.csv')
 
-    moco_noco = False
+    moco_noco = True
     if moco_noco:
         w.connect([
             (w.get_node('all_func_dirs'), n_moco_noco,[(('fmri_ap_all', flatten_remove_none),'dicom_files')]),
@@ -733,24 +666,24 @@ def preproc_fmri():
             (n_anat_grabber, n_moco_noco,[
                 ('norm','surfaces_volume_reference'),
                 ('cropped_mask','mask'),
-                (('pve_maps', utility.select, -1),'gm_pve'),
+                #(('pve_maps', utility.select, -1),'gm_pve'),
                 (('pve_maps', utility.select, 2),'wm_pve'),
                 (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
                   '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
                  'resample_rois')]),
-            (n_topup, n_moco_noco, [('out_field','fieldmap')]),
-            (n_topup2t1_mat, n_moco_noco, [('mat','fieldmap_reg')]),
-
-#            (n_repeat_fieldmaps, n_moco_noco,[
-#                ('fieldmaps','fieldmap'),
-#                ('fieldmap_regs','fieldmap_reg')]),
-            
             (n_group_hemi_surfs, n_moco_noco,[('out','resample_surfaces')]),
-            (n_topup2t1_mat, n_moco_noco, [('mat','init_reg')])
 
-            #(si,n_dataset_newmoco,[('subject_id',)*2]),
-            #(n_moco_noco,n_dataset_newmoco,[('out_file','ts_files')]),
-            #(w.get_node('all_func_dirs'),n_dataset_newmoco,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
+            (n_topup, n_moco_noco, [('out_field','fieldmap')]),
+            (n_topup2t1_mat, n_moco_noco, [('mat','fieldmap_reg'),
+                                           ('mat','init_reg')]),
+            # remove fieldmap for topup
+            #(n_repeat_fieldmaps, n_moco_noco,[
+            #('fieldmaps','fieldmap'),
+            #('fieldmap_regs','fieldmap_reg')]),
+
+            (si,n_dataset_newmoco,[('subject_id',)*2]),
+            (n_moco_noco,n_dataset_newmoco,[('out_file','ts_files')]),
+            (w.get_node('all_func_dirs'),n_dataset_newmoco,[(('fmri_all',flatten_remove_none),'dicom_dirs')]),
 
         ])
 
@@ -758,29 +691,114 @@ def preproc_fmri():
         if isinstance(l, list) and len(l)>0:
             if isinstance(l[-1], list) and len(l[-1])>1:
                 return l[-1][-2:]
+            return l[-2:]
         return []
 
     moco_noco_mvpa = True
     if moco_noco_mvpa:
-        for n in [n_moco_noco_mvpa,n_moco_noco_mvpa_nobiascorr]:
+        for n in [n_moco_bc_mvpa,n_moco_mvpa]:
             w.connect([
                 (w.get_node('all_func_dirs'), n,[(('fmri_ap_all', select_mvpa),'dicom_files')]),
                 
                 (n_anat_grabber, n,[
                     ('norm','surfaces_volume_reference'),
                     ('cropped_mask','mask'),
-                    (('pve_maps', utility.select, -1),'gm_pve'),
+                    #(('pve_maps', utility.select, -1),'gm_pve'),
                     (('pve_maps', utility.select, 2),'wm_pve'),
                     (('lowres_rois_coords',name_struct,'SUBCORTICAL_CEREBELLUM',
                       '/home/bpinsard/data/projects/motion_correction/code/aparc.a2009s+aseg_subcortical_subset.txt'),
                      'resample_rois')]),
-                (n_topup, n, [(('out_field',utility.select,slice(-2,None)),'fieldmap')]),
-                (n_topup2t1_mat, n, [(('mat',utility.select,slice(-2,None)),'fieldmap_reg')]),
-                
                 (n_group_hemi_surfs, n,[('out','resample_surfaces')]),
-                (n_topup2t1_mat, n, [(('mat',utility.select,slice(-2,None)),'init_reg')])
-            ])
 
+                (n_topup, n, [(('out_field',utility.select,slice(-2,None)),'fieldmap')]),
+                (n_topup2t1_mat, n, [(('mat',utility.select,slice(-2,None)),'fieldmap_reg'),
+                                     (('mat',utility.select,slice(-2,None)),'init_reg')]),
+            ])
+        w.connect([
+            (si, n_dataset_mvpa_moco, [('subject_id',)*2]),
+            (n_moco_mvpa, n_dataset_mvpa_moco, [('out_file','ts_files')]),
+            (w.get_node('all_func_dirs'), n_dataset_mvpa_moco, [(('fmri_ap_all',select_mvpa),'dicom_dirs')]),
+
+            (si, n_dataset_mvpa_moco_bc, [('subject_id',)*2]),
+            (n_moco_bc_mvpa, n_dataset_mvpa_moco_bc, [('out_file','ts_files')]),
+            (w.get_node('all_func_dirs'), n_dataset_mvpa_moco_bc, [(('fmri_ap_all',select_mvpa),'dicom_dirs')]),
+            
+        ])
+        n_corr_motion_wb = pe.MapNode(
+            utility.Function(
+                input_names = ['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
+                output_names = ['corr'],
+                function=moco_eval.corr_delta_motion_wb),
+            iterfield=['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
+            name='cov_motion_wb')
+
+        n_corr_motion_moco = pe.MapNode(
+            utility.Function(
+                input_names = ['in_file','motion_file','nslabs'],
+                output_names = ['corr'],
+                function=moco_eval.corr_delta_motion_moco),
+            iterfield=['in_file','motion_file'],
+            name='cov_motion_moco') 
+        n_corr_motion_moco.inputs.nslabs = 40
+
+        n_reg_motion_wb = pe.MapNode(
+            utility.Function(
+                input_names = ['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
+                output_names = ['corr'],
+                function=moco_eval.reg_delta_motion_wb),
+            iterfield=['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
+            name='reg_motion_wb')
+
+        n_reg_motion_moco = pe.MapNode(
+            utility.Function(
+                input_names = ['in_file','motion_file','nslabs'],
+                output_names = ['corr'],
+                function=moco_eval.reg_delta_motion_moco),
+            iterfield=['in_file','motion_file'],
+            name='reg_motion_moco') 
+        n_reg_motion_moco.inputs.nslabs = 40
+
+        n_ddiff_var_wb = pe.MapNode(
+            utility.Function(
+                input_names = ['lh_ctx_file','rh_ctx_file','sc_file'],
+                output_names = ['corr'],
+                function=moco_eval.ddiff_var_wb),
+            iterfield=['lh_ctx_file','rh_ctx_file','sc_file'],
+            name='ddiff_var_wb')
+
+        n_ddiff_var_moco = pe.MapNode(
+            utility.Function(
+                input_names = ['in_file'],
+                output_names = ['corr'],
+                function=moco_eval.ddiff_var_moco),
+            iterfield=['in_file'],
+            name='ddiff_var_moco')
+
+        w.connect([
+            #cov/corr
+            (wb_pipe, n_corr_motion_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
+                                        ('volume2surface_rh.out_file','rh_ctx_file'),
+                                        ('volume2surface_sc.out_file','sc_file')]),
+            (n_mcflirt, n_corr_motion_wb,[('par_file','motion_file')]),
+
+            (n_moco_bc_mvpa, n_corr_motion_moco, [('out_file','in_file'),
+                                                  ('motion_params','motion_file')]),
+            # betas regs
+            (wb_pipe, n_reg_motion_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
+                                        ('volume2surface_rh.out_file','rh_ctx_file'),
+                                        ('volume2surface_sc.out_file','sc_file')]),
+            (n_mcflirt, n_reg_motion_wb,[('par_file','motion_file')]),
+
+            (n_moco_bc_mvpa, n_reg_motion_moco, [('out_file','in_file'),
+                                                 ('motion_params','motion_file')]),
+            # ddiff 
+            (wb_pipe, n_ddiff_var_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
+                                      ('volume2surface_rh.out_file','rh_ctx_file'),
+                                      ('volume2surface_sc.out_file','sc_file')]),
+            
+            (n_moco_bc_mvpa, n_ddiff_var_moco, [('out_file','in_file')])
+
+        ])
 
     n_dataset_noisecorr = pe.Node(
         CreateDataset(tr=tr,
@@ -810,11 +828,9 @@ def preproc_fmri():
         name='dataset_wd_interp_hrf_gam2')
 
     n_dataset_nofilt.plugin_args = high_mem_queue_args
-    
     n_dataset_smoothed = n_dataset_noisecorr.clone('dataset_smoothed')
 
     nofilt_resample = False
-
     if nofilt_resample:
 
         if use_topup_fieldmap:
@@ -905,7 +921,8 @@ class CreateDatasetInputSpec(BaseInterfaceInputSpec):
     detrend = traits.Bool(False, usedefault=True)
     
     wavelet_despike = traits.Bool(False, usedefault=True)
-    
+    hptf = traits.Bool(False, usedefault=True)
+    hptf_thresh = traits.Float(32., usedefault=True)
     interp_bad_tss = traits.Bool(False, usedefault=True)
     tr = traits.Float(mandatory=True)
 
@@ -919,155 +936,10 @@ class CreateDataset(BaseInterface):
     input_spec = CreateDatasetInputSpec
     output_spec = CreateDatasetOutputSpec
 
-    def _run_interface(self, runtime):
-        dss = []
-        dss_glm = []
-        dss_glm_stim = []
-        scan_id = 0
-
-        subject_id = self.inputs.subject_id
-        used_ts_files = []
-
-        empty_to_none =lambda x: x if len(x) else None
-        design = np.atleast_2d(
-            np.loadtxt(
-                self.inputs.design,
-                dtype=np.object,
-                delimiter=',',
-                converters={0:int,1:str,2:str,3:empty_to_none,4:empty_to_none,5:empty_to_none,6:bool}))
-        scan_id=-1
-        for day,ses_name,mri_name,seq_name,beh,scan_idx,optional in design:
-            seq_idx = None
-            seq_info = None
-            if not seq_name is None and not beh is None:
-                seq_info = SEQ_INFO
-                seq_idx = [[s[0] for s in seq_info].index(seq_name)] * 14
-            behavior_file = None
-            if not beh is None:
-                # take the last behavioral file which matches in case of failed task
-                behavior_file = sorted(glob.glob(
-                    os.path.join(
-                        self.inputs.behavioral_data_path,
-                        'CoRe_%03d_D%d/CoRe_%03d_%s_?.mat'%(subject_id,day,subject_id,beh))))
-                if not len(behavior_file): 
-                    if optional:
-                        continue
-                    else:
-                        break # do not crash, in case we want to analyze for early boost...
-                        #raise RuntimeError('missing data')
-                behavior_file = behavior_file[-1]
-            # deal with multiple scans
-            ts_files = [f for f,dd in zip(self.inputs.ts_files,self.inputs.dicom_dirs)\
-                            if ('_D%d/'%day in dd and mri_name in dd)]
-
-            if scan_idx is not None:
-                scan_idx = int(scan_idx)
-                if scan_idx >= len(ts_files):
-                    if optional:
-                        continue
-                    else:
-                        break
-                        #raise RuntimeError('missing data')
-                ts_files = [ts_files[int(scan_idx)]]
-            ts_files = [f for f in ts_files if f not in used_ts_files]
-
-            for ts_file in ts_files:
-                used_ts_files.append(ts_file)                
-                #print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
-                #continue
-                ds = mvpa_dataset.ds_from_ts(
-                    ts_file,
-                    tr=self.inputs.tr)
-                mvpa_dataset.ds_set_attributes(
-                    behavior_file,
-                    seq_info=seq_info, seq_idx=seq_idx,
-                    tr=self.inputs.tr)
-                mvpa_dataset.preproc_ds(
-                    mean_divide=self.inputs.mean_divide,
-                    median_divide=self.inputs.median_divide,
-                    wav_despike=self.inputs.wavelet_despike,
-                    tr=self.inputs.tr)
-                del ts
-                if ds.nsamples <= 10:
-                    break
-                scan_id += 1
-
-                if self.inputs.interp_bad_tss:
-                    ds = mvpa_dataset.interp_bad_ts(ds)
-                ds.sa['scan_name'] = [ses_name]*ds.nsamples
-                ds.sa['scan_id'] = [scan_id]*ds.nsamples
-                dss.append(ds)
-                if beh is not None:
-                    reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_exec.dtype.names])
-                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_exec', reg_groups,[])
-                    dss_glm.append(ds_glm)
-                    reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_stim.dtype.names])
-                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_stim', reg_groups)
-                    dss_glm_stim.append(ds_glm)
-
-                    for a in ['regressors_exec','regressors_stim','regressors_exec_evt']:
-                        if a in ds.sa:
-                            del ds.sa[a]
-                # used ts files to avoid repeating
-                
-        # stack all
-        ds = mvpa2.datasets.vstack(dss)
-        ds.a.update(dss[0].a)
-#        ds.a = dss[0].a
-        ds.sa['chunks'] = np.cumsum(np.ediff1d(ds.chunks, to_begin=[0])!=0)
-        ds_glm = mvpa2.datasets.vstack(dss_glm)
-        ds_glm.a.update(dss[0].a)
-        ds_glm.sa['chunks'] = np.cumsum(np.ediff1d(ds_glm.chunks, to_begin=[0])!=0)
-        ds_glm_stim = mvpa2.datasets.vstack(dss_glm_stim)
-        ds_glm_stim.a.update(dss[0].a)
-        ds_glm_stim.sa['chunks'] = np.cumsum(np.ediff1d(ds_glm_stim.chunks, to_begin=[0])!=0)
-        mvpa_dataset.add_aparc_ba_fa(
-            ds, self.inputs.subject_id,
-            pproc_tpl='/home/bpinsard/data/analysis/core_sleep/surface_32k/_subject_id_%s')
-        ds_glm.fa = ds.fa
-        ds_glm_stim.fa = ds.fa
-        
-        outputs = self._list_outputs()
-        ds.save(outputs['dataset'])
-        ds_glm.save(outputs['glm_dataset'])
-        ds_glm_stim.save(outputs['glm_stim_dataset'])
-
-        return runtime
-
-    def _list_outputs(self):
-        outputs = self._outputs().get()
-        outputs['dataset'] = os.path.abspath('./ds_%s.h5'%self.inputs.subject_id)
-        outputs['glm_dataset'] = os.path.abspath('./glm_ds_%s.h5'%self.inputs.subject_id)
-        outputs['glm_stim_dataset'] = os.path.abspath('./glm_stim_ds_%s.h5'%self.inputs.subject_id)
-        return outputs
-
-
-
-class CreateDatasetWBInputSpec(CreateDatasetInputSpec):
-    subject_id = traits.Int(mandatory=True)
-    ts_files = traits.List(traits.Tuple(*([File(exists=True)]*3)))
-    dicom_dirs = traits.List(Directory(exists=True))
-    data_path = traits.Str('FMRI/DATA',usedefault=True,)
-    design = File(exists=True,mandatory=True)
-    behavioral_data_path=Directory()
-    mean_divide = traits.Bool(False, usedefault=True)
-    median_divide = traits.Bool(False, usedefault=True)
-    detrend = traits.Bool(False, usedefault=True)
-
-    lh_surf = File(exists=True)
-    rh_surf = File(exists=True)
-    sc_coords = File(exists=True)
-
-    wavelet_despike = traits.Bool(False, usedefault=True)
-    
-    interp_bad_tss = traits.Bool(False, usedefault=True)
-    tr = traits.Float(mandatory=True)
-
-
-class CreateDatasetWB(CreateDataset):
-
-    input_spec = CreateDatasetWBInputSpec
-    output_spec = CreateDatasetOutputSpec
+    def _load_ts_file(self, ts_file, dicom_dir, tr):
+        return mvpa_dataset.ds_from_ts(
+            ts_file,
+            tr=tr)
 
     def _run_interface(self, runtime):
         dss = []
@@ -1106,6 +978,7 @@ class CreateDatasetWB(CreateDataset):
                         break # do not crash, in case we want to analyze for early boost...
                         #raise RuntimeError('missing data')
                 behavior_file = behavior_file[-1]
+
             # deal with multiple scans
             select_ts = [('_D%d/'%day in dd and mri_name in dd) for dd in self.inputs.dicom_dirs]
             ts_files = [f for f,sts in zip(self.inputs.ts_files,select_ts) if sts]
@@ -1120,22 +993,16 @@ class CreateDatasetWB(CreateDataset):
                         break
                         #raise RuntimeError('missing data')
                 ts_files = [ts_files[int(scan_idx)]]
-            ts_files = [f for f in ts_files if f[0] not in used_ts_files]
+            ts_files = [f for f in ts_files if f not in used_ts_files]
 
-            for ts_file,dicom_dir in zip(ts_files,dicom_dirs):
-                used_ts_files.append(ts_file[0])
-                print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
-                tss = np.hstack([np.asarray([da.data for da in nb.load(f).darrays]) for f in ts_file])
-                print tss.shape
-                if tss.shape[0] <= 10:
-                    continue
-                ds = mvpa2.datasets.Dataset(tss)
+            
 
-                dcm = dicom.read_file(sorted(glob.glob(os.path.join(dicom_dir, '*')))[0])
-                dt = datetime.datetime.strptime(dcm.AcquisitionDate+':'+dcm.AcquisitionTime,'%Y%m%d:%H%M%S.%f')
-                tstp = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
-                ds.sa['time'] = tstp + np.arange(ds.nsamples)*tr
+            for ts_file, dicom_dir in zip(ts_files, dicom_dirs):
+                used_ts_files.append(ts_file)                
+                #print day, ses_name, mri_name, ts_file[-12:], str(behavior_file).split('/')[-1]
+                #continue
 
+                ds = self._load_ts_file(ts_file, dicom_dir, self.inputs.tr)
                 mvpa_dataset.ds_set_attributes(
                     ds,
                     behavior_file,
@@ -1146,8 +1013,9 @@ class CreateDatasetWB(CreateDataset):
                     mean_divide=self.inputs.mean_divide,
                     median_divide=self.inputs.median_divide,
                     wav_despike=self.inputs.wavelet_despike,
+                    hptf=self.inputs.hptf,
+                    hptf_thresh=self.inputs.hptf_thresh,
                     tr=self.inputs.tr)
-                
                 if ds.nsamples <= 10:
                     break
                 scan_id += 1
@@ -1159,11 +1027,16 @@ class CreateDatasetWB(CreateDataset):
                 dss.append(ds)
                 if beh is not None:
                     reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_exec.dtype.names])
-                    print reg_groups
-                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_exec', reg_groups,['constant'])
+                    glm_hptf = None
+                    if self.inputs.hptf:
+                        glm_hptf = self.inputs.hptf_thresh
+                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_exec', 
+                                                    reg_groups[reg_groups!='constant'],['constant'],
+                                                    hptf=glm_hptf)
                     dss_glm.append(ds_glm)
                     reg_groups = np.unique([n.split('_')[0] for n in ds.sa.regressors_stim.dtype.names])
-                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_stim', reg_groups,['constant'])
+                    ds_glm = mvpa_dataset.ds_tr2glm(ds, 'regressors_stim',
+                                                    reg_groups[reg_groups!='constant'],['constant'])
                     dss_glm_stim.append(ds_glm)
 
                     for a in ['regressors_exec','regressors_stim','regressors_exec_evt',
@@ -1174,6 +1047,7 @@ class CreateDatasetWB(CreateDataset):
         # stack all
         ds = mvpa2.datasets.vstack(dss)
         ds.a.update(dss[0].a)
+#        ds.a = dss[0].a
         ds.sa['chunks'] = np.cumsum(np.ediff1d(ds.chunks, to_begin=[0])!=0)
         ds_glm = mvpa2.datasets.vstack(dss_glm)
         ds_glm.a.update(dss[0].a)
@@ -1181,7 +1055,50 @@ class CreateDatasetWB(CreateDataset):
         ds_glm_stim = mvpa2.datasets.vstack(dss_glm_stim)
         ds_glm_stim.a.update(dss[0].a)
         ds_glm_stim.sa['chunks'] = np.cumsum(np.ediff1d(ds_glm_stim.chunks, to_begin=[0])!=0)
+        mvpa_dataset.add_aparc_ba_fa(
+            ds, self.inputs.subject_id,
+            pproc_tpl=os.path.join(proc_dir,'core_sleep','surface_32k','_subject_id_%s'))
+        ds_glm.fa = ds.fa
+        ds_glm_stim.fa = ds.fa
+        
+        outputs = self._list_outputs()
+        print 'saving'
+        ds.save(outputs['dataset'])
+        ds_glm.save(outputs['glm_dataset'])
+        ds_glm_stim.save(outputs['glm_stim_dataset'])
 
+        print 'completed'
+        return runtime
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs['dataset'] = os.path.abspath('./ds_%s.h5'%self.inputs.subject_id)
+        outputs['glm_dataset'] = os.path.abspath('./glm_ds_%s.h5'%self.inputs.subject_id)
+        outputs['glm_stim_dataset'] = os.path.abspath('./glm_stim_ds_%s.h5'%self.inputs.subject_id)
+        return outputs
+
+
+
+class CreateDatasetWBInputSpec(CreateDatasetInputSpec):
+    ts_files = traits.List(traits.Tuple(*([File(exists=True)]*3)))
+
+    lh_surf = File(exists=True)
+    rh_surf = File(exists=True)
+    sc_coords = File(exists=True)
+
+class CreateDatasetWB(CreateDataset):
+
+    input_spec = CreateDatasetWBInputSpec
+    output_spec = CreateDatasetOutputSpec
+
+    def _load_ts_file(self, ts_file, dicom_dir, tr):
+        tss = np.hstack([np.asarray([da.data for da in nb.load(f).darrays]) for f in ts_file])
+        ds = mvpa2.datasets.Dataset(tss)
+        
+        dcm = dicom.read_file(sorted(glob.glob(os.path.join(dicom_dir, '*')))[0])
+        dt = datetime.datetime.strptime(dcm.AcquisitionDate+':'+dcm.AcquisitionTime,'%Y%m%d:%H%M%S.%f')
+        tstp = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
+        ds.sa['time'] = tstp + np.arange(ds.nsamples)*tr
 
         lh_gii = nb.load(self.inputs.lh_surf)
         rh_gii = nb.load(self.inputs.rh_surf)
@@ -1200,22 +1117,7 @@ class CreateDatasetWB(CreateDataset):
         ds.fa.voxel_indices[rois_offset:] = sc_coords[:,3:6]
         ds.fa['node_indices'] = np.arange(ds.nfeatures, dtype=np.uint)
 
-        mvpa_dataset.add_aparc_ba_fa(
-            ds, self.inputs.subject_id,
-            pproc_tpl=os.path.join(proc_dir,'core_sleep/surface_32k/_subject_id_%s'))
-        ds_glm.fa = ds.fa
-        ds_glm_stim.fa = ds.fa
-        ds_glm.a = ds.a
-        ds_glm_stim.a = ds.a
-
-        
-        outputs = self._list_outputs()
-        ds.save(outputs['dataset'])
-        ds_glm.save(outputs['glm_dataset'])
-        ds_glm_stim.save(outputs['glm_stim_dataset'])
-
-        return runtime
-
+        return ds
 
 def repeat_fieldmaps(fmri_scans, fieldmaps, arg_names, **kwargs):
     from datetime import datetime
