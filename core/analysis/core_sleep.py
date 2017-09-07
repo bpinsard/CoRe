@@ -431,8 +431,8 @@ def group_rsa_cnbis_cluster(block_phase='exec',groupInt=None,
         data = sl_ress[:,contrast[0]]-sl_ress[:,contrast[1]]
         t,p = data.mean(0),None
 
-        permutations = [ np.random.randint(0,2,nsubj, dtype=np.uint8) for i in xrange(nperm-1)]
-        perm_bool = [np.asarray([perm==0,perm==1]).T for perm in permutations]
+        #permutations = [ np.random.randint(0,2,nsubj, dtype=np.uint8) for i in xrange(nperm-1)]
+        #perm_bool = [np.asarray([perm==0,perm==1]).T for perm in permutations]
         # include real contrast for lower-bound on p-values
         for i,perm in enumerate(perm_bool):
             sys.stdout.write('\r permutations: %d/%d' % (i,nperm))
@@ -475,6 +475,122 @@ def group_rsa_cnbis_cluster(block_phase='exec',groupInt=None,
                                           sc_labels, sc_cluster_prob_raw, sc_labels_fwe, sc_cluster_prob_fwe)
         del data
     del permttest
+    np.save('results_group_cluster_%s.npy'%block_phase,results)
+    return results
+
+def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
+                         main_fxs=[0,5], contrasts=[(0,5)],
+                         nperm=1000, h=2, e=.5, blocksize=10000,
+                         nproc=1):
+    
+    if groupInt is not None:
+        files = [os.path.join(proc_dir, output_subdir,'CoRe_%03d_%s_cnbis.h5'%(sid,block_phase)) \
+                 for sid in subject_ids if sid in group_Int]
+    else:
+        files = [os.path.join(proc_dir, output_subdir,'CoRe_%03d_%s_cnbis.h5'%(sid,block_phase)) \
+                 for sid in subject_ids]    
+
+    sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(6,6,-1).mean(0).astype(np.float32) for f in files])
+    nsubj = len(sl_ress)
+
+    neighborhood = np.load(os.path.join(proc_dir,'connectivity_96k.npy')).tolist()
+    results = dict()
+    results['main_fx'] = dict()
+    nfeat = sl_ress.shape[-1]
+
+    if nproc>1:
+        import pprocess
+
+    def perm_tfce(data, nperms):
+        perms = np.empty((nperms, data.shape[1]), dtype=np.float32)
+        for i in range(nperms):
+            sys.stdout.write('\r permutations: %d/%d' % (i,nperms))
+            sys.stdout.flush()
+            signs = np.random.randint(0,2,nsubj)*2-1
+            perm_mean = reduce(lambda x,y: x+y[0]*y[1], zip(signs,data),0)/nsubj
+            perms[i] = tfce_map(perm_mean, neighborhood, h, e, d)
+        return perms
+
+    for main_fx in main_fxs:
+        print('main_fx',main_fx)
+        data = sl_ress[:,main_fx]
+        data_mean = data.mean(0)
+        max_val = data_mean.max()
+        d = max_val/100.
+
+        tfce = tfce_map(data_mean, neighborhood, h, e, d)
+
+        if nproc>1:
+            p_results = pprocess.Queue(limit=nproc)
+            compute = p_results.manage(pprocess.MakeParallel(perm_tfce))
+
+            blocksize = nperm/nproc
+            for i in range(nproc-1):
+                compute(data, blocksize)
+            compute(data, nperm-1-(blocksize*(nproc-1)))
+            permttest = np.vstack([p for p in p_results]+[np.asarray([tfce])])
+            print permttest.shape
+        else:
+            permttest = np.empty((nperm, nfeat), dtype=np.float32)
+            for i in range(nperm-1):
+                permttest[i] = perm_tfce(data)
+                sys.stdout.write('\r permutations: %d/%d' % (i,nperm))
+                sys.stdout.flush()
+            sys.stdout.write(' done\n')
+        # include real contrast for lower-bound on p-values
+        permttest[-1] = tfce
+        
+        sum_higher = (permttest >= tfce).sum(0)
+        vox_pvalue = sum_higher/float(nperm)
+        
+        results['main_fx'][main_fx] = (data_mean, tfce, vox_pvalue)
+        del data, permttest, p_results, compute
+
+    results['contrasts'] = dict()
+
+    #if len(contrasts)>0:
+    #    permttest_low = np.empty((nperm, nfeat),dtype=np.float32)
+    for contrast in contrasts:
+        print('contrast',contrast)
+        
+        data = sl_ress[:,contrast[0]]-sl_ress[:,contrast[1]]
+        data_mean = data.mean(0)
+        max_val = data_mean.max()
+        d = max_val/100.
+        tfce = tfce_map(data_mean, neighborhood, h, e, d)
+        tfce_low = tfce_map(-data_mean, neighborhood, h, e, d)
+
+        # include real contrast for lower-bound on p-values
+        if nproc>1:
+            p_results = pprocess.Queue(limit=nproc)
+            compute = p_results.manage(pprocess.MakeParallel(perm_tfce))
+
+            blocksize = nperm/nproc
+            for i in range(nproc-1):
+                compute(data, blocksize)
+            compute(data, nperm-2-(blocksize*(nproc-1)))
+            permttest = np.vstack([p for p in p_results]+[np.asarray([tfce,tfce_low])])
+            print permttest.shape
+        else:
+            permttest = np.empty((nperm, nfeat), dtype=np.float32)
+            for i in range(nperm-1):
+                permttest[i] = perm_tfce(data)
+                sys.stdout.write('\r permutations: %d/%d' % (i,nperm))
+                sys.stdout.flush()
+            sys.stdout.write(' done\n')
+
+        sys.stdout.write(' done\n')
+
+        sum_higher = (permttest >= tfce).sum(0)
+        # as the permutations plays on the sign of difference, the null distribution should be the same for both tails
+        sum_lower = (permttest >= tfce_low).sum(0)
+
+        p_high = sum_higher/float(nperm)
+        p_low = sum_lower/float(nperm)
+        two_tailed_voxp = np.minimum(sum_higher, sum_lower)/float(nperm)
+        results['contrasts'][contrast] = (data_mean, tfce, tfce_low, two_tailed_voxp, p_high, p_low)
+
+        del data, permttest, p_results, compute
     np.save('results_group_cluster_%s.npy'%block_phase,results)
     return results
         
