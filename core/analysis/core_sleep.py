@@ -47,7 +47,7 @@ seq_groups = {
     'all_seqs': ulabels[:4]
 }
 block_phases = [
-    #'instr',
+    'instr',
     'exec'
 ]
 scan_groups = dict(
@@ -56,6 +56,7 @@ scan_groups = dict(
 #    mvpa_all=['d3_mvpa1','d3_mvpa2']
 )
 
+# the neighborhood connectivity_96k matrix creation script is in brain_topology eigenlaplacian code
 
 def searchlight_permutation(gnb,svqe,generator,splitter,npermutation=100):
     permutator = AttributePermutator(gnb.space, count=npermutation, limit='scan_name')
@@ -329,13 +330,76 @@ def subject_rois_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec'):
     print('______________   CoRe %03d   ___________'%sid)
 
     glm_ds_mvpa, residuals_mvpa = subject_mvpa_ds_residuals(sid, hptf_thresh, reg_sa=reg_sa)
+    
+def subject_rois_rsa_crossnobis_tmp(glm_ds_mvpa, residuals_mvpa):
 
+    mgs = mean_group_sample(attrs=['subtargets','targets','chunks'])
+    glm_ds_mvpa = mgs(glm_ds_mvpa)
+
+    targets_num(glm_ds_mvpa, ulabels)
+    splitter = Splitter(attr='chunks')
+    partnr = CustomPartitioner([([a],[b]) for a in range(4) for b in range(a+1,4)], attr='chunks')
+    part_splitter = Splitter(attr=partnr.space)
+
+    import sklearn.covariance
+    rois_results = dict()
     rois = Dataset.from_hdf5(os.path.join(proc_dir,'msl_rois.h5'))
     for ri,roi_name in enumerate(rois.a.roi_labels):
+        print roi_name
         mask = rois.samples[0]==ri+1
-        res = residuals_mvpa.samples[:,mask]
-        res2
-    
+        res = residuals_mvpa[:,mask]
+        betas = glm_ds_mvpa[:,mask]
+        dists_mnorm = []
+        dists_targets = []
+        nfeats = betas.nfeatures
+
+        print 'multivariate normalization'
+        for res_split, betas_split in zip(splitter.generate(res),splitter.generate(betas)):
+            emp_cov = np.cov(res_split.samples.T)
+            shrinkage = sklearn.covariance.ledoit_wolf_shrinkage(res_split.samples)
+            cov_shrink = sklearn.covariance.shrunk_covariance(emp_cov, shrinkage=shrinkage)
+            cov_eigval, cov_eigvec = np.linalg.eigh(cov_shrink)
+            cov_powminushalf = cov_eigvec.dot((cov_eigvec/np.sqrt(cov_eigval)).T)
+
+            for block_phase in block_phases:
+                betas_phase = betas_split[dict(subtargets=[block_phase])]
+                for bi,beta in enumerate(betas_phase):
+                    for beta2 in betas_phase[:bi]:
+                        diff = beta.samples - beta2.samples
+                        targ = (beta.sa.targets_num[0], beta2.sa.targets_num[0])
+                        if targ[1] < targ[0]:
+                            diff *= -1
+                            targ = targ[::-1]
+                        diff_mnorm = Dataset(np.dot(diff,cov_powminushalf),sa=beta.sa.copy(), fa=beta.fa, a=beta.a)
+                        dists_targets.append(targ)
+                        dists_mnorm.append(diff_mnorm)
+        dists_mnorm = vstack(dists_mnorm)
+        dists_mnorm.sa['targets'] = dists_targets
+        
+        upair_targets = sorted(list(set(dists_targets)))
+        n_pair_targets = len(upair_targets)
+        pair_targets2num = dict([(upt,upti) for upti,upt in enumerate(upair_targets)])
+        dists_mnorm.sa['targets_num'] = np.asarray([pair_targets2num[pt] for pt in dists_targets])
+
+        parts = list(partnr.generate(dists_mnorm))
+        nparts = len(parts)
+        results = dict(
+            (p,Dataset(np.empty((n_pair_targets*nparts), dtype=glm_ds_mvpa.samples.dtype),
+                       sa=dict(targets=upair_targets*nparts))) for p in block_phases)
+
+        print 'compute dists'
+        for part_idx, part in enumerate(parts):
+            for block_phase in block_phases:
+                train, test = list(part_splitter.generate(part[dict(subtargets=[block_phase])]))[1:3]
+                for pt_num,pair_target in enumerate(upair_targets):
+                    train_pairs = train[train.sa.targets_num==pt_num]
+                    test_pairs = test[test.sa.targets_num==pt_num]
+                    print train_pairs.shape, test_pairs.shape
+                    corr = np.dot(train_pairs.samples,test_pairs.samples.T)/nfeats
+                    
+                    results[block_phase].samples[part_idx*n_pair_targets+pt_num] = corr.mean()
+        rois_results[roi_name] = results
+    return rois_results
     
 
 def subject_searchlight_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec'):
@@ -343,7 +407,7 @@ def subject_searchlight_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_ex
 
     glm_ds_mvpa, residuals_mvpa = subject_mvpa_ds_residuals(sid, hptf_thresh, reg_sa=reg_sa)
 
-    svqe = searchlight.SurfVoxQueryEngine(max_feat=128, vox_sl_radius=3.2, surf_sl_radius=15)
+    svqe = searchlight.SurfVoxQueryEngine(max_feat=64, vox_sl_radius=3.2, surf_sl_radius=15)
     svqe_cached = searchlight.CachedQueryEngineAlt(svqe)
     svqe_cached.train(glm_ds_mvpa)
 
@@ -478,9 +542,30 @@ def group_rsa_cnbis_cluster(block_phase='exec',groupInt=None,
     np.save('results_group_cluster_%s.npy'%block_phase,results)
     return results
 
+def cluster_size_thresh(thrd, neighborhood, npts=10):
+    labels, num = _clusterize_custom_neighborhood(thrd, neighborhood)
+    area = scipy.ndimage.measurements.sum(thrd, labels, index=np.arange(1, num + 1)).astype(np.int)
+    new_labels = labels.copy()
+    for l,a in enumerate(area):
+        if a < npts:
+            new_labels[labels==l+1] = 0
+    return new_labels
+
+def perm_tfce(data, nperms, neighborhood, h=2, e=.5, d=.1):
+    nsubj, nfeat = data.shape
+    perms = np.empty((nperms, nfeat), dtype=np.float32)
+    for i in range(nperms):
+        sys.stdout.write('\r permutations: %d/%d' % (i,nperms))
+        sys.stdout.flush()
+        signs = np.random.randint(0,2,nsubj)*2-1
+        perm_mean = reduce(lambda x,y: x+y[0]*y[1], zip(signs,data),0)/nsubj
+        perms[i] = tfce_map(perm_mean, neighborhood, h, e, d)
+    sys.stdout.write('\n done')
+    return perms
+
 def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
                          main_fxs=[0,5], contrasts=[(0,5)],
-                         nperm=1000, h=2, e=.5, blocksize=10000,
+                         nperm=1000, h=2, e=.5,
                          nproc=1):
     
     if groupInt is not None:
@@ -501,15 +586,6 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
     if nproc>1:
         import pprocess
 
-    def perm_tfce(data, nperms):
-        perms = np.empty((nperms, data.shape[1]), dtype=np.float32)
-        for i in range(nperms):
-            sys.stdout.write('\r permutations: %d/%d' % (i,nperms))
-            sys.stdout.flush()
-            signs = np.random.randint(0,2,nsubj)*2-1
-            perm_mean = reduce(lambda x,y: x+y[0]*y[1], zip(signs,data),0)/nsubj
-            perms[i] = tfce_map(perm_mean, neighborhood, h, e, d)
-        return perms
 
     for main_fx in main_fxs:
         print('main_fx',main_fx)
@@ -521,30 +597,24 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
         tfce = tfce_map(data_mean, neighborhood, h, e, d)
 
         if nproc>1:
-            p_results = pprocess.Queue(limit=nproc)
-            compute = p_results.manage(pprocess.MakeParallel(perm_tfce))
-
             blocksize = nperm/nproc
-            for i in range(nproc-1):
-                compute(data, blocksize)
-            compute(data, nperm-1-(blocksize*(nproc-1)))
-            permttest = np.vstack([p for p in p_results]+[np.asarray([tfce])])
-            print permttest.shape
+            blocksizes = [blocksize]*(nproc-1)+[nperm-1-(blocksize*(nproc-1))]
+            df = joblib.delayed(perm_tfce)
+            permttest = np.vstack(
+                joblib.Parallel(n_jobs=nproc)([df(data, b, neighborhood, h, e, d) for b in blocksizes])+
+                [np.asarray([tfce])])
+                
         else:
-            permttest = np.empty((nperm, nfeat), dtype=np.float32)
-            for i in range(nperm-1):
-                permttest[i] = perm_tfce(data)
-                sys.stdout.write('\r permutations: %d/%d' % (i,nperm))
-                sys.stdout.flush()
+            permttest = perm_tfce(data, nperm, neighborhood, h, e, d)
+            # include real contrast for lower-bound on p-values
+            permttest[-1] = tfce
             sys.stdout.write(' done\n')
-        # include real contrast for lower-bound on p-values
-        permttest[-1] = tfce
         
         sum_higher = (permttest >= tfce).sum(0)
         vox_pvalue = sum_higher/float(nperm)
         
         results['main_fx'][main_fx] = (data_mean, tfce, vox_pvalue)
-        del data, permttest, p_results, compute
+        del data, permttest
 
     results['contrasts'] = dict()
 
@@ -560,25 +630,22 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
         tfce = tfce_map(data_mean, neighborhood, h, e, d)
         tfce_low = tfce_map(-data_mean, neighborhood, h, e, d)
 
-        # include real contrast for lower-bound on p-values
         if nproc>1:
-            p_results = pprocess.Queue(limit=nproc)
-            compute = p_results.manage(pprocess.MakeParallel(perm_tfce))
 
             blocksize = nperm/nproc
-            for i in range(nproc-1):
-                compute(data, blocksize)
-            compute(data, nperm-2-(blocksize*(nproc-1)))
-            permttest = np.vstack([p for p in p_results]+[np.asarray([tfce,tfce_low])])
-            print permttest.shape
+            blocksizes = [blocksize]*(nproc-1)+[nperm-2-(blocksize*(nproc-1))]
+            df = joblib.delayed(perm_tfce)
+            permttest = np.vstack(
+                joblib.Parallel(n_jobs=nproc)([df(data, b, neighborhood, h, e, d) for b in blocksizes])+
+                [np.asarray([tfce, tfce_low])])
+            
+            p_results = pprocess.Queue(limit=nproc)
+            compute = p_results.manage(pprocess.MakeParallel(perm_tfce))
         else:
-            permttest = np.empty((nperm, nfeat), dtype=np.float32)
-            for i in range(nperm-1):
-                permttest[i] = perm_tfce(data)
-                sys.stdout.write('\r permutations: %d/%d' % (i,nperm))
-                sys.stdout.flush()
-            sys.stdout.write(' done\n')
-
+            permttest = perm_tfce(data, nperm, neighborhood, h, e, d)
+            # include real contrasts for lower-bound on p-values
+            permttest[-1] = tfce
+            permttest[-2] = tfce_low
         sys.stdout.write(' done\n')
 
         sum_higher = (permttest >= tfce).sum(0)
@@ -590,7 +657,7 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
         two_tailed_voxp = np.minimum(sum_higher, sum_lower)/float(nperm)
         results['contrasts'][contrast] = (data_mean, tfce, tfce_low, two_tailed_voxp, p_high, p_low)
 
-        del data, permttest, p_results, compute
+        del data, permttest
     np.save('results_group_cluster_%s.npy'%block_phase,results)
     return results
         
@@ -599,23 +666,25 @@ def tfce_map(map_, neighborhood, h, e, d=None):
     if d is None:
         d = max_value/100.
     tfce = np.zeros_like(map_)
-    mask = np.zeros_like(map_, dtype=np.bool)
+    mask = np.empty_like(map_, dtype=np.bool)
+    keep_edges = np.empty(len(neighborhood.col),dtype=np.bool)
+    labels_map = np.empty_like(map_, dtype=np.uint)
     
     for t in np.arange(d, max_value+d/2., d):
-        mask = map_ > t
-        keep_edges = np.logical_and(mask[neighborhood.col], mask[neighborhood.row])
+        mask[:] = map_ > t
+        np.logical_and(mask[neighborhood.col], mask[neighborhood.row], keep_edges)
         neigh_thr = scipy.sparse.coo_matrix(
             (neighborhood.data[keep_edges],
              (neighborhood.row[keep_edges],
               neighborhood.col[keep_edges])),
             neighborhood.shape)
-        labels_map = (scipy.sparse.csgraph.connected_components(neigh_thr, directed=False)[1]+1)*mask
-        labels, labels_map, area = np.unique(labels_map,return_inverse=True,return_counts=True)
+        labels_map[:] = (scipy.sparse.csgraph.connected_components(neigh_thr, directed=False)[1]+1)*mask
+        labels, labels_map[:], area = np.unique(labels_map, return_inverse=True, return_counts=True)
 
         tfce_vals = d*(area**e)*(t**h)
         
         tfce[mask] += tfce_vals[labels_map[mask]]
-        del neigh_thr
+        del neigh_thr, labels, area, tfce_vals
     return tfce
     
 
@@ -1363,4 +1432,5 @@ def create_rois():
         rois_labels.append(roi_name)
     return rois_mask, rois_labels
             
+
 
