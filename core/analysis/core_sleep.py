@@ -41,6 +41,11 @@ ulabels = ['CoReTSeq','CoReIntSeq','mvpa_CoReOtherSeq1','mvpa_CoReOtherSeq2','re
 #ulabels = ulabels[1:]
 
 
+mean_gpi_tseq_intseq_retest = dict(zip([1,23,63,79,107,128,82,100,87,192,195,220,223,235,268,267,237,296],
+                                       [0.691678762,0.6476318601,0.7146664634,0.6942514435,0.6439363702,0.7129282095,
+                                        0.7786872682,0.6831603428,0.655332343,0.6189194603,0.7243437075,0.6760921572,
+                                        0.7275203957,0.7322032598,0.7174293011,0.7663752402,0.6448094237,0.6884314187]))
+
 seq_groups = {
     'mvpa_new_seqs' : ulabels[2:4],
     'tseq_intseq' : ulabels[:2],
@@ -331,10 +336,10 @@ def subject_rois_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec'):
 
     glm_ds_mvpa, residuals_mvpa = subject_mvpa_ds_residuals(sid, hptf_thresh, reg_sa=reg_sa)
     
-def subject_rois_rsa_crossnobis_tmp(glm_ds_mvpa, residuals_mvpa):
+#def subject_rois_rsa_crossnobis_tmp(glm_ds_mvpa, residuals_mvpa):
 
-    mgs = mean_group_sample(attrs=['subtargets','targets','chunks'])
-    glm_ds_mvpa = mgs(glm_ds_mvpa)
+    #mgs = mean_group_sample(attrs=['subtargets','targets','chunks'])
+    #glm_ds_mvpa = mgs(glm_ds_mvpa)
 
     targets_num(glm_ds_mvpa, ulabels)
     splitter = Splitter(attr='chunks')
@@ -343,7 +348,7 @@ def subject_rois_rsa_crossnobis_tmp(glm_ds_mvpa, residuals_mvpa):
 
     import sklearn.covariance
     rois_results = dict()
-    rois = Dataset.from_hdf5(os.path.join(proc_dir,'msl_rois.h5'))
+    rois = Dataset.from_hdf5(os.path.join(proc_dir,'msl_rois_new.h5'))
     for ri,roi_name in enumerate(rois.a.roi_labels):
         print roi_name
         mask = rois.samples[0]==ri+1
@@ -394,7 +399,6 @@ def subject_rois_rsa_crossnobis_tmp(glm_ds_mvpa, residuals_mvpa):
                 for pt_num,pair_target in enumerate(upair_targets):
                     train_pairs = train[train.sa.targets_num==pt_num]
                     test_pairs = test[test.sa.targets_num==pt_num]
-                    print train_pairs.shape, test_pairs.shape
                     corr = np.dot(train_pairs.samples,test_pairs.samples.T)/nfeats
                     
                     results[block_phase].samples[part_idx*n_pair_targets+pt_num] = corr.mean()
@@ -558,10 +562,107 @@ def perm_tfce(data, nperms, neighborhood, h=2, e=.5, d=.1):
         sys.stdout.write('\r permutations: %d/%d' % (i,nperms))
         sys.stdout.flush()
         signs = np.random.randint(0,2,nsubj)*2-1
-        perm_mean = reduce(lambda x,y: x+y[0]*y[1], zip(signs,data),0)/nsubj
+        #perm_mean = reduce(lambda x,y: x+y[0]*y[1], zip(signs,data),0)/nsubj
+        perm_mean,_ = scipy.stats.ttest_1samp(signs[:,np.newaxis]*data,0)
+        perm_mean[np.isnan(perm_mean)] = 0
         perms[i] = tfce_map(perm_mean, neighborhood, h, e, d)
     sys.stdout.write('\n done')
     return perms
+
+def perm_tfce_reg(data, regs, nperms, neighborhood, h=2, e=.5, d=.1):
+    nsubj, nfeat = data.shape
+    perms = np.empty((nperms, nfeat), dtype=np.float32)
+    regs_perm = regs.copy()
+    for i in range(nperms):
+        sys.stdout.write('\r permutations: %d/%d' % (i,nperms))
+        sys.stdout.flush()
+        regs_perm[:,0] = np.random.permutation(regs[:,0])
+        perm_mean = np.linalg.lstsq(regs_perm, data)[0][0]
+        perm_mean[np.isnan(perm_mean)] = 0
+        perms[i] = tfce_map(perm_mean, neighborhood, h, e, d)
+    sys.stdout.write('\n done')
+    return perms
+
+
+def group_rsa_cnbis_reg_tfce(reg, block_phase='exec',groupInt=None,
+                             main_fxs=[0], contrasts=[],
+                             nperm=1000, h=2, e=.5,
+                             nproc=1):
+    
+    if groupInt is not None:
+        files = [os.path.join(proc_dir, output_subdir,'CoRe_%03d_%s_cnbis.h5'%(sid,block_phase)) \
+                 for sid in subject_ids if sid in group_Int]
+    else:
+        files = [os.path.join(proc_dir, output_subdir,'CoRe_%03d_%s_cnbis.h5'%(sid,block_phase)) \
+                 for sid in subject_ids]    
+
+    sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(6,6,-1).mean(0).astype(np.float32) for f in files])
+    nsubj = len(sl_ress)
+
+    neighborhood = np.load(os.path.join(proc_dir,'connectivity_96k.npy')).tolist()
+    results = dict()
+
+    # add intercept
+    regs = np.asarray([reg,np.ones(reg.shape)]).T
+    
+    if nproc>1:
+        import pprocess
+
+    results['main_fx'] = dict()        
+    for main_fx in main_fxs:
+        print('main_fx', main_fx)
+        data = sl_ress[:,main_fx]
+        betas,_,_,_= np.linalg.lstsq(regs, data)
+        betas[np.isnan(betas)] = 0
+        max_val = betas[0].max()
+        min_val = -betas[0].min()
+        d = max_val/100.
+        d_neg = min_val/100.
+        
+        tfce = tfce_map(betas[0], neighborhood, h, e, d)
+        
+        if nproc>1:
+            blocksize = nperm/nproc
+            blocksizes = [blocksize]*(nproc-1)+[nperm-1-(blocksize*(nproc-1))]
+            df = joblib.delayed(perm_tfce_reg)
+            permttest = np.vstack(
+                joblib.Parallel(n_jobs=nproc)([df(data, regs, b, neighborhood, h, e, d) for b in blocksizes])+
+                [np.asarray([tfce])])
+
+        else:
+            permttest = perm_tfce_reg(data, regs, nperm, neighborhood, h, e, d)
+            # include real contrast for lower-bound on p-values
+            permttest[-1] = tfce
+            sys.stdout.write(' done\n')
+        
+        sum_higher = (permttest >= tfce).sum(0)
+        vox_pvalue = sum_higher/float(nperm)
+
+        del permttest
+        tfce_neg = tfce_map(-betas[0], neighborhood, h, e, d)
+
+        if nproc>1:
+            blocksize = nperm/nproc
+            blocksizes = [blocksize]*(nproc-1)+[nperm-1-(blocksize*(nproc-1))]
+            df = joblib.delayed(perm_tfce_reg)
+            permttest_neg = np.vstack(
+                joblib.Parallel(n_jobs=nproc)([df(data, -regs, b, neighborhood, h, e, d_neg) for b in blocksizes])+
+                [np.asarray([tfce_neg])])
+
+        else:
+            permttest_neg = perm_tfce_reg(data, -regs, nperm, neighborhood, h, e, d_neg)
+            # include real contrast for lower-bound on p-values
+            permttest_neg[-1] = tfce_neg
+            sys.stdout.write(' done\n')
+
+        sum_higher_neg = (permttest_neg >= tfce_neg).sum(0)
+        vox_pvalue_neg = sum_higher_neg/float(nperm)
+        del permttest_neg
+        
+        results['main_fx'][main_fx] = (betas[0], tfce, vox_pvalue, tfce_neg, vox_pvalue_neg)
+        del data
+    return results
+    
 
 def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
                          main_fxs=[0,5], contrasts=[(0,5)],
@@ -590,7 +691,9 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
     for main_fx in main_fxs:
         print('main_fx',main_fx)
         data = sl_ress[:,main_fx]
-        data_mean = data.mean(0)
+        #data_mean = data.mean(0)
+        data_mean,_ = scipy.stats.ttest_1samp(data,0)
+        data_mean[np.isnan(data_mean)] = 0
         max_val = data_mean.max()
         d = max_val/100.
 
@@ -624,7 +727,9 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
         print('contrast',contrast)
         
         data = sl_ress[:,contrast[0]]-sl_ress[:,contrast[1]]
-        data_mean = data.mean(0)
+#        data_mean = data.mean(0)
+        data_mean,_ = scipy.stats.ttest_1samp(data,0)
+        data_mean[np.isnan(data_mean)] = 0
         max_val = data_mean.max()
         d = max_val/100.
         tfce = tfce_map(data_mean, neighborhood, h, e, d)
@@ -1362,7 +1467,10 @@ def all_subjects_rsa_analysis(shift=30):
     return all_subject_tvalues, all_subject_corrs, sas
             
 
-def create_rois():
+def create_rois(t_pat=None):
+
+    if t_pat is None:
+        t_pat = Dataset.from_hdf5('/home/bpinsard/data/projects/CoRe/results/mean_task_pattern.h5')
 
     hemis = 'lr'
     subctx_rois = dict(
@@ -1372,27 +1480,39 @@ def create_rois():
         thal_r=49,
         put_l=12,
         put_r=51,
-        cer_l=8,
-        cer_r=47,
+        #cer_l=8,
+        #cer_r=47,
+        lob_V_l=603,
+        lob_V_r=604,
+        lob_VI_l=605,
+        lob_VI_r=607,
+        crus_I_l=608,
+        crus_I_r=610,
+        lob_VII_l=614,
+        lob_VII_r=616,
         caud_l=11,
         caud_r=50,
         pal_l=13,
-        pal_r=52    
+        pal_r=52
     )
-    t_pat = Dataset.from_hdf5('/home/bpinsard/data/projects/CoRe/results/mean_task_pattern.h5')
 
     bas = t_pat.fa.ba
     parc = t_pat.fa.aparc
     parcmod100 = np.mod(parc,100)
-
+    coords = t_pat.fa.coordinates
+    coords_sym = coords.copy()
+    coords_sym[32492:2*32492,0] *= -1
+    
     ctx_rois_masks = [
 #        ('dlpfc', np.logical_and(parcmod100==15,bas!=7)),
-        ('sma', np.logical_and(bas==7, parcmod100==16)),
-        ('pmd', np.logical_and(bas==7, np.logical_or(np.logical_or(parcmod100==70, parcmod100==55),parcmod100==29))),
+#        ('sma', np.logical_and(bas==7, parcmod100==16)),
+        ('sma', (bas==7)&(coords_sym[:,0]>25)&((parcmod100==16)|(parcmod100==7)|(parcmod100==8))),
+        ('pmd', (bas==7)&(coords_sym[:,0]>-25)&((parcmod100==70)|(parcmod100==55)|(parcmod100==29))),
+        ('pmv', (bas==7)&(coords_sym[:,0]<-25)&((parcmod100==70)|(parcmod100==55)|(parcmod100==29))),
         ('m1', np.logical_and(np.logical_or(bas==5,bas==6),~np.logical_or(parcmod100==3,parcmod100==16))),
         ('s1', np.logical_and(bas>0,bas<5)),
         ('opj', parcmod100==27),
-        ('ips', parcmod100==57),
+        ('ips', ((parcmod100==57)|(parcmod100==68))&(coords_sym[:,0]>-25)&(bas==0)),
     ]
 
 
@@ -1417,8 +1537,13 @@ def create_rois():
                     neighs = np.asarray(svqe.query_byid(8080+32492*hi))
                 elif roi_name=='dlpfc':
                     neighs = np.asarray(svqe.query_byid(29972+32492*hi))
+                #elif roi_name=='pmd':
+                #    neighs = np.asarray(svqe.query_byid(5812+32492*hi))
+
                 neighs = neighs[tmp_mask[neighs]]
+                
                 rois_mask[neighs] = idx
+                #rois_mask[tmp_mask] = idx
             else:
                 rois_mask[tmp_mask] = idx
             rois_labels.append('%s_%s'%(roi_name,h))
@@ -1426,9 +1551,10 @@ def create_rois():
         print roi_name
         idx += 1
         mask = (parc == roi_label)
-        neighs = np.asarray(svqe.query_byid(t_pat.fa.node_indices[mask][np.argmax(t_pat.samples[0,mask])]))
-        neighs = neighs[mask[neighs]]
-        rois_mask[neighs] = idx
+        #neighs = np.asarray(svqe.query_byid(t_pat.fa.node_indices[mask][np.argmax(t_pat.samples[0,mask])]))
+        #neighs = neighs[mask[neighs]]
+        #rois_mask[neighs] = idx
+        rois_mask[mask] = idx
         rois_labels.append(roi_name)
     return rois_mask, rois_labels
             
