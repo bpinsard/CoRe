@@ -131,6 +131,7 @@ def blocks_to_attributes(ds, blocks, hrf_rest_thresh=.5, tr=default_tr):
 
     ds.a['blocks_tr'] = np.round(np.asarray([b[2] for b in blocks])/tr).astype(np.int)
     ds.a['blocks_targets'] = [b[0] for b in blocks]
+    ds.a['blocks_durations'] = [b[6]-b[2] for b in blocks]
         
     #"""
     par_exec = BlockParadigm(
@@ -356,8 +357,9 @@ def ds_set_attributes(
         
         ds.sa['chunks'] = np.cumsum(np.ediff1d(ds.chunks, to_begin=[0])!=0)
         # rounding is to remove numerical small errors
-        ds.a['blocks_tr'] = [int(np.round(b[2]/tr)) for b in blocks]
-        ds.a['blocks_targets'] = [b[0] for b in blocks]
+        ds.a['blocks_tr'] = np.asarray([int(np.round(b[2]/tr)) for b in blocks])
+        ds.a['blocks_targets'] = np.asarray([b[0] for b in blocks])
+        ds.a['blocks_durations'] = np.asarray([b[6]-b[2] for b in blocks])
     else:
         ds.sa['chunks'] = np.arange(int(ds.nsamples/float(target_chunk_len))+1).repeat(target_chunk_len)[:ds.nsamples]
         ds.sa['targets'] = [default_target]*ds.nsamples

@@ -53,7 +53,7 @@ This reprocessing is observed as either gains or maintenance of performance comp
 However, controversies remains regarding the respective roles that both wake and sleeps' different stages play in consolidating motor memory traces [@nettersheim_role_2015;@landry_effects_2016].
 
 Sequential motor skills recruit an extended network of cerebral [@hardwick_quantitative_2013], cerebellar and spinal regions [@vahdat_simultaneous_2015], which involvement evolves differently across learning stages [@dayan_neuroplasticity_2011].
-Herein, critical plasticity changes [@ungerleider_imaging_2002;@doyon_reorganization_2005] occurs at both training and consolidation, the latter being modelled  [@rasch_reactivation_2008;@born_system_2012;@albouy_hippocampus_2013;@dudai_consolidation_2015] as a "transfer" or "reorganization" between nervous system structures supporting such function.
+Herein, critical plasticity changes [@ungerleider_imaging_2002;@doyon_reorganization_2005] occurs at both training and consolidation, the latter being modelled [@rasch_reactivation_2008;@born_system_2012;@albouy_hippocampus_2013;@dudai_consolidation_2015;@bassett_learning-induced_2015] as a "transfer" or "reorganization" between nervous system structures supporting such function.
 
 Both cortico-cerebellar and cortico-striatal loop circuits contributes to MSL [@doyon_reorganization_2005], recruiting primary sensorimotor and supplementary motor cortices as well as posterior parietal and dorso-lateral prefrontal cortices [@hardwick_quantitative_2013] concurrently to sub-parts of cerebellum and striatum on which we will further expand.
 
@@ -86,7 +86,7 @@ Numerous neuroimaging [@hikosaka_central_2002;@albouy_both_2008;@orban_multiface
 Nevertheless, the acquisition of motor sequence representation during MSL in these regions critical to MSL is still to be assessed.
 
 The goal of the present study is thus to identify newly acquired finger-presses sequences representation and their reorganization after consolidation.
-We hypothesize that sequence representation is reorganized by consolidation, with strengthened cortical and striatal and lowered hippocampal activity difference [@doyon_reorganization_2005;@albouy_interaction_2013;@debas_off-line_2014].
+We hypothesized that strengthened cortical and striatal with lowered hippocampal representation, as assessed by multivariate difference in local activity, reflects this reorganization.
 
 ##Method
 
@@ -96,7 +96,7 @@ The study includes 18 right-handed young (18-35 years old) healthy volunteers re
 
 The subject were not included in case of history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961].
 
-Subjects with BMI greater than 27, smokers, extreme chronotype, night-workers, having travelled across meridian during the 3 previous months, or training as musician or professional typist (for over-training on coordinated finger movements) were also excluded.
+Subjects with BMI greater than 27, smokers, extreme chronotype, night-workers, having traveled across meridian during the 3 previous months, or training as musician or professional typist (for over-training on coordinated finger movements) were also excluded.
 
 Sleep quality was assessed by Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989], and daytime sleepiness  (Epworth Sleepiness Scale [@johns_new_1991]) had to be lower or equal to 9.
 
@@ -116,7 +116,7 @@ On the second evening (D2), subjects were first tested for 1 block on TSeq, then
 On the third evening (D3), subjects first performed TSeq for 7 blocks followed by 7 blocks of IntSeq, each block including 12 repetitions of the sequence or 60 keypresses. 
 
 This was followed by a task specifically designed for MVPA analysis, similar to @wiestler_skill_2013, alternating short blocks of practice of 4 different sequences.
-However it differed in that the 4 sequences used the left hand four fingers excluding the thumb, and were, as for the initial training, performed repeatedly without interuption not and given error feedback, this in order to probe the processes underlying automation of the skill.
+However it differed in that the 4 sequences used the left hand four fingers excluding the thumb, and were, as for the initial training, performed repeatedly without interruption not and given error feedback, this in order to probe the processes underlying automation of the skill.
 
 Each block, composed of an instruction period of 4 sec when was displayed 5 numbers (eg. 1-4-2-3-1) representing in reading order the sequence of fingers to be pressed, followed by an execution period indicated by a green cross.
 Subject had to perform 5 times the sequence, or a maximum of 5x5=25 key-presses, before being instructed to stop and rest by displaying a red cross.
@@ -187,15 +187,39 @@ Conversely, the representation strength decreases for consolidated sequences in 
 
 While patterns differentiating newly acquired sequences exists in contralateral putamen and bilateral caudate, this distances increases for consolidated sequences in bilateral putamen.
 
-
 ## Discussion
 
-Memory consolidation 
-
+Behaviorally assessed consolidation is subtended by long-term changes in neuronal circuits that support the efficient retrieval and expression of memories.
+In the present study we aimed to measure the changes in activity patterns that reflect the specialization of distributed network for the execution of different motor sequential skills.
+ 
 (recapitulate the results)
-Our results shows for the first time 
+The present results first shows which regions are differentially recruited to performed two sequences which underwent similar consolidation and two sequences that are newly acquired.
+An extended network of regions showing reliable sequence specific activity patterns for both sequence types emcompasses bilateral supplementary and pre-motor to posterior parietal cortices, while contralateral primary sensorimotor regions are only different between novel sequences.
 
+
+We further investigated how early consolidation restructures the distributed representation of sequential motor skills, notably between cortical and subcortical regions.
+Interestingly bilateral putamen, more precisely ventral posterior regions, show higher discriminability.
+This also aligns with recent results [@] showing that striatal regions at "tutored" by cortical regions during training, being able after to express the skills even in the absence of cortical inputs.
+
+
+frontal results:
+These results could be explained by the task itself, which require more cognitive processing, notably switching between and inhibiting interfering sequences.
+
+M1 for new sequences:
+The stronger pattern difference in primary motor cortex for newly learned sequences could reflect their structure difference.
+This first finger press was recently shown to elicit stronger activation thus driving separability of patterns for sequences with different starts [@yokoi_does_human_2017] unbeknownst to us during experimental design.
+While our design differs in that the sequences are uninterruptedly repeated five times, the first finger effect could remain for the first execution of the newly learned sequence only, the consolidated one having the same initiating finger.
 
 (limitations)
 
+
+
+
 (what's next)
+
+
+
+
+# Funding
+
+This work was supported by the Canadian Institutes of Health Research (MOP 97830) to JD, as well as by French Education and Research Ministry and Sorbonne Universités to BP. __+Ella? +Arnaud(QBIN)__
