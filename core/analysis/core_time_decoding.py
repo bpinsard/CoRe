@@ -75,7 +75,8 @@ def wb_time_decoding(sid, n_alpha=5, logistic_window=9):
             onehot[ds.a.blocks_tr[ds.a.blocks_targets==seq],seqi] = 1
         stimuli_onehot.append(onehot)
 
-    
+
+        
     scores = dict()
 
     rois = Dataset.from_hdf5(os.path.join(proc_dir,'msl_rois_new.h5'))
@@ -84,42 +85,61 @@ def wb_time_decoding(sid, n_alpha=5, logistic_window=9):
         scores[roi_name]=[]
         mask = rois.samples[0]==ri+1
         for tr,te in custom_cv:
-            stimuli_train, stimuli_test = stimuli_onehot[tr], stimuli_onehot[te]
-
             fmri_train, fmri_test = dss_mvpa[tr].samples[:,mask], dss_mvpa[te].samples[:,mask]
-            """
-            fmri_train, fmri_test = timedec.feature_selection(
-                dss_mvpa[tr].samples, dss_mvpa[te].samples,
-                np.argmax(stimuli_train[:,:-1], axis=1),k=1000)
-            """
-
-            alphas = np.logspace(- n_alpha / 2, n_alpha - (n_alpha / 2), num=n_alpha)
-            ridge = timedec.linear_model.RidgeCV(alphas=alphas)
-            ridge.fit(fmri_train, design_mtxs[tr])
-            prediction_train = ridge.predict(fmri_train)
-            prediction_test = ridge.predict(fmri_test)
-
-            score = timedec.metrics.r2_score(stimuli_test, prediction_test[:,:nclasses],
-                                             multioutput='raw_values')
-            print score
-            
-            log = timedec.linear_model.LogisticRegressionCV()
-            train_mask = np.sum(stimuli_train, axis=1).astype(bool)
-            test_mask = np.sum(stimuli_test, axis=1).astype(bool)
-            time_windows_train = [
-                prediction_train[scan: scan + logistic_window,:nclasses].ravel()
-                for scan in xrange(len(prediction_train) - logistic_window + 1)
-                if train_mask[scan]]
-            time_windows_test = [
-                prediction_test[scan: scan + logistic_window,:nclasses].ravel()
-                for scan in xrange(len(prediction_test) - logistic_window + 1)
-                if test_mask[scan]]
-
-            stimuli_train = np.argmax(stimuli_train[train_mask], axis=1)
-            stimuli_test = np.argmax(stimuli_test[test_mask], axis=1)
-
-            log.fit(time_windows_train, stimuli_train)
-            accuracy = log.score(time_windows_test, stimuli_test)
+            accuracy = cv_acc(fmri_train, fmri_test,
+                              stimuli_onehot[tr], stimuli_onehot[te],
+                              design_mtxs[tr],design_mtxs[te],
+                              n_alpha, logistic_window)
         
             scores[roi_name].append(accuracy)
+    scores['wb']=[]
+    for tr,te in custom_cv:
+        
+        fmri_train, fmri_test = timedec.feature_selection(
+            dss_mvpa[tr].samples, dss_mvpa[te].samples,
+            np.argmax(stimuli_onehot[tr], axis=1),k=10000)
+        
+        accuracy = cv_acc(fmri_train, fmri_test,
+                          stimuli_onehot[tr], stimuli_onehot[te],
+                          design_mtxs[tr],design_mtxs[te],
+                          n_alpha, logistic_window)
+        scores['wb'].append(accuracy)
     return scores
+
+
+def cv_acc(fmri_train, fmri_test,
+           stimuli_train, stimuli_test,
+           design_mtx_train, design_mtx_test,
+           n_alpha, logistic_window):
+    classes = ulabels[:4]
+    nclasses = len(classes)
+
+    alphas = np.logspace(- n_alpha / 2, n_alpha - (n_alpha / 2), num=n_alpha)
+    ridge = timedec.linear_model.RidgeCV(alphas=alphas)
+    ridge.fit(fmri_train, design_mtx_train)
+    prediction_train = ridge.predict(fmri_train)
+    prediction_test = ridge.predict(fmri_test)
+    
+    score = timedec.metrics.r2_score(
+        stimuli_test, prediction_test[:,:nclasses],
+        multioutput='raw_values')
+    
+    log = timedec.linear_model.LogisticRegressionCV()
+    train_mask = np.sum(stimuli_train, axis=1).astype(bool)
+    test_mask = np.sum(stimuli_test, axis=1).astype(bool)
+    time_windows_train = [
+        prediction_train[scan: scan + logistic_window,:nclasses].ravel()
+        for scan in xrange(len(prediction_train) - logistic_window + 1)
+        if train_mask[scan]]
+    time_windows_test = [
+        prediction_test[scan: scan + logistic_window,:nclasses].ravel()
+        for scan in xrange(len(prediction_test) - logistic_window + 1)
+        if test_mask[scan]]
+    
+    stimuli_train = np.argmax(stimuli_train[train_mask], axis=1)
+    stimuli_test = np.argmax(stimuli_test[test_mask], axis=1)
+    
+    log.fit(time_windows_train, stimuli_train)
+    accuracy = log.score(time_windows_test, stimuli_test)
+    return accuracy
+    

@@ -479,13 +479,16 @@ def cluster_size_thresh(thrd, neighborhood, npts=10):
 
 def perm_tfce(data, nperms, neighborhood, h=2, e=.5, d=.1):
     nsubj, nfeat = data.shape
-    perms = np.zeros((nperms, nfeat), dtype=np.float32)
+    perms = np.empty((nperms, nfeat), dtype=np.float32)
+    perms.fill(0)
+    perm_data = data.astype(np.float32)
     for i in range(nperms):
         sys.stdout.write('\r permutations: %d/%d    ' % (i,nperms))
         sys.stdout.flush()
         signs = np.random.randint(0,2,nsubj)*2-1
         #perm_mean = reduce(lambda x,y: x+y[0]*y[1], zip(signs,data),0)/nsubj
-        perm_mean,_ = scipy.stats.ttest_1samp(signs[:,np.newaxis]*data,0)
+        perm_data *= signs[:,np.newaxis]
+        perm_mean,_ = scipy.stats.ttest_1samp(perm_data,0)
         perm_mean[np.isnan(perm_mean)] = 0
         perms[i] = tfce_map(perm_mean, neighborhood, h, e, d)
     sys.stdout.write('\n done')
@@ -570,7 +573,6 @@ def group_rsa_cnbis_reg_tfce(reg, block_phase='exec',groupInt=None,
             permttest_neg = np.vstack(
                 joblib.Parallel(n_jobs=nproc)([df(data, -regs, b, neighborhood, h, e, d_neg) for b in blocksizes])+
                 [np.asarray([tfce_neg])])
-
         else:
             permttest_neg = perm_tfce_reg(data, -regs, nperm, neighborhood, h, e, d_neg)
             # include real contrast for lower-bound on p-values
@@ -774,7 +776,7 @@ def group_rsa_cnbis_delay_tfce(groupInt=None,
         files = [os.path.join(proc_dir, 'searchlight_cnbis_delays_slmap','CoRe_%03d_cnbis_delays.h5'%sid) \
                  for sid in subject_ids]
 
-    sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(9,6,6,-1).mean(1).astype(np.float32) for f in files])
+    sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(9,6,6,-1)[:,1:-1].mean(1).astype(np.float32) for f in files])
 
     nsubj = len(sl_ress)
     nfeat = sl_ress.shape[-1]

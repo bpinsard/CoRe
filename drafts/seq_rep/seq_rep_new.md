@@ -196,10 +196,9 @@ In the present study we aimed to measure the changes in activity patterns that r
 The present results first shows which regions are differentially recruited to performed two sequences which underwent similar consolidation and two sequences that are newly acquired.
 An extended network of regions showing reliable sequence specific activity patterns for both sequence types emcompasses bilateral supplementary and pre-motor to posterior parietal cortices, while contralateral primary sensorimotor regions are only different between novel sequences.
 
-
 We further investigated how early consolidation restructures the distributed representation of sequential motor skills, notably between cortical and subcortical regions.
 Interestingly bilateral putamen, more precisely ventral posterior regions, show higher discriminability.
-This also aligns with recent results [@] showing that striatal regions at "tutored" by cortical regions during training, being able after to express the skills even in the absence of cortical inputs.
+This also aligns with recent results [@kawai_motor_2015] showing that striatum is "tutored" by the cortex during training and is able afterward to express the skills in the absence of neo-cortical inputs.
 
 
 frontal results:
@@ -211,6 +210,7 @@ This first finger press was recently shown to elicit stronger activation thus dr
 While our design differs in that the sequences are uninterruptedly repeated five times, the first finger effect could remain for the first execution of the newly learned sequence only, the consolidated one having the same initiating finger.
 
 (limitations)
+
 
 
 
