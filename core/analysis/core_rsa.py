@@ -4,6 +4,7 @@ import scipy.stats, scipy.ndimage.measurements, scipy.sparse
 from ..mvpa import searchlight
 from ..mvpa import dataset as mvpa_ds
 from . import mvpa_nodes
+from .core_sleep import targets_num
 from mvpa2.datasets import Dataset, vstack
 from mvpa2.misc.errorfx import mean_mismatch_error, mean_match_accuracy
 from mvpa2.mappers.fx import mean_sample
@@ -15,6 +16,8 @@ from mvpa2.clfs.gnb import GNB
 from mvpa2.misc.neighborhood import CachedQueryEngine
 from mvpa2.measures.rsa import CrossNobisSearchlight
 from mvpa2.generators.partition import NFoldPartitioner, FactorialPartitioner, CustomPartitioner
+from mvpa2.measures.base import CrossValidation
+from mvpa2.generators.splitters import Splitter
 from mvpa2.algorithms.group_clusterthr import (GroupClusterThreshold, Counter, 
                                                get_cluster_sizes, _transform_to_pvals, _clusterize_custom_neighborhood)
 import statsmodels.stats.multitest as smm
@@ -214,11 +217,16 @@ def subject_mvpa_ds_residuals(sid, hptf_thresh=8, reg_sa='regressors_exec'):
     residuals_mvpa = vstack(residuals_mvpa, a='drop_nonunique')
     return glm_ds_mvpa, residuals_mvpa
 
-def subject_rois_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec'):
+def subject_rois_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec', fir_delays=None):
     import sklearn.covariance
     print('______________   CoRe %03d   ___________'%sid)
 
-    glm_ds_mvpa, residuals_mvpa = subject_mvpa_ds_residuals(sid, hptf_thresh, reg_sa=reg_sa)
+    if fir_delays is None:
+        glm_ds_mvpa, residuals_mvpa = subject_mvpa_ds_residuals(sid, hptf_thresh, reg_sa=reg_sa)
+        subsets = [dict(subtargets=[block_phase]) for block_phase in block_phases]
+    else:
+        glm_ds_mvpa, residuals_mvpa = subject_mvpa_ds_fir_residuals(sid, fir_delays,hptf_thresh)
+        subsets = [dict(fir_delays=[fir_delay]) for fir_delay in fir_delays]
     
 #def subject_rois_rsa_crossnobis_tmp(glm_ds_mvpa, residuals_mvpa):
     import sklearn.covariance
@@ -263,8 +271,8 @@ def subject_rois_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec'):
             cov_eigval, cov_eigvec = np.linalg.eigh(cov_shrink)
             cov_powminushalf = cov_eigvec.dot((cov_eigvec/np.sqrt(cov_eigval)).T)
 
-            for block_phase in block_phases:
-                betas_phase = betas_split[dict(subtargets=[block_phase])]
+            for subset in subsets:
+                betas_phase = betas_split[subset]
                 for bi,beta in enumerate(betas_phase):
                     for beta2 in betas_phase[:bi]:
                         diff = beta.samples - beta2.samples
@@ -286,18 +294,18 @@ def subject_rois_rsa_crossnobis(sid, hptf_thresh=8, reg_sa='regressors_exec'):
         parts = list(partnr.generate(dists_mnorm))
         nparts = len(parts)
         results = dict(
-            (p,Dataset(np.empty((n_pair_targets*nparts), dtype=glm_ds_mvpa.samples.dtype),
-                       sa=dict(targets=upair_targets*nparts))) for p in block_phases)
+            (p.values()[0][0],Dataset(np.empty((n_pair_targets*nparts), dtype=glm_ds_mvpa.samples.dtype),
+                                      sa=dict(targets=upair_targets*nparts))) for p in subsets)
 
         print 'compute dists'
         for part_idx, part in enumerate(parts):
-            for block_phase in block_phases:
-                train, test = list(part_splitter.generate(part[dict(subtargets=[block_phase])]))[1:3]
+            for subset in subsets:
+                train, test = list(part_splitter.generate(part[subset]))[1:3]
                 for pt_num,pair_target in enumerate(upair_targets):
                     train_pairs = train[train.sa.targets_num==pt_num]
                     test_pairs = test[test.sa.targets_num==pt_num]
                     corr = np.dot(train_pairs.samples,test_pairs.samples.T)/nfeats
-                    results[block_phase].samples[part_idx*n_pair_targets+pt_num] = corr.mean()
+                    results[subset.values()[0][0]].samples[part_idx*n_pair_targets+pt_num] = corr.mean()
         rois_results[roi_name] = results
     return rois_results
     
@@ -776,7 +784,7 @@ def group_rsa_cnbis_delay_tfce(groupInt=None,
         files = [os.path.join(proc_dir, 'searchlight_cnbis_delays_slmap','CoRe_%03d_cnbis_delays.h5'%sid) \
                  for sid in subject_ids]
 
-    sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(9,6,6,-1)[:,1:-1].mean(1).astype(np.float32) for f in files])
+    sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(9,6,6,-1).mean(1).astype(np.float32) for f in files])
 
     nsubj = len(sl_ress)
     nfeat = sl_ress.shape[-1]
