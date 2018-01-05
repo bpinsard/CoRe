@@ -40,7 +40,8 @@ SEQ_INFO = [('CoReTSeq', np.asarray([1,4,2,3,1])),
 
 
 subject_ids = [1,11,23,22,63,50,67,79,54,107,128,162,102,82,155,100,94,87,192,200,184,194,195,220,223,235,256,268,267,237,283,296,319]
-subject_ids=[162]
+group_Int = [1,23,63,79,82,87,100,107,128,192,195,220,223,235,268,267,237,296]
+#subject_ids=[67]
 #subject_ids = subject_ids[:1]
 #subject_ids = subject_ids[1:]
 #subject_ids = [1,11,23,22,63,50,296]
@@ -162,21 +163,25 @@ def preproc_anat():
 
     n_fs32k_surf = generic_pipelines.fmri_surface.surface_32k()
     
-    ants_for_sbctx = generic_pipelines.fmri_surface.ants_for_subcortical()
-    ants_for_sbctx.inputs.inputspec.template ='/home/bpinsard/data/src/Pipelines/global/templates/MNI152_T1_1mm_brain.nii.gz'
-    ants_for_sbctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__[0],'../data','Atlas_ROIs.csv')
+#    ants_for_sbctx = generic_pipelines.fmri_surface.ants_for_subcortical()
+#    ants_for_sbctx.inputs.inputspec.template ='/home/bpinsard/data/src/Pipelines/global/templates/MNI152_T1_1mm_brain.nii.gz'
+#    ants_for_sbctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__[0],'../data','Atlas_ROIs.csv')
+    warp_subctx = generic_pipelines.fmri_surface.warp_subcortical()
+    warp_subctx.inputs.inputspec.template = os.path.join(generic_pipelines.__path__[0],'../data','MNI152_T1_1mm_brain_fslmask.nii.gz')
+    warp_subctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__[0],'../data','Atlas_ROIs.csv')
         
     w.base_dir = proc_dir
     w.connect([
         (w.get_node('anat_dirs'),n_t1_convert,[('t1_mprage','dicom_files')]),
-        (w.get_node('anat_dirs'),n_t1_12ch_2mm_iso_convert,[('t1_mprage_12ch_2mm_iso','dicom_files')]),
+#        (w.get_node('anat_dirs'),n_t1_12ch_2mm_iso_convert,[('t1_mprage_12ch_2mm_iso','dicom_files')]),
 #        (n_t1_12ch_2mm_iso_convert, n_n4_12ch_2mm,[('nifti_file','input_image')]),
         (w.get_node('subjects_info'),t1_pipeline,[(('subject_id',wrap(str),[]),'inputspec.subject_id')]),
         (n_t1_convert,t1_pipeline,[('nifti_file','inputspec.t1_files')]),
         (t1_pipeline, wm_surface, [(('freesurfer.aparc_aseg',utility.select,0),'inputspec.aseg')]),
         (t1_pipeline,n_fs32k_surf,[('freesurfer.subjects_dir','fs_source.base_directory'),]),
         (w.get_node('subjects_info'),n_fs32k_surf,[('subject_id','fs_source.subject')]),
-        (t1_pipeline, ants_for_sbctx,[('crop_brain.out_file','inputspec.t1')]),
+        #(t1_pipeline, ants_for_sbctx,[('crop_brain.out_file','inputspec.t1')]),
+        (t1_pipeline, warp_subctx,[('crop_brain.out_file','inputspec.t1')]),
     ])
 
     return w
@@ -224,7 +229,8 @@ def preproc_fmri():
              'white_resample_surf/mapflow/_white_resample_surf1/rh.white_converted.32k.gii'],
             ['surface_32k/_subject_id','subject_id',
              'pial_resample_surf/mapflow/_pial_resample_surf1/rh.pial_converted.32k.gii']],
-        lowres_rois_coords = [['ants_for_subcortical/_subject_id','subject_id','coords_itk2nii/atlas_coords_nii.csv']],
+        lowres_rois_coords = [['warp_subcortical/_subject_id','subject_id','warp_coords/Atlas_ROIs_warped.csv']],
+        #lowres_rois_coords = [['ants_for_subcortical/_subject_id','subject_id','coords_itk2nii/atlas_coords_nii.csv']],
         )
     n_anat_grabber = pe.Node(
         nio.DataGrabber(
@@ -249,42 +255,44 @@ def preproc_fmri():
 
     ## FIELDMAP PREPROC #####################################################################
 
-    n_fieldmap_fmri_convert = pe.MapNode(
-        np_dcmstack.DCMStackFieldmap(
-            meta_force_add=meta_tag_force,
-            out_file_format = 'fieldmap_bold'+file_pattern,
-            voxel_order='LAS'),
-        iterfield=['dicom_files'],
-        name='convert_fieldmap_dicom')
+    use_fieldmap=False
+    if use_fieldmap:
+        n_fieldmap_fmri_convert = pe.MapNode(
+            np_dcmstack.DCMStackFieldmap(
+                meta_force_add=meta_tag_force,
+                out_file_format = 'fieldmap_bold'+file_pattern,
+                voxel_order='LAS'),
+            iterfield=['dicom_files'],
+            name='convert_fieldmap_dicom')
 
-    n_flirt_fmap2t1 = pe.MapNode(
-        fsl.FLIRT(cost='mutualinfo',
-                  dof=6,
-                  out_matrix_file = 'fmap2t1.mat',
-                  no_search=True,
-                  uses_qform=True),
-        iterfield=['in_file'],
-        name='flirt_fmap2t1')
+        n_flirt_fmap2t1 = pe.MapNode(
+            fsl.FLIRT(cost='mutualinfo',
+                      dof=6,
+                      out_matrix_file = 'fmap2t1.mat',
+                      no_search=True,
+                      uses_qform=True),
+            iterfield=['in_file'],
+            name='flirt_fmap2t1')
 
-    n_flirt2xfm = pe.MapNode(
-        freesurfer.preprocess.Tkregister(reg_file='reg.mat',
-                                         xfm_out='fmap2t1.xfm'),
-        iterfield=['mov','fsl_reg'],
-        run_without_submitting=True,
-        name='flirt2xfm')
+        n_flirt2xfm = pe.MapNode(
+            freesurfer.preprocess.Tkregister(reg_file='reg.mat',
+                                             xfm_out='fmap2t1.xfm'),
+            iterfield=['mov','fsl_reg'],
+            run_without_submitting=True,
+            name='flirt2xfm')
+        
+        n_xfm2mat = pe.MapNode(
+            utility.Function(
+                input_names = ['xfm'],
+                output_names = ['mat'],
+                function=xfm2mat),
+            iterfield=['xfm'],
+            run_without_submitting=True,
+            name='xfm2mat')
 
-    n_xfm2mat = pe.MapNode(
-        utility.Function(
-            input_names = ['xfm'],
-            output_names = ['mat'],
-            function=xfm2mat),
-        iterfield=['xfm'],
-        run_without_submitting=True,
-        name='xfm2mat')
-
-    w.connect([
+        w.connect([
             (w.get_node('all_func_dirs'),n_fieldmap_fmri_convert,[(('fmri_fieldmap_all',group_by_3), 'dicom_files')]),
-
+            
             (n_fieldmap_fmri_convert, n_flirt_fmap2t1,[('magnitude_file','in_file')]),
             (n_anat_grabber, n_flirt_fmap2t1,[('cropped_t1','reference'),]),
             
@@ -293,7 +301,7 @@ def preproc_fmri():
             (n_anat_grabber, n_flirt2xfm,[('cropped_t1','target'),]),
 
             (n_flirt2xfm, n_xfm2mat,[('xfm_out','xfm')]),
-            ])
+        ])
 
     ## Phase Inversion TOPUP APPA fieldmap ###############################################################
 
@@ -430,11 +438,11 @@ def preproc_fmri():
             #(n_anat_grabber,n_topup2t1_xfm,[('norm','target')]),
             (n_topup2t1_xfm, n_topup2t1_mat,[('xfm_out','xfm')]),
         
-            (n_bbreg_epi_topup, n_epi_pvf, [('out_reg_file','reg_file')]),
-            (n_topup, n_epi_pvf, [('out_corrected','in_file')]),
-            (n_anat_grabber,n_epi_pvf,[ ('subjects_dir',)*2]),
+            #(n_bbreg_epi_topup, n_epi_pvf, [('out_reg_file','reg_file')]),
+            #(n_topup, n_epi_pvf, [('out_corrected','in_file')]),
+            #(n_anat_grabber,n_epi_pvf,[ ('subjects_dir',)*2]),
 
-            (n_epi_pvf,n_repeat_topup,[('partial_volume_maps','pve')]),
+            #(n_epi_pvf,n_repeat_topup,[('partial_volume_maps','pve')]),
                 
             (n_topup2t1_mat, n_repeat_topup,[('mat','reg_file')]),
             (w.get_node('all_func_dirs'),n_repeat_topup,[('fmri_all','fmri_scans')]),
@@ -466,7 +474,7 @@ def preproc_fmri():
 
         ])
 
-    workbench_interpolate = True
+    workbench_interpolate = False
     if workbench_interpolate:
         wb_pipe = generic_pipelines.fmri_surface.workbench_pipeline()
         w.connect([
@@ -550,13 +558,13 @@ def preproc_fmri():
 
     n_moco_noco = pe.MapNode(
         nipy.preprocess.OnlineRealign(
-            iekf_jacobian_epsilon = 1e-1,
+            iekf_jacobian_epsilon = 1e-2,
             iekf_convergence = 1e-2,
-            iekf_max_iter = 16,
+            iekf_max_iter = 8,
             iekf_min_nsamples_per_slab = 32,
-            iekf_observation_var = 1e5,
-            iekf_transition_cov = 1e-4,
-            iekf_init_state_cov = 1e-4,
+            iekf_observation_var = 1e6,
+            iekf_transition_cov = 1e-3,
+            iekf_init_state_cov = 1e-1,
             echo_time=echo_time,
             echo_spacing=echo_spacing * 2 * np.pi, # topup field in Hz * 2pi = rad/s
             phase_encoding_dir=phase_encoding_dir,
@@ -564,7 +572,7 @@ def preproc_fmri():
             register_gradient=False,
             bias_correction=True,
             bias_sigma=15,
-            interp_rbf_sigma=2,
+            interp_rbf_sigma=1.5,
             interp_cortical_anisotropic_kernel=True,
             resampled_first_frame='frame1.nii',
             out_file_format='ts.h5',
@@ -694,7 +702,7 @@ def preproc_fmri():
             return l[-2:]
         return []
 
-    moco_noco_mvpa = True
+    moco_noco_mvpa = False
     if moco_noco_mvpa:
         for n in [n_moco_bc_mvpa,n_moco_mvpa]:
             w.connect([
@@ -724,81 +732,83 @@ def preproc_fmri():
             (w.get_node('all_func_dirs'), n_dataset_mvpa_moco_bc, [(('fmri_ap_all',select_mvpa),'dicom_dirs')]),
             
         ])
-        n_corr_motion_wb = pe.MapNode(
-            utility.Function(
-                input_names = ['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
-                output_names = ['corr'],
-                function=moco_eval.corr_delta_motion_wb),
-            iterfield=['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
-            name='cov_motion_wb')
-
-        n_corr_motion_moco = pe.MapNode(
-            utility.Function(
-                input_names = ['in_file','motion_file','nslabs'],
-                output_names = ['corr'],
-                function=moco_eval.corr_delta_motion_moco),
-            iterfield=['in_file','motion_file'],
-            name='cov_motion_moco') 
-        n_corr_motion_moco.inputs.nslabs = 40
-
-        n_reg_motion_wb = pe.MapNode(
-            utility.Function(
-                input_names = ['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
-                output_names = ['corr'],
-                function=moco_eval.reg_delta_motion_wb),
-            iterfield=['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
-            name='reg_motion_wb')
-
-        n_reg_motion_moco = pe.MapNode(
-            utility.Function(
-                input_names = ['in_file','motion_file','nslabs'],
-                output_names = ['corr'],
-                function=moco_eval.reg_delta_motion_moco),
-            iterfield=['in_file','motion_file'],
-            name='reg_motion_moco') 
-        n_reg_motion_moco.inputs.nslabs = 40
-
-        n_ddiff_var_wb = pe.MapNode(
-            utility.Function(
-                input_names = ['lh_ctx_file','rh_ctx_file','sc_file'],
-                output_names = ['corr'],
-                function=moco_eval.ddiff_var_wb),
-            iterfield=['lh_ctx_file','rh_ctx_file','sc_file'],
-            name='ddiff_var_wb')
-
-        n_ddiff_var_moco = pe.MapNode(
-            utility.Function(
-                input_names = ['in_file'],
-                output_names = ['corr'],
-                function=moco_eval.ddiff_var_moco),
-            iterfield=['in_file'],
-            name='ddiff_var_moco')
-
-        w.connect([
-            #cov/corr
-            (wb_pipe, n_corr_motion_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
-                                        ('volume2surface_rh.out_file','rh_ctx_file'),
-                                        ('volume2surface_sc.out_file','sc_file')]),
-            (n_mcflirt, n_corr_motion_wb,[('par_file','motion_file')]),
-
-            (n_moco_bc_mvpa, n_corr_motion_moco, [('out_file','in_file'),
-                                                  ('motion_params','motion_file')]),
-            # betas regs
-            (wb_pipe, n_reg_motion_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
-                                        ('volume2surface_rh.out_file','rh_ctx_file'),
-                                        ('volume2surface_sc.out_file','sc_file')]),
-            (n_mcflirt, n_reg_motion_wb,[('par_file','motion_file')]),
-
-            (n_moco_bc_mvpa, n_reg_motion_moco, [('out_file','in_file'),
-                                                 ('motion_params','motion_file')]),
-            # ddiff 
-            (wb_pipe, n_ddiff_var_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
-                                      ('volume2surface_rh.out_file','rh_ctx_file'),
-                                      ('volume2surface_sc.out_file','sc_file')]),
+        eval_moco = False
+        if eval_moco:
+            n_corr_motion_wb = pe.MapNode(
+                utility.Function(
+                    input_names = ['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
+                    output_names = ['corr'],
+                    function=moco_eval.corr_delta_motion_wb),
+                iterfield=['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
+                name='cov_motion_wb')
             
-            (n_moco_bc_mvpa, n_ddiff_var_moco, [('out_file','in_file')])
+            n_corr_motion_moco = pe.MapNode(
+                utility.Function(
+                    input_names = ['in_file','motion_file','nslabs'],
+                    output_names = ['corr'],
+                function=moco_eval.corr_delta_motion_moco),
+                iterfield=['in_file','motion_file'],
+                name='cov_motion_moco') 
+            n_corr_motion_moco.inputs.nslabs = 40
+            
+            n_reg_motion_wb = pe.MapNode(
+                utility.Function(
+                    input_names = ['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
+                    output_names = ['corr'],
+                    function=moco_eval.reg_delta_motion_wb),
+                iterfield=['lh_ctx_file','rh_ctx_file','sc_file','motion_file'],
+                name='reg_motion_wb')
+            
+            n_reg_motion_moco = pe.MapNode(
+                utility.Function(
+                    input_names = ['in_file','motion_file','nslabs'],
+                    output_names = ['corr'],
+                    function=moco_eval.reg_delta_motion_moco),
+                iterfield=['in_file','motion_file'],
+                name='reg_motion_moco') 
+            n_reg_motion_moco.inputs.nslabs = 40
+        
+            n_ddiff_var_wb = pe.MapNode(
+                utility.Function(
+                    input_names = ['lh_ctx_file','rh_ctx_file','sc_file'],
+                    output_names = ['corr'],
+                    function=moco_eval.ddiff_var_wb),
+                iterfield=['lh_ctx_file','rh_ctx_file','sc_file'],
+                name='ddiff_var_wb')
 
-        ])
+            n_ddiff_var_moco = pe.MapNode(
+                utility.Function(
+                    input_names = ['in_file'],
+                    output_names = ['corr'],
+                    function=moco_eval.ddiff_var_moco),
+                iterfield=['in_file'],
+                name='ddiff_var_moco')
+
+            w.connect([
+                #cov/corr
+                (wb_pipe, n_corr_motion_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
+                                            ('volume2surface_rh.out_file','rh_ctx_file'),
+                                            ('volume2surface_sc.out_file','sc_file')]),
+                (n_mcflirt, n_corr_motion_wb,[('par_file','motion_file')]),
+                
+                (n_moco_bc_mvpa, n_corr_motion_moco, [('out_file','in_file'),
+                                                      ('motion_params','motion_file')]),
+                # betas regs
+                (wb_pipe, n_reg_motion_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
+                                           ('volume2surface_rh.out_file','rh_ctx_file'),
+                                           ('volume2surface_sc.out_file','sc_file')]),
+                (n_mcflirt, n_reg_motion_wb,[('par_file','motion_file')]),
+                
+                (n_moco_bc_mvpa, n_reg_motion_moco, [('out_file','in_file'),
+                                                     ('motion_params','motion_file')]),
+                # ddiff 
+                (wb_pipe, n_ddiff_var_wb,[('volume2surface_lh.out_file','lh_ctx_file'),
+                                          ('volume2surface_rh.out_file','rh_ctx_file'),
+                                          ('volume2surface_sc.out_file','sc_file')]),
+            
+                (n_moco_bc_mvpa, n_ddiff_var_moco, [('out_file','in_file')])
+                
+            ])
 
     n_dataset_noisecorr = pe.Node(
         CreateDataset(tr=tr,
