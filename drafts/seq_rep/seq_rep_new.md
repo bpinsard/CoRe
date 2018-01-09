@@ -178,8 +178,8 @@ The MVPA analysis was done using the PyMVPA software [@hanke_pymvpa_2009] packag
 
 ## Results
 
-For both new and consolidated sequences (@fig:new_crossnobis_tfce_map,@fig:cons_crossnobis_tfce_map), a large network shows differentiated patterns of activity, including primary visual cortex that processes the visual instructions, as well as posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.
-Subcortical regions also show differing activity patterns, including ipsilateral cerebellum, bilateral thalamus, hippocampus and striatum.
+For both new and consolidated sequences (@fig:new_cons_crossnobis_tfce_map), a conjunction statistic reveals a large network with differentiated patterns of activity, including primary visual cortex that processes the visual instructions, as well as posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.
+When looking at separate results, subcortical regions also show differing activity patterns, including ipsilateral cerebellum, bilateral thalamus, hippocampus and striatum (@fig:new_crossnobis_tfce_map,@fig:cons_crossnobis_tfce_map).
 
 ![Group searchlight conjunction map cross-validated Mahalanobis distance within new and consolidated sequences (z-score thresholded at p<.05 TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map.pdf){#fig:new_cons_conj_crossnobis_tfce_map}
 
@@ -197,30 +197,44 @@ Behaviorally assessed consolidation is subtended by long-term changes in neurona
 In the present study we aimed to measure the changes in activity patterns that reflect the specialization of distributed network for the execution of different motor sequential skills.
  
 (recapitulate the results)
-The present results first shows which regions are differentially recruited to performed two sequences which underwent similar consolidation and two sequences that are newly acquired.
+The present results first shows which regions are differentially recruited to performed two sequences which underwent consolidation and two sequences that are newly acquired.
 An extended network of regions showing reliable sequence specific activity patterns for both sequence types emcompasses bilateral supplementary and pre-motor to posterior parietal cortices, while contralateral primary sensorimotor regions are only different between novel sequences.
+The herein found ipsilateral representation have already been described [@wiestler_skill_2013], notably when non-dominant hand is used for such skills.
 
 We further investigated how early consolidation restructures the distributed representation of sequential motor skills, notably between cortical and subcortical regions.
-Interestingly bilateral putamen, more precisely ventral posterior regions, show higher discriminability.
-This also aligns with recent results [@kawai_motor_2015] showing that striatum is "tutored" by the cortex during training and is able afterward to express the skills in the absence of neo-cortical inputs.
+Interestingly bilateral putamen, more precisely ventral posterior regions, show increased sequence representation, corroborating previous accounts of consolidation related increased BOLD activation [@].
+This aligns with recent results [@kawai_motor_2015] showing that striatum is "tutored" by the cortex during training and is afterward able to express acquired skills even in the absence of neo-cortical inputs.
+However when cortex is intact from damages, the distributed representation of the skill precise execution yet include large cortical networks [@].
 
+Concurrently to striatal representation emergence, the only few regions which show decreased sequence discrimination include ipsilateral caudate nuclei and bilateral hippocampus, which purportedly supports motor sequential skills early acquisition [@albouy_hippocampus_2013].
+However, the present study was not designed to more precisely investigate the space of hippocampal and striatal sequence representation that were previously assessed at cortical level for finger sequences [@wiestler_effector-independent_2014] as well as for larger forearm movements [@haar_effector-invariant_2017].
+As our results reflect, motor sequences consolidation reorganizes both hippocampal and striatal representations, which respecive contributions to extrinsic and intrinsic skill encoding will need to be assessed.
 
-frontal results:
-These results could be explained by the task itself, which require more cognitive processing, notably switching between and inhibiting interfering sequences.
+Interestingly, our results investigated sequences representation early after consolidation while previous studies compared sequences intensely trained for multiple days to newly acquired ones.
+It is therefore possible that these representations would further evolve with either additional training or offline memory reprocessing supported in part by sleep.
 
-M1 for new sequences:
-The stronger pattern difference in primary motor cortex for newly learned sequences could reflect their structure difference.
-This first finger press was recently shown to elicit stronger activation thus driving separability of patterns for sequences with different starts [@yokoi_does_2017] unbeknownst to us during experimental design.
-While our design differs in that the sequences are uninterruptedly repeated five times, the first finger effect could remain for the first execution of the newly learned sequence only, the consolidated one having the same initiating finger.
+(further discuss the results)
+(frontal results:)
+These results could be explained by the task itself, which require more cognitive processing, notably the implied switch between sequences and inhibition of interfering ones.
+
+(M1 for new sequences:)
+Pattern difference in primary motor cortex is only found in newly learned sequences, but this could reflect their structural difference.
+Indeed, the first finger press was recently shown to elicit stronger activation thus driving separability of patterns for sequences with different starts [@yokoi_does_2017] unbeknownst to us during experimental design.
+This initiating finger effect could remain for the first execution of the newly learned sequence only, the consolidated one having the same initiating finger.
+The relatively weak primary motor representation, as compared to @wiestler_skill_2013 study, could be partly accounted by our subjects executing the five sequences uninterruptedly, singling the effect of initiating finger.
 
 (limitations)
+To bound the difficulty and the duration of the task, only four sequences were practiced by the subjects, two consolidated and two newly acquired.
+This could factor limitating the power of our analysis, as only a single multivariate distance is assessed for each of these condition.
+Moreover, the sequences were trained independently during longer blocks, and thus the present task further induces demands for instruction processing, switching and inhibition that could trigger novel learning.
+However we supposed that the previously encoded motor sequences engram of consolidated sequences is retrieved during this task.
 
 
+## Conclusion
 
+To conclude our study shows 
 
-
-(what's next)
-
+# Acknowledgment
 
 
 

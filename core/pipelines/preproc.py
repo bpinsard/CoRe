@@ -584,8 +584,8 @@ def preproc_fmri():
     #not really using much memory, but better with multicore blas 
     n_moco_noco.plugin_args = pe_queue_args
 
-    n_moco_bc_mvpa = n_moco_noco.clone('moco_bc_mvpa_aniso')
-    n_moco_mvpa = n_moco_bc_mvpa.clone('moco_mvpa_aniso')
+    n_moco_bc_mvpa = n_moco_noco.clone('moco_bc_mvpa_aniso_new')
+    n_moco_mvpa = n_moco_bc_mvpa.clone('moco_mvpa_aniso_new')
     n_moco_mvpa.inputs.bias_correction = False
     ### bug with cloning of mapnode
     n_moco_mvpa.interface.inputs.bias_correction = False    
@@ -666,7 +666,7 @@ def preproc_fmri():
     n_dataset_newmoco = n_dataset_mvpa_moco_bc.clone('dataset_moco_bc')
     n_dataset_newmoco.inputs.design = os.path.join(project_dir,'data/design.csv')
 
-    moco_noco = True
+    moco_noco = False
     if moco_noco:
         w.connect([
             (w.get_node('all_func_dirs'), n_moco_noco,[(('fmri_ap_all', flatten_remove_none),'dicom_files')]),
@@ -702,9 +702,9 @@ def preproc_fmri():
             return l[-2:]
         return []
 
-    moco_noco_mvpa = False
+    moco_noco_mvpa = True
     if moco_noco_mvpa:
-        for n in [n_moco_bc_mvpa,n_moco_mvpa]:
+        for n in [n_moco_bc_mvpa]:#,n_moco_mvpa]:
             w.connect([
                 (w.get_node('all_func_dirs'), n,[(('fmri_ap_all', select_mvpa),'dicom_files')]),
                 
