@@ -172,19 +172,24 @@ Searchlight was configured to select for each grayordinate the 128 closest neigh
 
 #### Statistical testing
 
-To assess statistical significance of multivariate distance and contrasts, group-level Monte-Carlo non-parametric statistical testing using 10000 permutations was conducted on searchlight distance maps with Threshold-Free-Cluster-Enhancement correction and thresholded at $p<.05$ (with confidence interval $\pm.0044$ for 10000 permutations) with a minimum cluster size of 25 features.
+To assess statistical significance of multivariate distance and contrasts, group-level Monte-Carlo non-parametric statistical testing using 10000 permutations was conducted on searchlight distance maps with Threshold-Free-Cluster-Enhancement (TFCE) correction and thresholded at $p<.05$ (with confidence interval $\pm.0044$ for 10000 permutations) with a minimum cluster size of 25 features.
 
 The MVPA analysis was done using the PyMVPA software [@hanke_pymvpa_2009] package with additional development of custom samples extraction, cross-validation scheme, Searchlight and measures to adapt to the study design and data.
 
 ## Results
 
-For both new and consolidated sequences (@fig:new_cons_crossnobis_tfce_map), a conjunction statistic reveals a large network with differentiated patterns of activity, including primary visual cortex that processes the visual instructions, as well as posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.
+We first measured the searchlight patterns cross-validated Mahalanobis distance between consolidated and between new sequences across subjects.
+This unbiased measure, when consistently larger than zero, assesses that pattern of activity significantly differs between conditions.
+Therefore we tested for significant difference from zero using sign-flipping Monte-Carlo non-parametric testing with TFCE.
+To excerpt the network that discriminate sequences at both stages of learning, we then submitted these results to a minimum-statistic conjunction.
+It reveals a large network (@fig:new_cons_crossnobis_tfce_map) with differentiated patterns of activity, including primary visual cortex that processes the visual instructions, as well as posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.
 When looking at separate results, subcortical regions also show differing activity patterns, including ipsilateral cerebellum, bilateral thalamus, hippocampus and striatum (@fig:new_crossnobis_tfce_map,@fig:cons_crossnobis_tfce_map).
 
 ![Group searchlight conjunction map cross-validated Mahalanobis distance within new and consolidated sequences (z-score thresholded at p<.05 TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map.pdf){#fig:new_cons_conj_crossnobis_tfce_map}
 
 
-When contrasting the multivariate distance between consolidated and unconsolidated sequences ( @fig:contrast_cons-new_crossnobis_tfce_map) higher discriminability or representation is found in bilateral putamen, contralateral caudate nuclei, thalamus, ventral and dorsal premotor, supplementary motor and dorsolateral prefrontal cortices for consolidated sequences.
+In order to evaluate the changes in sequence representation during consolidation, we submitted searchlight pattern distance maps from all subjects to pairwise t-test between consolidated and new sequences using permutation testing with TFCE (@fig:contrast_cons-new_crossnobis_tfce_map).
+Higher discriminability or representation is found in bilateral putamen, contralateral caudate nuclei, thalamus, ventral and dorsal premotor, supplementary motor and dorsolateral prefrontal cortices for consolidated sequences.
 Conversely, the representation strength decreases for consolidated sequences in bilateral hippocampus and ipsilateral body of the caudate nuclei.
 
 ![Group searchlight contrasts of cross-validated Mahalanobis distance between consolidated and unconsolidated sequences (z-score thresholded at p<.05 TFCE-cluster-corrected) ](../../results/crossnobis_tfce/contrast_cons_new_crossnobis_tfce_map.pdf){#fig:contrast_cons-new_crossnobis_tfce_map}
@@ -214,14 +219,23 @@ Interestingly, our results investigated sequences representation early after con
 It is therefore possible that these representations would further evolve with either additional training or offline memory reprocessing supported in part by sleep.
 
 (further discuss the results)
+
+The conjunction map reflect the common processing stream from stimuli to motor sequence production, including non-specific support regions.
+(visual cortex results:)
+Occipital cortex, as well as ventro-temporal regions are also found to discriminate the sequences [@fig:new_cons_conj_crossnobis_tfce_map], but likely reflect the processing of the visual stimuli respectively as visual mapping and for higher order arabic number representation [@], this not differing between the stages of learning studied here [@fig:contrast_cons-new_crossnobis_tfce_map].
+
 (frontal results:)
+Dorsolateral prefrontal regions are also engaged at both stages .
+
 These results could be explained by the task itself, which require more cognitive processing, notably the implied switch between sequences and inhibition of interfering ones.
+
 
 (M1 for new sequences:)
 Pattern difference in primary motor cortex is only found in newly learned sequences, but this could reflect their structural difference.
 Indeed, the first finger press was recently shown to elicit stronger activation thus driving separability of patterns for sequences with different starts [@yokoi_does_2017] unbeknownst to us during experimental design.
 This initiating finger effect could remain for the first execution of the newly learned sequence only, the consolidated one having the same initiating finger.
-The relatively weak primary motor representation, as compared to @wiestler_skill_2013 study, could be partly accounted by our subjects executing the five sequences uninterruptedly, singling the effect of initiating finger.
+The relatively weak primary motor representation, as compared to @wiestler_skill_2013 study, could be partly accounted by the subjects executing the five sequences uninterruptedly, singling the effect of initiating finger.
+Another factor reducing this effect is the fact that the present sequences excluded the thumb, which M1 pattern is farther from other fingers [@ejaz_hand_2015] and would otherwise elicit even stronger distance if initiating the sequence.
 
 (limitations)
 To bound the difficulty and the duration of the task, only four sequences were practiced by the subjects, two consolidated and two newly acquired.

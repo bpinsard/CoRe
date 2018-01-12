@@ -33,7 +33,8 @@ dataset_subdir = 'dataset_mvpa_moco_bc_hptf'
             
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 #output_subdir = 'searchlight_wb_hptf'
-output_subdir = 'searchlight_cnbis_mnorm'
+#output_subdir = 'searchlight_cnbis_mnorm'
+output_subdir = 'searchlight_cnbis_newmoco'
 compression= 'gzip'
 
 subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195, 220, 223, 235, 268, 267,237,296]
@@ -156,8 +157,8 @@ def subject_mvpa_ds_fir_residuals(sid, fir_delays, hptf_thresh=8):
 
 def subject_mvpa_ds_residuals(sid, hptf_thresh=8, reg_sa='regressors_exec'):
 
-    ts_files = [ os.path.join(preproc_dir, '_subject_id_%d'%sid, 'moco_bc_mvpa_aniso','mapflow',
-                              '_moco_bc_mvpa_aniso%d'%scan_id,'ts.h5') for scan_id in range(2)]
+    ts_files = [ os.path.join(preproc_dir, '_subject_id_%d'%sid, 'moco_bc_mvpa_aniso_new','mapflow',
+                              '_moco_bc_mvpa_aniso_new%d'%scan_id,'ts.h5') for scan_id in range(2)]
     ds_mvpa = [mvpa_ds.ds_from_ts(f) for f in ts_files]
     dss_mvpa = []
     glm_ds_mvpa = []

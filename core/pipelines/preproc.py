@@ -177,7 +177,7 @@ def preproc_anat():
 #        (n_t1_12ch_2mm_iso_convert, n_n4_12ch_2mm,[('nifti_file','input_image')]),
         (w.get_node('subjects_info'),t1_pipeline,[(('subject_id',wrap(str),[]),'inputspec.subject_id')]),
         (n_t1_convert,t1_pipeline,[('nifti_file','inputspec.t1_files')]),
-        (t1_pipeline, wm_surface, [(('freesurfer.aparc_aseg',utility.select,0),'inputspec.aseg')]),
+        #(t1_pipeline, wm_surface, [(('freesurfer.aparc_aseg',utility.select,0),'inputspec.aseg')]),
         (t1_pipeline,n_fs32k_surf,[('freesurfer.subjects_dir','fs_source.base_directory'),]),
         (w.get_node('subjects_info'),n_fs32k_surf,[('subject_id','fs_source.subject')]),
         #(t1_pipeline, ants_for_sbctx,[('crop_brain.out_file','inputspec.t1')]),
@@ -230,6 +230,7 @@ def preproc_fmri():
             ['surface_32k/_subject_id','subject_id',
              'pial_resample_surf/mapflow/_pial_resample_surf1/rh.pial_converted.32k.gii']],
         lowres_rois_coords = [['warp_subcortical/_subject_id','subject_id','warp_coords/Atlas_ROIs_warped.csv']],
+        warp2mni = [['warp_subcortical/_subject_id','subject_id','warp_to_mni/norm_crop_warp.npz']],
         #lowres_rois_coords = [['ants_for_subcortical/_subject_id','subject_id','coords_itk2nii/atlas_coords_nii.csv']],
         )
     n_anat_grabber = pe.Node(
