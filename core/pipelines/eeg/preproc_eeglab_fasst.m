@@ -23,7 +23,8 @@ if length(Trigs)==0
   Trigs=find_trig(EEG,'Stimulus');
   fprintf('%d Stimulus Triggers found\n',length(Trigs));
 end
-fprintf('trigger intervals in  [%d %d] \n',min(diff(Trigs)),max(diff(Trigs)));
+diffTrigs = diff(Trigs)
+fprintf('trigger intervals in  [%d %d] \n',min(diffTrigs),max(diffTrigs));
 
 % add dummy triggers
 %Trigs = [linspace(-3,-1,3)*(EEG.srate*tr)+Trigs(1) Trigs Trigs(end)+EEG.srate*tr];
@@ -31,7 +32,7 @@ fprintf('trigger intervals in  [%d %d] \n',min(diff(Trigs)),max(diff(Trigs)));
 ecg_chans = get_ecg_chans(EEG)
 
 EEG_fastr = fmrib_fastr(EEG,70,4,30,Trigs,0,0,0,0,0,0.03,ecg_chans,'auto');
-EEG_qrs = pop_select(EEG_fastr,'point',[Trigs(1)-1 Trigs(end)+1]);
+EEG_qrs = pop_select(EEG_fastr,'point',[Trigs(1)-1 Trigs(end)+1+diffTrigs(1)]);
 EEG_qrs.event(1).code = 'New Segment';
 %EEG_qrs.event(1).bvtime = EEG_fastr.event(1).bvtime + Trigs(1); % matlab doesnt read it correct + raw date
 

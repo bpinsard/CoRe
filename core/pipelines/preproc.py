@@ -169,7 +169,7 @@ def preproc_anat():
     warp_subctx = generic_pipelines.fmri_surface.warp_subcortical()
     warp_subctx.inputs.inputspec.template = os.path.join(generic_pipelines.__path__[0],'../data','MNI152_T1_1mm_brain_fslmask.nii.gz')
     warp_subctx.inputs.inputspec.coords = os.path.join(generic_pipelines.__path__[0],'../data','Atlas_ROIs.csv')
-        
+
     w.base_dir = proc_dir
     w.connect([
         (w.get_node('anat_dirs'),n_t1_convert,[('t1_mprage','dicom_files')]),
@@ -230,6 +230,7 @@ def preproc_fmri():
             ['surface_32k/_subject_id','subject_id',
              'pial_resample_surf/mapflow/_pial_resample_surf1/rh.pial_converted.32k.gii']],
         lowres_rois_coords = [['warp_subcortical/_subject_id','subject_id','warp_coords/Atlas_ROIs_warped.csv']],
+        eeg_coords = [['_subject_id','subject_id','warp_eeg_coords/grid_eeg_loc_mni_warped.csv']],
         warp2mni = [['warp_subcortical/_subject_id','subject_id','warp_to_mni/norm_crop_warp.npz']],
         #lowres_rois_coords = [['ants_for_subcortical/_subject_id','subject_id','coords_itk2nii/atlas_coords_nii.csv']],
         )
@@ -703,7 +704,7 @@ def preproc_fmri():
             return l[-2:]
         return []
 
-    moco_noco_mvpa = True
+    moco_noco_mvpa = False
     if moco_noco_mvpa:
         for n in [n_moco_bc_mvpa]:#,n_moco_mvpa]:
             w.connect([
@@ -905,6 +906,21 @@ def preproc_fmri():
 
         ])
 
+    eeg_coords = True
+    if eeg_coords:
+        
+        n_eeg_coords_bold = pe.MapNode(
+            utility.Function(
+                input_names = ['in_file', 'warp_file', 'coords_file'],
+                output_names = ['bold_signal'],
+                function = eeg_coords_bold_signal),
+            iterfield=['in_file'],
+            name = 'eeg_coords_bold')
+        n_eeg_coords_bold.inputs.coords_file = os.path.join(project_dir,'data','grid_eeg_loc_mni.csv')
+        w.connect([
+            (n_anat_grabber, n_eeg_coords_bold, [('warp2mni','warp_file')]),
+            (n_apply_registration, n_eeg_coords_bold, [('out_file','in_file')])])
+        
     return w 
 
 
@@ -1226,5 +1242,41 @@ def coords2fakesurf(in_file):
     nb.save(fake_surf, out_fname)
     return out_fname
     
+    
+    
+
+def eeg_coords_bold_signal(in_file, warp_file, coords_file):
+    import os, sys
+    sys.path.insert(0, '/home/bpinsard/data/projects/CoRe')
+    import numpy as np
+    import scipy.io
+    from scipy.ndimage import map_coordinates
+    import nibabel as nb
+    import dipy.align.vector_fields as vfu
+    import core.mvpa.dataset
+    from nipype.utils.filemanip import fname_presuffix
+
+    coords = np.loadtxt(coords_file, delimiter=',', usecols=(0,1,2))
+    nii = nb.load(in_file)
+
+    warp = np.load(warp_file)
+    backward = warp['backward']
+    prealign = warp['prealign']
+    postalign = np.linalg.inv(prealign.dot(nii.affine))
+    shift = vfu.interpolate_vector_3d(backward, coords[:,:3])[0]
+    coords[:,:3] += shift
+    coords[:,:3] = nb.affines.apply_affine(postalign, coords[:,:3])
+    
+    data = nii.get_data().astype(np.float32)
+
+    out_data = np.empty((coords.shape[0],nii.shape[3]), dtype=data.dtype)
+    for v in range(nii.shape[3]):
+        map_coordinates(data[...,v],coords.T,out_data[:,v])
+    ds = core.mvpa.dataset.Dataset(out_data)
+    core.mvpa.dataset.preproc_ds(ds, detrend=True)
+
+    out_fname = os.path.abspath(fname_presuffix(in_file, newpath='./', suffix='.mat', use_ext=False))    
+    scipy.io.savemat(out_fname, dict(bold=ds.samples))
+    return out_fname
     
     
