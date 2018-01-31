@@ -1,4 +1,4 @@
----cour
+---
 tags: [example, citation]
 bibliography: [abstract_rbiq.bib]
 title: Evolution of a distributed motor memory trace from learning to consolidation.
@@ -199,47 +199,38 @@ While patterns differentiating newly acquired sequences exists in contralateral 
 Behaviorally assessed consolidation is subtended by long-term changes in neuronal circuits that support the efficient retrieval and expression of memories [@dayan_neuroplasticity_2011].
 In the present study we aimed to measure the changes in activity patterns that reflect the specialization of distributed network for the execution of multiple motor sequential skills.
  
-(recapitulate the results)
-The present results first shows which regions are differentially recruited to perform two sequences which underwent consolidation and two sequences that are newly acquired.
+The present results first shows which regions are differentially recruited locally to perform two sequences which underwent consolidation and two sequences that are newly acquired.
 An extended network of regions showing reliable sequence specific activity patterns for both learning stages emcompasses known bilateral supplementary and pre-motor to posterior parietal cortices, while contralateral primary sensorimotor regions are only different between novel sequences.
 The herein found ipsilateral motor, premotor and parietal representation have already been described [@wiestler_skill_2013], notably when non-dominant hand is used for such skills.
 
-The conjunction map reflect the common processing stream from stimuli to motor sequence production, including non-specific support regions.
-Occipital cortex, as well as ventro-temporal regions are also found to discriminate the sequences [@fig:new_cons_conj_crossnobis_tfce_map], but likely reflect the processing of the visual stimuli respectively as low-level visual mapping and higher level arabic number representation [@shum_brain_2013;@peters_neural_2015;], and thus do not differ between the stages of learning studied here [@fig:contrast_cons-new_crossnobis_tfce_map].
-Dorsolateral prefrontal cortex also exhibit specific patterns which could be mainly explained by the task design that require higher cognitive processing, notably implying to switch between sequences and to inhibit interfering ones.
+The conjunction map reflect that a common processing stream from stimuli to motor sequence production, including non-specific support regions maintain the sequential information during practice.
+Occipital cortex, as well as ventro-temporal regions are also found to discriminate the sequences [@fig:new_cons_conj_crossnobis_tfce_map], but likely reflect the processing of the visual stimuli respectively as low-level visual mapping and higher level arabic number representation [@shum_brain_2013;@peters_neural_2015], and thus do not differ between the stages of learning studied here [@fig:contrast_cons-new_crossnobis_tfce_map].
+The dorsolateral prefrontal cortex (DLPFC) also exhibit specific patterns, which we mainly explained by the task design that require higher cognitive processing, notably implying to switch between sequences and to inhibit interfering ones.
 
 We further investigated how subcortical regions representations are restructured after early consolidation of MSL.
-Interestingly bilateral putamen, more precisely ventral posterior regions, show increased sequence representation, corroborating previous accounts of consolidation related increased BOLD activation [@debas_brain_2010;@albouy_hippocampus_2013;@debas_off-line_2014;@fogel_reactivation_2017;@vahdat_network-wide_2017].
-Concurrently to this representation emergence, only few regions which show decreased sequence discrimination include ipsilateral caudate nuclei and bilateral hippocampus, the latter purportedly supporting motor sequential skills early acquisition [@albouy_hippocampus_2013] and participating in off-line reactivation.
-
-This differential implication of dorsomedial and dorsolateral striatum in sequence representation during learning and expression of a mastered skill specifies their previously assessed relative implication in the course of MSL [@lehericy_distinct_2005;@kupferschmidt_parallel_2017;@corbit_corticostriatal_2017].
+Interestingly bilateral putamen, more precisely ventral posterior regions, show increased sequence representation, corroborating that previous accounts of consolidation related increased BOLD activation [@debas_brain_2010;@albouy_hippocampus_2013;@debas_off-line_2014;@fogel_reactivation_2017;@vahdat_network-wide_2017] purport specific encoding of MSL.
+Concurrently to this representation emergence, only few regions show decreased sequence discrimination include ipsilateral caudate nuclei and bilateral hippocampus, the latter purportedly supporting motor sequential skills early acquisition [@albouy_hippocampus_2013] and participating in off-line reactivation.
+This differential implication of dorsomedial and dorsolateral striatum in sequence representation during learning and expression of a mastered skill specifies their previously reported change in activation in the course of MSL [@lehericy_distinct_2005;@kupferschmidt_parallel_2017;@corbit_corticostriatal_2017].
 
 These results also align with recent account [@kawai_motor_2015] of striatum being "tutored" by the cortex during training and being afterward able to express the acquired skill even in the absence of neo-cortical inputs.
 However when the cortex is intact from injury, the distributed representation of the skill yet includes the large cortical networks described above, which are recruited during learning and might still be necessary for complex, longer or precise movements [@grillner_action_2015]. 
 
-The present study was not designed to investigate the space of hippocampal and striatal sequence representation that were previously assessed at cortical level for finger sequences [@wiestler_effector-independent_2014;@kornysheva_human_2014] as well as for larger forearm movements [@haar_effector-invariant_2017].
-As the results show that motor sequences consolidation reorganizes not only cortical, but also hippocampal and striatal representations, which respective contributions to extrinsic and intrinsic skill encoding will need to be further assessed.
+While our results show that motor sequences consolidation reorganizes distributed skill encoding, the present study was not designed to investigate the space of hippocampal and striatal sequence representation that were previously assessed at cortical level for finger sequences [@wiestler_effector-independent_2014;@kornysheva_human_2014] as well as for larger forearm movements [@haar_effector-invariant_2017].
+Notably the respective extrinsic and intrinsic skill encoding in hippocampal and striatal systems will need to be further assessed.
 
-Interestingly, our results investigated sequences representation early after consolidation while previous studies compared sequences intensely trained for multiple days to newly acquired ones [@wiestler_skill_2013].
-It is therefore possible that these representations would further evolve with either additional training or offline memory reprocessing supported in part by sleep.
+Interestingly, our study investigated sequences representation early after limited training and consolidation while previous research compared sequences intensely trained for multiple days to newly acquired ones [@wiestler_skill_2013], therefore these representations could further evolve, strengthen or decline with either additional training or offline memory reprocessing supported in part by sleep.
 
-(M1 for new sequences:)
-Pattern difference in primary motor cortex is only found in newly learned sequences, but this could reflect their structural difference.
-Indeed, the first finger press was recently shown to elicit stronger activation thus driving separability of patterns for sequences with different starts [@yokoi_does_2017] unbeknownst to us during experimental design.
-This initiating finger effect could remain for the first execution of the newly learned sequence only, the consolidated one having the same initiating finger.
-The relatively weak primary motor representation, as compared to @wiestler_skill_2013 study, could be partly accounted by the subjects executing the five sequences uninterruptedly, singling the effect of initiating finger.
-Another factor reducing this effect is the fact that the present sequences excluded the thumb, which M1 pattern is farther from other fingers [@ejaz_hand_2015] and would otherwise elicit even stronger distance if initiating the sequence.
+Pattern difference in primary motor cortex was only found for newly learned sequences, whitch could reflect their motoric difference in term of finger presses order.
+Indeed, the first finger press was recently shown to elicit stronger activation thus driving separability of patterns for sequences with different initiating finger [@yokoi_does_2017] unbeknownst to us during experimental design.
+The relatively weak primary motor representation, as compared to @wiestler_skill_2013 study, could be accounted by the subjects repeating the five sequences uninterruptedly, thus singling the effect of initiating finger, or by the present sequences not involving the thumb, which M1 pattern is farther from other fingers [@ejaz_hand_2015] and would elicit even stronger difference if initiating the sequence.
 
-(limitations)
-To bound the difficulty and the duration of the task, only four sequences were practiced by the subjects, two consolidated and two newly acquired.
-This could factor limitating the power of our analysis, as only a single multivariate distance is assessed for each of these condition.
-Moreover, the sequences were trained independently during longer blocks, and thus the present task further induces demands for instruction processing, switching and inhibition that could trigger novel learning.
-However we supposed that the previously encoded motor sequences engram of consolidated sequences is retrieved during this task.
+To bound the difficulty and the duration of the task, only four sequences were practiced by the subjects, two consolidated and two newly acquired, that choice could be a factor limitating the power of our analysis, as only a single multivariate distance is assessed for each of these condition.
+Moreover, the sequences were trained independently during longer blocks, and thus the present task further induces demands for instruction processing, switching and inhibition that could trigger novel learning for the consolidated sequences.
+However we supposed that a previously encoded motor sequences engram of consolidated sequences is invariably retrieved during this task and is reflected by significant differences in the multivariate distance maps.
 
-
-## Conclusion
-
-To conclude our study shows 
+To conclude our study shows that consolidation reorganizes the cerebral network supporting a distributed encoding of newly acquired sequential motor skills.
+Hippocampal representations fades while engrams in cortical and striatal specialized circuits are reinforced, paving the way for automatization of the skill if extended training and consolidation is afforded.
+These results prompt for further investigation of the dynamic of this sleep-dependent mnemonic process, which progressively reorganizes cerebral network by repeatedly reactivating the memory.
 
 # Acknowledgment
 
