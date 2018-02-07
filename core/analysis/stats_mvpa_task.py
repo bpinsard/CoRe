@@ -1,3 +1,4 @@
+import os,sys
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
@@ -107,3 +108,44 @@ with PdfPages('/home/bpinsard/data/tests/behavior.pdf') as pdf:
         pdf.savefig()
         plt.close()
 """
+
+data_dir = '/home/bpinsard/data/raw/UNF/CoRe/Behavior/'
+
+def get_correct_seq_dur(blocks,seq):
+    return np.asarray([np.mean([sq['rt_pre'][1:].sum() for sq in b[-1] if np.all(sq['match']) and len(sq)==5]) \
+                       for b in blocks if b[0] in seq])
+
+def get_block_dur(blocks,seq):
+    return np.asarray([np.hstack(b[-1])['rt_pre'][1:60].sum() for b in blocks if b[0] in seq])
+
+
+def mvpa_stats():
+
+    mvpa1_files = [sorted(glob.glob(os.path.join(data_dir,'CoRe_%03d_D3/CoRe_%03d_mvpa-1-D-Three_*.mat'%(s,s))))[-1] \
+                   for s in core.analysis.core_rsa.group_Int]
+    mvpa2_files = [sorted(glob.glob(os.path.join(data_dir,'CoRe_%03d_D3/CoRe_%03d_mvpa-2-D-Three_*.mat'%(s,s))))[-1] \
+                   for s in core.analysis.core_rsa.group_Int]
+
+    mvpa_blocks = [core.behavior.load_behavior(m1)+core.behavior.load_behavior(m2) \
+                   for m1,m2 in zip(mvpa1_files,mvpa2_files)]
+    
+    mean_seq_duration_per_block = dict([(seq,np.asarray([get_correct_seq_dur(m,seq) for m in mvpa_blocks])) for seq in uniq_seq])
+    
+
+    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['CoReTSeq'],0),
+                          np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],0))
+    #Out[217]: Ttest_relResult(statistic=-1.6403945526532608, pvalue=0.12172004145749361)
+    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],0),
+                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],0))
+    #Out[218]: Ttest_relResult(statistic=1.1950059195026257, pvalue=0.25063753501922054)
+
+    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['CoReTSeq'],0)+
+                          np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],0),
+                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],0)+
+                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],0))
+    #Out[219]: Ttest_relResult(statistic=-8.5590414978015996, pvalue=3.7116818758092801e-07)
+    (np.nanmean(mean_seq_duration_per_block['CoReTSeq'],0)+
+     np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],0))/2-(
+         np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],0)+
+         np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],0))/2
+    
