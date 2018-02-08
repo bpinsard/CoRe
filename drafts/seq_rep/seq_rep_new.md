@@ -9,26 +9,26 @@ author:
   email: basile.pinsard@gmail.com
 - family: Boutin
   given: Arnaud
-  affiliation: 1,3
+  affiliation: 2,3
 - family: Gabitov
   given: Ella
-  affiliation: 1,3
+  affiliation: 2,3
 - family: Benali
   given: Habib
-  affiliation: 2,5
+  affiliation: 1,5
 - family: Doyon
   given: Julien
-  affiliation: 1,3,4
+  affiliation: 2,3,4
 institute: here
 organization:
 - id: 1
-  name: Functional Neuroimaging Unit, Centre de Recherche de l'Institut Universitaire de Gériatrie de Montréal
-  address: Montreal, Canada
-  url: http://unf-montreal.ca
-- id: 2
   name: Sorbonne Universités, UPMC Univ Paris 06, CNRS, INSERM, Laboratoire d’Imagerie Biomédicale (LIB) 
   address: 75013, Paris, France
   url: http://lib.upmc.fr
+- id: 2
+  name: Functional Neuroimaging Unit, Centre de Recherche de l'Institut Universitaire de Gériatrie de Montréal
+  address: Montreal, Canada
+  url: http://unf-montreal.ca
 - id: 3
   name: McConnell Brain Imaging Centre, Montreal Neurological Institute, McGill University
   address: Montreal, Canada
@@ -121,7 +121,7 @@ On the second evening (D2), subjects were evaluated on the TSeq during a retest 
 
 On the third evening (D3), subjects first performed TSeq for 7 blocks followed by 7 blocks of IntSeq, each block including 12 repetitions of the sequence or 60 keypresses. 
 
-This was followed by a task specifically designed for MVPA analysis, which alternates short practice blocks of 4 different sequences similarly to @wiestler_skill_2013.
+This was followed by a task specifically designed for MVPA analysis, similar to a previous study [@wiestler_skill_2013], which alternates short practice blocks of 4 different sequences, including TSeq et IntSeq as well as two new sequences.
 It however differed in that, in our study, all 4 sequences used the left-hand 4 fingers excluding the thumb.
 Also, as for the initial training, sequences were performed repeatedly and without interruption nor any feedback, this in order to probe the processes underlying automatization of the skill.
 
@@ -178,34 +178,41 @@ The extent of the searchlight was thus kept to a limited range to limit the infl
 #### Statistical testing
 
 To assess statistical significance of multivariate distance and contrasts, group-level Monte-Carlo non-parametric statistical testing using 10000 permutations was conducted on searchlight distance maps with Threshold-Free-Cluster-Enhancement (TFCE) correction and thresholded at $p<.05$ (with confidence interval $\pm.0044$ for 10000 permutations) with a minimum cluster size of 25 features.
+TFCE enabled a locally adaptive statistics and cluster size correction that particularly fitted our non-regular BOLD sampling in grayordinates, as well as the different sizes of the structures that we investigated.
 
 The MVPA analysis was done using the PyMVPA software [@hanke_pymvpa_2009] package with additional development of custom samples extraction, cross-validation scheme, Searchlight and measures to adapt to the study design and data.
 
 ## Results
 
-### Behavioral
+### Behavioral task performance
 
-The consolidated sequences showed no difference in average sequence duration ($T(18)=-1.64, p=0.12$)
-Similarly, the newly acquired sequences were not found different in term of average sequence duration  ($T(18)=1.12, pvalue=0.25$).
-As expected, the consolidated sequences significantly differed from the newly learned sequences in average sequence duration ($T(18)=-8.56, p<1e-6$)
+The consolidated sequences (TSeq-IntSeq) showed no difference in average sequence duration ($t(17)=-1.89, p=0.07$), number of correct sequences ($t(17)=-1.38, p=0.18$).
+Similarly, the newly acquired sequences (NewSeq1-NewSeq2) were not found different in term of average sequence duration ($t(17)=0.82, pvalue=0.42$), number of correct sequences ($t=0.55, p=0.58$).
+As expected, the consolidated sequences significantly differ from the newly learned ones in both sequence duration ($t(17)=-5.60, p=0.00003$) and number of correctly performed sequence ($t(17)=2.86, p=0.01$).
+The difference in execution speed were observed until the last block ($t(17)=-2.69, p=0.02$) showing a persistent benefit of previous training and consolidation as compared to newly trained sequences of similar difficulty.
 
-### Searchlight
+The newly trained sequences indeed showed a learning curve (@fig:mvpa_task_groupInt_seq_duration), speed increasing from first to last block ($t(17)=-3.78, p=0.001$) while accuracy did not significantly improve ($t(17)=0.97, p=0.34$) likely due to the number of correct sequence being discrete and bounded (ie. 0 to 5) suffers from ceiling effect.
+The consolidated sequences speed also significantly improved during this new task ($t(17)=-2.49, p=0.02$), potentially combining improvements in sequence performance or more general knowledge in the novel task.
 
-We first measured the searchlight patterns cross-validated Mahalanobis distance between consolidated and between new sequences across subjects.
-This unbiased measure, when consistently larger than zero, assesses that pattern of activity significantly differs between conditions.
+![Average and standard deviation of sequence duration across the MVPA task blocks.](../../results/behavior/mvpa_task_groupInt_seq_duration.pdf){#fig:mvpa_task_groupInt_seq_duration}
+        
+### Sequence representations
+
+We first measured the patterns cross-validated Mahalanobis distance for all searchlights between consolidated and between new sequences across subjects.
+This unbiased measure, when consistently larger than zero, assesses that the pattern of activity significantly differs between conditions imaged.
 Therefore, we tested for significant difference from zero at the group level using sign-flipping Monte-Carlo non-parametric testing with TFCE.
 To excerpt the network that discriminate sequences at both stages of learning, we then submitted these results to a minimum-statistic conjunction.
 It reveals a large network (@fig:new_cons_conj_crossnobis_tfce_map) with differentiated patterns of activity, including primary visual cortex that processes the visual instructions, as well as posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.
 When looking at separate results, subcortical regions also show differing activity patterns, including ipsilateral cerebellum, bilateral thalamus, hippocampus and striatum (@fig:new_crossnobis_tfce_map,@fig:cons_crossnobis_tfce_map).
 
-![Group searchlight conjunction map cross-validated Mahalanobis distance within new and consolidated sequences (z-score thresholded at p<.05 TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map.pdf){#fig:new_cons_conj_crossnobis_tfce_map}
+![Group searchlight conjunction map cross-validated Mahalanobis distance within new and consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map.pdf){#fig:new_cons_conj_crossnobis_tfce_map}
 
 
 In order to evaluate the changes in sequence representation during consolidation, we submitted searchlight pattern distance maps from all subjects to pairwise t-test between consolidated and new sequences, assessing signficance by permutation testing with TFCE (@fig:contrast_cons-new_crossnobis_tfce_map).
 Discriminability is found to be significantly higher in bilateral putamen, contralateral caudate nuclei, thalamus, ventral and dorsal premotor, supplementary motor and dorsolateral prefrontal cortices for consolidated sequences.
 Conversely, the representation strength decreases for consolidated sequences in bilateral hippocampus and ipsilateral body of the caudate nuclei.
 
-![Group searchlight contrasts of cross-validated Mahalanobis distance between consolidated and unconsolidated sequences (z-score thresholded at p<.05 TFCE-cluster-corrected) ](../../results/crossnobis_tfce/contrast_cons_new_crossnobis_tfce_map.pdf){#fig:contrast_cons-new_crossnobis_tfce_map}
+![Group searchlight contrasts of cross-validated Mahalanobis distance between consolidated and unconsolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/contrast_cons_new_crossnobis_tfce_map.pdf){#fig:contrast_cons-new_crossnobis_tfce_map}
 
 While patterns differentiating newly acquired sequences exists in contralateral putamen and bilateral caudate, these distances increase for consolidated sequences in bilateral putamen.
 
@@ -218,7 +225,7 @@ Our findings provide evidence that an extended network of regions shows reliable
 Cortically, a previously described network [@wiestler_skill_2013;@nambu_decoding_2015] encompasses bilateral supplementary and pre-motor areas, as well as posterior parietal cortices, while contralateral primary sensorimotor regions were only shown to elicit different patterns for novel sequences.
 It is noteworthy that discrimination of motor sequence representations within the ipsilateral motor, premotor and parietal cortices has been previously described [@wiestler_skill_2013;@waters_metenier_bihemispheric_2014;@waters_cooperation_2017], notably when non-dominant hand is used for such skills.
 
-Difference in activity patterns within the primary motor cortex was only found for newly learned sequences @fig:new_crossnobis_tfce_map], which could reflect their motoric differences in terms of finger presses ordering.
+Difference in activity patterns within the primary motor cortex was only found for newly learned sequences [@fig:new_crossnobis_tfce_map], which could reflect their motoric differences in terms of finger presses ordering.
 Unbeknownst to us during experimental design, the first finger press was recently shown to elicit higher activation, thus driving separability of patterns for sequences with different initiating finger [@yokoi_does_2017].
 However, the primary motor representation was found to be relatively weak in our study in comparison to [@wiestler_skill_2013], likely explained by the uninterrupted repetition of the motor sequences during the practice singling this effect to the beginning of the block, as well as our 5-element sequences not engaging the thumb which distinctive M1 pattern would have elicited stronger difference if initiating the sequence [@ejaz_hand_2015].
 
@@ -230,23 +237,19 @@ We then investigated how representations are restructured after early consolidat
 At the cortical level, we found that contralateral premotor and bilateral parietal regions acquire a stronger representation during consolidation, that likely reflects that the tuning of these neural populations to coordinated movements are consolidated early after learning [@makino_transformation_2017;@yokoi_does_2017;@pilgramm_motor_2016].
 
 Further investigating such changes at subcortical level, significant differences are found in bilateral putamen and more specifically ventral posterior regions, which specifies the previous report of their increased activation after consolidation [@debas_brain_2010;@albouy_hippocampus_2013;@debas_off-line_2014;@fogel_reactivation_2017;@vahdat_network-wide_2017].
-TODO: cerebellum
+Significant representational changes are also found in cerebellum ipsilateral lobule IX as well as contralateral Crus I and II in lobule VII. (TODO: explanation?)
 Concurrently to this consolidation induced representational emergence, only few regions showed decreased sequence discrimination, namely ipsilateral caudate nuclei and bilateral hippocampus.
 The hippocampal early representation have been hypothesized to buffer novel explicit motor sequence learning and concur to the reactivations of the distributed network for reprocessing during offline periods, though progressively disengaging afterward [@albouy_hippocampus_2013].
 Our novel findings of differential implication of dorsomedial and dorsolateral striatum in sequence representation during learning and expression of a mastered skill specifies their previously reported activity change in the course of MSL [@lehericy_distinct_2005;@jankowski_distinct_2009;@kupferschmidt_parallel_2017;@corbit_corticostriatal_2017].
 
-These results also align with recent report [@kawai_motor_2015] of the striatum being "tutored" by the cortex during training and is afterward able to express the acquired and consolidated skill even in the absence of neo-cortical inputs.
-However, when the cortex is intact from injury, the distributed representation of the skill yet includes the large cortical networks described above, which is recruited during learning and still necessary for more complex, longer or dexterous sequences of movements [@grillner_action_2015].
-Indeed, the results of [@kawai_motor_2015] applied to the learning a simple timing between two level presses, the striatal representation that we found here could similarly encode subsets of timely coordinated movements, or chunks of the sequence.
-
 While our results show that the distributed representational network during learning is reorganized during memory consolidation, the present study was not designed to investigate the space of hippocampal and striatal sequence representation that were previously assessed at cortical level for finger sequences [@wiestler_effector-independent_2014;@kornysheva_human_2014] as well as for larger forearm movements [@haar_effector-invariant_2017].
-Notably the respective extrinsic and intrinsic skill encoding in hippocampal and striatal systems remains to be assessed.
+Notably, the respective extrinsic and intrinsic skill encoding in hippocampal and striatal systems remains to be assessed.
 
 Interestingly, our study investigated sequence representations after limited training and following sleep-dependent consolidation while previous research compared sequences intensely trained for multiple days to newly acquired ones [@wiestler_skill_2013]. Therefore, in our study, sequence representations may further evolve, strengthen or decline with either additional training or offline memory reprocessing supported in part by sleep.
 
 To limit the difficulty and the duration of the task, only four sequences were practiced by the subjects, two consolidated and two newly acquired, which could be a factor limiting the power of our analysis, as only a single multivariate distance is assessed for each of these conditions.
 Moreover, the sequences were trained independently during longer blocks, and thus the present task further induces demands for instruction processing, switching and inhibition that could trigger novel learning for the consolidated sequences.
-We however suppose that the previously encoded motor sequence engrams are invariably retrieved during this task and is reflected by significant differences in the multivariate distance contrast maps.
+We however suppose that the previously encoded motor sequence engrams are invariably retrieved during this task and is reflected by significant differences in behavioral measures and multivariate distance contrast.
 
 ##Conclusion
 
@@ -265,8 +268,8 @@ This work was supported by the Canadian Institutes of Health Research (MOP 97830
 
 # Supplementary {#sec:suppl label="S"}
 
-![Group searchlight map of cross-validated Mahalanobis distance between the 2 new unconsolidated sequences (z-score thresholded at p<.05 TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map.pdf){#fig:new_crossnobis_tfce_map}
+![Group searchlight map of cross-validated Mahalanobis distance between the 2 new unconsolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map.pdf){#fig:new_crossnobis_tfce_map}
 
-![Group searchlight map of cross-validated Mahalanobis distance between the 2 consolidated sequences (z-score thresholded at p<.05 TFCE-cluster-corrected) ](../../results/crossnobis_tfce/cons_crossnobis_tfce_map.pdf){#fig:cons_crossnobis_tfce_map}
+![Group searchlight map of cross-validated Mahalanobis distance between the 2 consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/cons_crossnobis_tfce_map.pdf){#fig:cons_crossnobis_tfce_map}
 
 # References

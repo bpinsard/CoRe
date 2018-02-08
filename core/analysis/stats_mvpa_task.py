@@ -5,6 +5,7 @@ plt.style.use('ggplot')
 color_cycle = plt.style.library['ggplot']['axes.color_cycle']
 
 uniq_seq = ['CoReTSeq', 'CoReIntSeq', 'mvpa_CoReOtherSeq1', 'mvpa_CoReOtherSeq2']
+seq_article_names = ['TSeq', 'IntSeq', 'NewSeq1', 'NewSeq2']
 
 def plot(blocks, uniq_seq = None):
     
@@ -115,6 +116,10 @@ def get_correct_seq_dur(blocks,seq):
     return np.asarray([np.mean([sq['rt_pre'][1:].sum() for sq in b[-1] if np.all(sq['match']) and len(sq)==5]) \
                        for b in blocks if b[0] in seq])
 
+def get_num_correct_seq(blocks,seq):
+    return np.asarray([sum([np.all(sq['match']) and len(sq)==5 for sq in b[-1] ]) \
+                       for b in blocks if b[0] in seq])
+
 def get_block_dur(blocks,seq):
     return np.asarray([np.hstack(b[-1])['rt_pre'][1:60].sum() for b in blocks if b[0] in seq])
 
@@ -130,22 +135,83 @@ def mvpa_stats():
                    for m1,m2 in zip(mvpa1_files,mvpa2_files)]
     
     mean_seq_duration_per_block = dict([(seq,np.asarray([get_correct_seq_dur(m,seq) for m in mvpa_blocks])) for seq in uniq_seq])
+    mean_num_correct_seq_per_block = dict([(seq,np.asarray([get_num_correct_seq(m,seq) for m in mvpa_blocks])) for seq in uniq_seq])
     
 
-    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['CoReTSeq'],0),
-                          np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],0))
-    #Out[217]: Ttest_relResult(statistic=-1.6403945526532608, pvalue=0.12172004145749361)
-    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],0),
-                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],0))
-    #Out[218]: Ttest_relResult(statistic=1.1950059195026257, pvalue=0.25063753501922054)
+    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['CoReTSeq'],1),
+                          np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],1))
+    #Ttest_relResult(statistic=-1.8905212446386963, pvalue=0.075859215284321824)
+    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],1),
+                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],1))
+    #Ttest_relResult(statistic=0.82409522866903795, pvalue=0.42129767376196381)
 
-    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['CoReTSeq'],0)+
-                          np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],0),
-                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],0)+
-                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],0))
-    #Out[219]: Ttest_relResult(statistic=-8.5590414978015996, pvalue=3.7116818758092801e-07)
-    (np.nanmean(mean_seq_duration_per_block['CoReTSeq'],0)+
-     np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],0))/2-(
-         np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],0)+
-         np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],0))/2
+    scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['CoReTSeq'],1)+
+                          np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],1),
+                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],1)+
+                          np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],1))
+    #Ttest_relResult(statistic=-5.6066375364018368, pvalue=3.1445329252915e-05)
+    (np.nanmean(mean_seq_duration_per_block['CoReTSeq'],1)+
+     np.nanmean(mean_seq_duration_per_block['CoReIntSeq'],1))/2-(
+         np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'],1)+
+         np.nanmean(mean_seq_duration_per_block['mvpa_CoReOtherSeq2'],1))/2
+    
+
+    scipy.stats.ttest_rel(
+        mean_num_correct_seq_per_block['CoReTSeq'].mean(1),
+        mean_num_correct_seq_per_block['CoReIntSeq'].mean(1))
+    #Out[252]: Ttest_relResult(statistic=-1.3867504905630728, pvalue=0.18343486443854889)
+
+    scipy.stats.ttest_rel(
+        mean_num_correct_seq_per_block['mvpa_CoReOtherSeq1'].mean(1),
+        mean_num_correct_seq_per_block['mvpa_CoReOtherSeq2'].mean(1))
+    #Out[253]: Ttest_relResult(statistic=0.55683017708274662, pvalue=0.58490030737698162)
+
+    scipy.stats.ttest_rel(
+        mean_num_correct_seq_per_block['CoReTSeq'].mean(1)+\
+        mean_num_correct_seq_per_block['CoReIntSeq'].mean(1),
+        mean_num_correct_seq_per_block['mvpa_CoReOtherSeq1'].mean(1)+\
+        mean_num_correct_seq_per_block['mvpa_CoReOtherSeq2'].mean(1))
+    #Out[251]: Ttest_relResult(statistic=2.8639420742641848, pvalue=0.010752736412558923)
+
+    scipy.stats.ttest_rel(mean_seq_duration_per_block['mvpa_CoReOtherSeq1'][:,0]+
+                          mean_seq_duration_per_block['mvpa_CoReOtherSeq2'][:,0],
+                          mean_seq_duration_per_block['mvpa_CoReOtherSeq1'][:,-1]+
+                          mean_seq_duration_per_block['mvpa_CoReOtherSeq2'][:,-1])
+    #Out[380]: Ttest_relResult(statistic=3.7829720168998384, pvalue=0.001484733433173324)
+
+    scipy.stats.ttest_rel(mean_num_correct_seq_per_block['mvpa_CoReOtherSeq1'][:,0]+
+                          mean_num_correct_seq_per_block['mvpa_CoReOtherSeq2'][:,0],
+                          mean_num_correct_seq_per_block['mvpa_CoReOtherSeq1'][:,-1]+
+                          mean_num_correct_seq_per_block['mvpa_CoReOtherSeq2'][:,-1])
+    #Out[381]: Ttest_relResult(statistic=-0.97182531580754983, pvalue=0.34476303104414352)1
+
+
+    scipy.stats.ttest_rel(mean_num_correct_seq_per_block['CoReTSeq'][:,0]+
+                          mean_num_correct_seq_per_block['CoReIntSeq'][:,0],
+                          mean_num_correct_seq_per_block['CoReTSeq'][:,-1]+
+                          mean_num_correct_seq_per_block['CoReIntSeq'][:,-1])
+    #Out[390]: Ttest_relResult(statistic=0.19458138494594823, pvalue=0.84802706229304969)
+
+    scipy.stats.ttest_rel(mean_seq_duration_per_block['CoReTSeq'][:,0]+
+                          mean_seq_duration_per_block['CoReIntSeq'][:,0],
+                          mean_seq_duration_per_block['CoReTSeq'][:,-1]+
+                          mean_seq_duration_per_block['CoReIntSeq'][:,-1])
+    #Out[391]: Ttest_relResult(statistic=2.4917714996317795, pvalue=0.023337365371333949)
+
+    f,ax=subplots()
+    for seqi,seq in enumerate(uniq_seq):
+        dur_mean = np.nanmean(mean_seq_duration_per_block[seq],0)
+        dur_std = np.nanstd(mean_seq_duration_per_block[seq],0)
+        ax.bar(width=1,left=np.arange(16)*5+seqi,height=dur_mean,
+               yerr=dur_std,
+               color=color_cycle_bars[seqi],
+               error_kw=dict(ecolor=color_cycle_bars[seqi]))
+    ax.legend(seq_article_names,fontsize='medium')
+    ax.set_ylabel('average sequence execution duration (s)')
+    ax.set_xlabel('mvpa task block')
+    ax.set_xticks(np.arange(16)*5+2)
+    ax.set_xticklabels(['# %d'%bi for bi in range(1,17)])
+    ax.grid(axis='x')
+    ax.set_ylim(0,2.6)
+    ax.tick_params(axis='x', which='both',length=0)
     
