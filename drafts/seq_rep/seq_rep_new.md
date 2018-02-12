@@ -184,10 +184,14 @@ The MVPA analysis was done using the PyMVPA software [@hanke_pymvpa_2009] packag
 
 ## Results
 
-### Behavioral task performance
+To behaviorally measure consolidation, subjects (n=18) were trained to perform two finger presses sequences, each practiced separately on two successive days, this in order to avoid their consolidation to interfere.
+On the third day the subjects were retested on both sequences separately, and then performed a task (MVPA-task) designed to investigate neuronal representation from fMRI BOLD activity pattern.
+By practising the two consolidated sequences as well as two new sequences during interleavedly ordered blocks, we were able to extract patterns of activity during the execution.
 
-The consolidated sequences (TSeq-IntSeq) showed no difference in average sequence duration ($t(17)=-1.89, p=0.07$), number of correct sequences ($t(17)=-1.38, p=0.18$).
-Similarly, the newly acquired sequences (NewSeq1-NewSeq2) were not found different in term of average sequence duration ($t(17)=0.82, pvalue=0.42$), number of correct sequences ($t=0.55, p=0.58$).
+### MVPA-task behavioral performance
+
+The consolidated sequences (TSeq-IntSeq) showed no difference in average sequence duration ($t(17)=-1.89, p=0.07$) and number of correct sequences ($t(17)=-1.38, p=0.18$).
+Similarly, the newly acquired sequences (NewSeq1-NewSeq2) were not found different in term of average sequence duration ($t(17)=0.82, pvalue=0.42$) and number of correct sequences ($t=0.55, p=0.58$).
 As expected, the consolidated sequences significantly differ from the newly learned ones in both sequence duration ($t(17)=-5.60, p=0.00003$) and number of correctly performed sequence ($t(17)=2.86, p=0.01$).
 The difference in execution speed were observed until the last block ($t(17)=-2.69, p=0.02$) showing a persistent benefit of previous training and consolidation as compared to newly trained sequences of similar difficulty.
 
@@ -196,9 +200,15 @@ The consolidated sequences speed also significantly improved during this new tas
 
 ![Average and standard deviation of sequence duration across the MVPA task blocks.](../../results/behavior/mvpa_task_groupInt_seq_duration.pdf){#fig:mvpa_task_groupInt_seq_duration}
         
-### Sequence representations
+### A common distributed sequence representation for consolidated and new sequences
 
-We first measured the patterns cross-validated Mahalanobis distance for all searchlights between consolidated and between new sequences across subjects.
+In order to measure sequences representation, we used cross-validated Mahalanobis distance [].
+This unbiased measure of stable pattern difference avoids the ceiling effect of previously used classification-based measures [@walther_reliability_2016].
+For multivariate approaches not to only reflect global activity levels differences, the conditions needs to be similar.
+Thus we separately computed cross-validated Mahalanobis distance between consolidated sequences and between new sequences.
+We explored local representation across the whole brain using a Searchlight approach [], each gray matter location being assigned the distance between the evoked activity pattern from its neighborhood, yielding two maps of multivariate distance per subject for the two stages of learning.
+
+
 This unbiased measure, when consistently larger than zero, assesses that the pattern of activity significantly differs between conditions imaged.
 Therefore, we tested for significant difference from zero at the group level using sign-flipping Monte-Carlo non-parametric testing with TFCE.
 To excerpt the network that discriminate sequences at both stages of learning, we then submitted these results to a minimum-statistic conjunction.
@@ -207,6 +217,7 @@ When looking at separate results, subcortical regions also show differing activi
 
 ![Group searchlight conjunction map cross-validated Mahalanobis distance within new and consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map.pdf){#fig:new_cons_conj_crossnobis_tfce_map}
 
+### Reorganization of the distributed sequence representation with consolidation
 
 In order to evaluate the changes in sequence representation during consolidation, we submitted searchlight pattern distance maps from all subjects to pairwise t-test between consolidated and new sequences, assessing signficance by permutation testing with TFCE (@fig:contrast_cons-new_crossnobis_tfce_map).
 Discriminability is found to be significantly higher in bilateral putamen, contralateral caudate nuclei, thalamus, ventral and dorsal premotor, supplementary motor and dorsolateral prefrontal cortices for consolidated sequences.
