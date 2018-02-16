@@ -51,7 +51,7 @@ abstract: |
   While local increase in activity likely indicates specialization, decrease could either reflect gained efficiency or lower involvement of non-specific circuits contributing to the early phases of learning.
   For this reason, we investigated whole-brain local representational changes using novel multivariate distance between patterns evoked by production of motor sequences, either consolidated or newly acquired.
   While both consolidated and new sequences are represented in large cortical network, specific patterns in cortical prefrontal and motor secondary areas as well as dorsolateral striatal and associative cerebellar cortex are heightened by consolidation while fading in hippocampus and dorsomedial striatum.
-  These results bring novel specificity on the dynamic roles of distributed structures in encoding of acquired motor sequential skills.
+  These results bring novel specificity on the roles of distributed brain structures in the encoding of acquired motor sequential skills in the earlier phases of learning.
 ---
 
 # Introduction {#sec:introduction}
