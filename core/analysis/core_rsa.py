@@ -33,8 +33,8 @@ dataset_subdir = 'dataset_mvpa_moco_bc_hptf'
             
 proc_dir = '/home/bpinsard/data/analysis/core_mvpa'
 #output_subdir = 'searchlight_wb_hptf'
-#output_subdir = 'searchlight_cnbis_mnorm'
-output_subdir = 'searchlight_cnbis_newmoco'
+output_subdir = 'searchlight_cnbis_mnorm'
+#output_subdir = 'searchlight_cnbis_newmoco'
 compression= 'gzip'
 
 subject_ids = [1, 11, 23, 22, 63, 50, 79, 54, 107, 128, 162, 102, 82, 155, 100, 94, 87, 192, 195, 220, 223, 235, 268, 267,237,296]
@@ -594,6 +594,7 @@ def group_rsa_cnbis_reg_tfce(reg, block_phase='exec',groupInt=None,
         
         results['main_fx'][main_fx] = (betas[0], tfce, vox_pvalue, tfce_neg, vox_pvalue_neg)
         del data
+    np.save('results_group_regression_%s.npy'%block_phase,results)
     return results
     
 

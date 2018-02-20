@@ -198,13 +198,16 @@ def mvpa_stats():
                           mean_seq_duration_per_block['CoReIntSeq'][:,-1])
     #Out[391]: Ttest_relResult(statistic=2.4917714996317795, pvalue=0.023337365371333949)
 
+
+    color_cycle_elife = ['#90CAF9','#FFB74D','#9E86C9','#E57373']
+    
     f,ax=subplots()
     for seqi,seq in enumerate(uniq_seq):
         dur_mean = np.nanmean(mean_seq_duration_per_block[seq],0)
         dur_std = np.nanstd(mean_seq_duration_per_block[seq],0)
         ax.bar(width=1,left=np.arange(16)*5+seqi,height=dur_mean,
                yerr=dur_std,
-               color=color_cycle_bars[seqi],
+               color=color_cycle_elife[seqi],
                error_kw=dict(ecolor=color_cycle_bars[seqi]))
     ax.legend(seq_article_names,fontsize='medium')
     ax.set_ylabel('average sequence execution duration (s)')
