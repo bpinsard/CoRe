@@ -15,7 +15,7 @@ Please find attached the manuscript "<place final title here>" by Pinsard, Bouti
 
 This article investigates the reorganization of the networks supporting the expression of newly acquired sequential skills after their consolidation using novel multivariate measures of fMRI BOLD activity patterns.
 
-Research in neuroimaging, including work from our lab, have largely described non-linear evolution of brain regions activity levels along the course of motor sequence learning.
+Research in neuroimaging, including work from our lab, have largely described evolution of brain regions activity levels along the course of motor sequence learning.
 Notably a reorganization of a network comprising cortical, cerebellar, hippocampal and striatal regions is observed when initial practice and retest sessions are separated by a sleep period during which reactivations of a subset of these regions occurs.
 While these changes show that complementary processes contributing to a more efficient practice are differentially at play in the course of learning, these does not necessarily reflect that all of this network encode the motor sequential knowledge, as these could also indicate a more general task knowledge.
 In fact, the tuning of local neuronal circuit were established to be measurable by fine-grained activity patterns of BOLD activity, notably by the group of Jörn Diedrichsen.
