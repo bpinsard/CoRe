@@ -1,5 +1,6 @@
 ---
 documentclass: elife
+elife: true
 title: Representational changes in a distributed striato-cerebello-hippocampo-cortical network underlies the consolidation of sequential motor memories.
 title: Evolution of distributed sequence-specific motor skills encoding.
 title: Consolidation alters the distributed motor skill sequence-specific representations.
@@ -89,12 +90,16 @@ In another study [@nambu_decoding_2015] that separately analyzed the preparation
 In both studies, the regions carrying sequence-specific representations overlapped only partly with GLM-based measures, illustrating the fact that directly measuring coarser differences between novel and trained sequences evoked activity levels cannot assess if these truly purport sequential information.
 However, the classification-based measures they used can bias parametric statistical results [@jamalabadi_classification_2016;@allefeld_valid_2015;@combrisson_exceeding_2015;@varoquaux_cross-validation_2017] and are suboptimal to detect representational changes [@walther_reliability_2016].
 
-The present study aims to address both the critical issues overlooked by studies investigating the MSL consolidation with GLM-based approach and the limitations of classifier-based MVPA studies.
+
+As a part of a larger study, the present experimental manipulation aims to address both the critical issues overlooked by studies investigating the MSL consolidation with GLM-based approach and the limitations of classifier-based MVPA studies.
 Specifically, we adopt a recently developed MVPA approach [@nili_toolbox_2014] that is unbiased and more sensitive to continuous representational changes [@walther_reliability_2016], such that occur in the early stage of MSL consolidation [@albouy_interaction_2013] onto which our focus here is.
 Our experimental manipulation hence allows to isolate sequence-specific plasticity, by extracting patterns evoked by the practice of consolidated and new sequences at the same task expertise level and computing this novel multivariate distance using a searchlight approach over the whole brain, in order to cover cortical and subcortical regions critical to MSL.
 Based on theoretical model [@albouy_hippocampus_2013;@doyon_current_2018] that account for imaging and animal studies, we hypothesized that offline consolidation following training should induce greater sequence-specific cortical and striatal representations, in conjunction with weaker hippocampal-based ones.
 
 # Results {#sec:results}
+
+To investigate the representations of sequences along the course of learning, subjects that learned two finger presses sequences separately in the first two days of the experiment were scanned on the third day while performing a task in which they performed these two sequences, that were allowed a consolidation period including sleep, as well as two new sequences.
+
 
 Eighteen young healthy volunteers were trained to perform, using their non-dominant hand, two sequences of 5 finger presses, each separately practiced on two successive days in order to avoid their consolidation to interfere.
 On the third day the participants were retested on both sequences separately, and then performed a task (MVPA-task) designed to investigate neuronal representation from fMRI BOLD activity pattern using multivariate statistics.
@@ -110,7 +115,7 @@ The difference in execution speed was observed until the last block ($t(17)=-2.6
 The newly trained sequences indeed showed a learning curve (@fig:mvpa_task_groupInt_seq_duration), speed increasing from first to last block ($t(17)=-3.78, p=0.001$) while accuracy did not significantly improve ($t(17)=0.97, p=0.34$) likely caused by the number of correct sequence being discrete and bounded (ie. 0 to 5).
 The consolidated sequences speed also significantly improved during this new task ($t(17)=-2.49, p=0.02$), potentially combining improvements in sequence performance but also more general competence in the novel task.
 
-![Average and standard deviation of sequence duration across the MVPA task blocks.](../../results/behavior/mvpa_task_groupInt_seq_duration.pdf){#fig:mvpa_task_groupInt_seq_duration}
+![Average and standard deviation of correct sequence durations across the MVPA task blocks.](../../results/behavior/mvpa_task_groupInt_seq_duration.pdf){#fig:mvpa_task_groupInt_seq_duration}
 
 ## A common distributed sequence representation for consolidated and new sequences
 
@@ -205,22 +210,25 @@ These results prompt for further investigation of the dynamic of this sleep-depe
 
 ## Participants
 
-The study includes 18 right-handed young ($25\pm6.2$yr.) healthy participants (14 female) recruited by advertising on scholar and public website.
-Volunteers were not included in case of history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961].
-Volunteers with BMI greater than 27, smokers, extreme chronotype, night-workers, having traveled across meridian during the 3 previous months, or training as musician or professional typist (for over-training on coordinated finger movements) were also excluded.
-Sleep quality was assessed by Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989], and daytime sleepiness  (Epworth Sleepiness Scale [@johns_new_1991]) had to be lower or equal to 9.
+Eigtheen right-handed young ($25\pm6.2$yr.) healthy individuals (14 female) participated in the study.
+They were recruited by advertising on academic and public website.
+Participants were excluded if they had a history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961], had a BMI greater than 27, smokers, had extreme chronotype, were night-workers, had traveled across meridians during the 3 previous months, or were trained as  musician or professional typist.
+Their sleep quality was assessed, and individuals with score to the Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989] greater or equal to 5, or daytime sleepiness Epworth Sleepiness Scale [@johns_new_1991] score greater than 9 were excluded.
 
 Participants included in the study were also instructed to abstain from caffeine, alcohol and nicotine, and have regular sleep schedule (bed-time 10PM-1AM, wake-time 7AM-10AM) and avoid taking daytime nap for the duration of the experiment.
-Instruction compliance was controlled by non-dominant hand wrist actigraphy (Actiwatch 2, Philips Respironics, Andover, MA, USA) for the week preceding and the duration of the experiment.
+Their sleep schedule was assessed by analyzing the data obtained from an actigraph (Actiwatch 2, Philips Respironics, Andover, MA, USA) worn on the wrist of the non-dominant hand for the week preceding and for the duration of the experiment, and cerfified that all included subjects complied to the instructions.
 
 All participants provided written informed consent and received financial compensation for their participation.
 This study protocol was approved by the Research Ethics Board of the “Regroupement en Neuroimagerie du Québec” (RNQ).
 
 ## Behavioral experiment
 
-The experiment was conducted over 3 consecutive days, at the end of the day, with the motor tasks performed in the scanner using an ergonomic MRI-compatible 4-keys response pad.
+The study was conducted over 3 consecutive days.
+Each day, in the evening, participants performed the experimental tasks while their brain activity was recorded by an MRI scanner, using an ergonomic MRI-compatible 4-keys response pad.
 
-On the first evening (D1), participants were trained to perform with their non-dominant left-hand a 5 elements sequence (TSeq1) for 14 blocks (indicated by a green cross displayed in the center of the screen) each composed of 12 repetitions of the motor sequences (ie. 60 keypresses per block).
+TODO:do we describe CoRe?
+
+On the first day (D1), participants were trained to perform repeatdly with their non-dominant hand (left) a 5 elements sequence (TSeq1) for 14 blocks (indicated by a green cross displayed in the center of the screen) each composed of 12 repetitions of the motor sequences (ie. 60 keypresses per block).
 Participants were instructed to execute repeatedly as fast and accurate as possible the sequence of keypresses until completion of the practice block.
 Practice blocks were interspersed with 25-s rest periods (indicated by the onset of a red cross on the screen) to prevent fatigue.
 In case of mistake during sequence production, participants were asked to stop their performance and to immediately start practicing again from the beginning of the sequence until the end of the block.
@@ -241,53 +249,54 @@ Ordered assignment of sequences to blocks was chosen to include all possible suc
 A 2-length De Bruijn cycle of the 4 sequences repeats each one 4 times, yielding a total of 16 blocks.
 This cycle was repeated twice in each of the 2 scanning sessions separated by approximately 5 minutes, thus resulting in a total of 64 blocks (4 groups of 16 practice blocks).
 
-## Scan acquisition
+## MRI data acquisition
 
-MRI data were acquired on a Siemens Trio 3T scanner on 2 two separate sessions.
-The first session used a 32-channel coil to acquire high-resolution anatomical T1 weighted image using Multi-Echo (4) MPRAGE (MEMPRAGE, 1mm iso, TR=2530ms, TE=1.64,3.6,5.36,7.22ms, FA=7, GRAPPA=2) with the different echoes combined using a Root-Mean-Square (RMS). 
+MRI data were acquired on a Siemens TIM Trio 3T scanner on 2 two separate sessions.
+The first session used a 32-channel coil to acquire high-resolution anatomical T1 weighted saggital images using a Multi-Echo MPRAGE sequence (MEMPRAGE; voxel size=1mm isometric; TR=2530ms; TE=1.64,3.6,5.36,7.22ms; FA=7; GRAPPA=2; FoV=$256\times256\times176mm$) with the different echoes combined using a Root-Mean-Square (RMS). 
 
-Functional data were acquired during the second session with a 12-channel coil for comparison with other dataset.
-EPI sequence consists of 40 ascending slices providing cortical and cerebellum coverage with a TR of 2.16 sec (FoV=$220\times220\times132$mm, res=$3.44\times3.44\times3.3$mm, TE=30ms, FA=90, GRAPPA=2).
-Following fMRI data acquisition, a short EPI set of data was acquired with reversed phase encoding to correct for B0 field inhomogeneity induced distortions.
+Functional data were acquired during the second session with a 12-channel coil for comparison with other dataset and using an
+EPI sequence providing complete cortical and cerebellum coverage (40 axial slices, acquire in ascending order, TR=2160ms;FoV=$220\times220\times132$mm, voxel size=$3.44\times3.44\times3.3$mm, TE=30ms, FA=90, GRAPPA=2).
+Following fMRI data acquisition during task, four volume were acquired using the same EPI sequence but with reversed phase encoding to enable retrospective correction of distortions induced by B0 field inhomogeneity.
 
-## Preprocessing
+## MRI data preprocessing
 
-A custom pipeline [@pinsard_integrated_2018] was used to preprocess fMRI data prior to analysis.
 High-resolution anatomical T1 weighted image was preprocessed with Freesurfer [@dale_cortical_1999;@fischl_high-resolution_1999;@fischl_cortical_2008] to segment subcortical regions, reconstruct cortical surfaces and provide inter-individual alignment of cortical folding patterns.
 Pial and grey/white matter interface surfaces were downsampled to match the 32k sampling of Human Connectome Project (HCP) [@glasser_minimal_2013].
 HCP subcortical atlas coordinates were warped onto individual T1 data using non-linear registration using the Ants software [@avants_symmetric_2008;@klein_evaluation_2009].
 
-fMRI data was processed using an integrated method [@pinsard_integrated_2018] which combines slice-wise motion estimation and intensity correction followed by the resampling of cortical and subcortical gray matter timecourse extraction.
-This interpolation concurrently removed B0 inhomogeneity induced EPI distortion estimated by FSL Topup using fMRI data with reversed phase encoding [@andersson_how_2003] acquired after the task.
-BOLD signal was further processed to remove drifts and motion-related abrupt signal changes.
+A custom pipeline [@pinsard_integrated_2018] was used to preprocess fMRI data prior to analysis and relied on an integrated method [@pinsard_integrated_2018] which combines slice-wise motion estimation and intensity correction followed by the extraction of BOLD timecourses in cortical and subcortical gray matter.
+This interpolation concurrently removed B0 inhomogeneity induced EPI distortion estimated by FSL Topup tool using the fMRI data with reversed phase encoding [@andersson_how_2003] acquired after the task.
+BOLD signal was further processed by detecting whole-brain intensity changes that corresponded to large motion, and each continuous period without such detected event was then separately detrended to remove linear signal drifts.
 
-Importantly, this preprocessing did not include smoothing, even though interpolation inherent to any motion correction causes averaging of values of neighboring voxels.
-This intend to minimize the blurring of data in order to preserve fine-grained patterns of activity, the resolution of relevant patterns being hypothetically at columnar scale.
+Importantly, the fMRI data preprocessing did not include smoothing, even though the interpolation inherent to any motion correction was based on averaging of values of neighboring voxels.
+This approach was intended to minimize the blurring of data in order to preserve fine-grained patterns of activity, with the resolution of relevant patterns being hypothetically at the columnar scale.
 
 ## Multivariate Pattern Analysis
 
 ### Samples
 
-Each block was modeled by having 2 boxcars, respectively instruction and execution phases, convolved with Hemodynamic Response Functions (HRF).
-Least-square separate (LS-S) regression of each event [@mumford_deconvolving_2012], shown to provide improved activation patterns estimates for MVPA, yielded instruction and execution phases beta maps for each block that were further used as MVPA samples.
+Each block was modeled by having 2 boxcars, corresponding to the instruction and execution phases respectively, which were convolved with the Hemodynamic Response Functions.
+Least-square separate (LS-S) regression of each event, which have been shown to provide improved activation patterns estimates for MVPA [@mumford_deconvolving_2012], yielded instruction and execution phases beta maps for each block that were further used as MVPA samples.
 
 ### Cross-validated multivariate distance
 
-Analogously to @wiestler_skill_2013 and @nambu_decoding_2015, we aimed to uncover activity patterns representing the different sequences that were performed by the participants.
-However, instead of applying cross-validated classification, we opted for a representational approach by computing multivariate distance between evoked activity patterns, in order to avoid the former's ceiling effect and baseline drift sensitivity [@walther_reliability_2016].
-Cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016;@diedrichsen_distribution_2016] is an unbiased metric that uses multivariate normalization by estimating the covariance from the GLM fitting residuals, that we regularized through Ledoit-Wolf optimal shrinkage [@ledoit_honey_2004].
-Distance were estimated for pairs of sequences that were in a comparable acquisition stage, that is separately between the newly acquired and between consolidated sequences.
+Similarly to @wiestler_skill_2013 and @nambu_decoding_2015, we aimed to uncover activity patterns that represent the different sequences that were performed by the participants.
+However, instead of calculating cross-validated classification accuracies, we opted for a representational approach by computing multivariate distance between evoked activity patterns, in order to avoid the former's ceiling effect and baseline drift sensitivity [@walther_reliability_2016].
+In the current study, cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016;@diedrichsen_distribution_2016] which is an unbiased metric that uses multivariate normalization by estimating the covariance from the GLM fitting residuals, was regularized through Ledoit-Wolf optimal shrinkage [@ledoit_honey_2004].
+Distance were estimated separately for pairs of sequences that were in a similar acquisition stage, that is, separately for the newly acquired and for the consolidated sequences.
 
 ### Searchlight analysis
 
 Searchlight [@kriegeskorte_information-based_2006] is an exploratory technique that applies MVPA repeatedly on small spatial neighborhoods covering the whole brain while avoiding high-dimensional limitation of multivariate algorithms.
-Searchlight was configured to select for each gray-ordinate the 64 closest neighboring coordinates, using geodesic distance for cortical gray-ordinates, as the subset of features for representational distance estimation.
-The extent of the searchlight was thus kept to a limited range to limit the inflation of false positive or negative results [@etzel_looking_2012;@etzel_searchlight_2013].
+Searchlight was configured to select for each gray-matter coordinate their 64 closest neighbors as the subset of features for representational distance estimation.
+The neighborhood was limited to coordinates in the same structure (hemisphere or region of interest), and proximity was determined using respectively euclidian and geodesic distance for subcortical and cortical coordinates.
+The extent of the searchlight was thus kept to such a local range to limit the inflation of false positive or negative results [@etzel_looking_2012;@etzel_searchlight_2013].
 
 ### Statistical testing
 
-To assess statistical significance of multivariate distance and contrasts, group-level Monte-Carlo non-parametric statistical testing using 10000 permutations was conducted on searchlight distance maps with Threshold-Free-Cluster-Enhancement (TFCE) correction [@smith_threshold-free_2009] and thresholded at $p<.05$ (with confidence interval $\pm.0044$ for 10000 permutations) with a minimum cluster size of 25 features.
-TFCE enabled a locally adaptive statistics and cluster size correction that particularly fitted our non-regular BOLD sampling in gray-ordinates, as well as the different sizes of the structures that we investigated.
+To assess statistical significance of multivariate distance and contrasts, group-level Monte-Carlo non-parametric statistical testing using 10000 permutations was conducted on searchlight distance maps with Threshold-Free-Cluster-Enhancement (TFCE) correction [@smith_threshold-free_2009].
+The statistical significance level was set at $p<.05$ (with confidence interval $\pm.0044$ for 10000 permutations) with a minimum cluster size of 25 features.
+TFCE enabled a locally adaptive statistics and cluster size correction that particularly fitted our BOLD sampling of sparse gray-matter coordinates, as well as the large differences in the sizes of the structures that were investigated.
 
 The MVPA analysis was done using the PyMVPA software [@hanke_pymvpa_2009] package with additional development of custom samples extraction, cross-validation scheme, efficient searchlight and multivariate measure computation, this to adapt to the study design and the anatomy-constrained data sampling.
 
@@ -300,6 +309,8 @@ We thank J.Diedrichsen for methodological advice on multivariate representationa
 This work was supported by the Canadian Institutes of Health Research (MOP 97830) to JD, as well as by French Education and Research Ministry and Sorbonne Universités to BP. __+Ella? +Arnaud(QBIN)__
 
 # Supplementary materials{ label="S"}
+
+\beginsupplement
 
 ![Group searchlight map of cross-validated Mahalanobis distance between the 2 new unconsolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map.pdf){#fig:new_crossnobis_map}
 
