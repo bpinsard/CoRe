@@ -837,3 +837,17 @@ def group_rsa_cnbis_delay_tfce(groupInt=None,
         del data, permttest
     return results
 
+
+
+'''
+
+hv.set_data(
+    scipy.stats.norm.ppf(1-res_old['contrasts'][(0,5)][3])* # zscore
+    (core.analysis.core_rsa.cluster_size_thresh(
+        (res_old['contrasts'][(0,5)][3]<.05)* # ctx stat
+        (np.minimum(res_old['main_fx'][0][2],res_old['main_fx'][5][2])<.05), # mask by max stat of simple fx
+        neigh,10)>0)* # remove small clusters
+    (1-2*np.argmin([res_old['contrasts'][(0,5)][4],res_old['contrasts'][(0,5)][5]],0)) # add sign to stats
+)
+
+'''

@@ -5,7 +5,9 @@ plt.style.use('ggplot')
 color_cycle = plt.style.library['ggplot']['axes.color_cycle']
 
 uniq_seq = ['CoReTSeq', 'CoReIntSeq', 'mvpa_CoReOtherSeq1', 'mvpa_CoReOtherSeq2']
-seq_article_names = ['TSeq', 'IntSeq', 'NewSeq1', 'NewSeq2']
+seq_article_names = ['Trained sequence 1', 'Trained sequence 2', 'New sequence 1', 'New sequence 2']
+seq_article_shortnames = ['TSeq1', 'TSeq2', 'NewSeq1', 'NewSeq2']
+
 
 def plot(blocks, uniq_seq = None):
     
@@ -135,7 +137,7 @@ def mvpa_stats():
                    for m1,m2 in zip(mvpa1_files,mvpa2_files)]
     
     mean_seq_duration_per_block = dict([(seq,np.asarray([get_correct_seq_dur(m,seq) for m in mvpa_blocks])) for seq in uniq_seq])
-    mean_num_correct_seq_per_block = dict([(seq,np.asarray([get_num_correct_seq(m,seq) for m in mvpa_blocks])) for seq in uniq_seq])
+    num_correct_seq_per_block = dict([(seq,np.asarray([get_num_correct_seq(m,seq) for m in mvpa_blocks])) for seq in uniq_seq])
     
 
     scipy.stats.ttest_rel(np.nanmean(mean_seq_duration_per_block['CoReTSeq'],1),
@@ -209,12 +211,38 @@ def mvpa_stats():
                yerr=dur_std,
                color=color_cycle_elife[seqi],
                error_kw=dict(ecolor=color_cycle_bars[seqi]))
-    ax.legend(seq_article_names,fontsize='medium')
-    ax.set_ylabel('average sequence execution duration (s)')
-    ax.set_xlabel('mvpa task block')
-    ax.set_xticks(np.arange(16)*5+2)
-    ax.set_xticklabels(['# %d'%bi for bi in range(1,17)])
-    ax.grid(axis='x')
-    ax.set_ylim(0,2.6)
-    ax.tick_params(axis='x', which='both',length=0)
+        ax.legend(seq_article_names,fontsize='medium')
+        ax.set_ylabel('average sequence execution duration (s)')
+        ax.set_xlabel('mvpa task block')
+        ax.set_xticks(np.arange(16)*5+2)
+        ax.set_xticklabels(['# %d'%bi for bi in range(1,17)])
+        ax.grid(axis='x')
+        ax.set_ylim(0,2.6)
+        ax.tick_params(axis='x', which='both',length=0)
+        
+
+
+    nsubj = len(core.analysis.core_rsa.group_Int)
+
+    seq_consolidated = np.asarray([True]*2+[False]*2)[np.newaxis,:,np.newaxis].repeat(nsubj,0).repeat(16,2).ravel()
+    # flat order: subject, sequence, block
+    data = pandas.DataFrame(dict(
+        subjects = np.asarray(core.analysis.core_rsa.group_Int)[:,np.newaxis].repeat(16*4).ravel(),
+        sequences = np.asarray(seq_article_shortnames)[np.newaxis,:,np.newaxis].repeat(nsubj,0).repeat(16,2).ravel(),
+        seq_consolidated = seq_consolidated,
+        seq_new = np.logical_not(seq_consolidated),
+        blocks = np.arange(1,17)[np.newaxis].repeat(nsubj*4,0).ravel(),
+        mean_seq_duration = np.hstack([mean_seq_duration_per_block[seq][:,np.newaxis] for seq in uniq_seq]).ravel(),
+        num_correct_seq = np.hstack([num_correct_seq_per_block[seq][:,np.newaxis] for seq in uniq_seq]).ravel()
+    ))
+    
+
+
+    md_seq_duration = smf.mixedlm(
+        "mean_seq_duration ~ seq_new + seq_new*blocks",
+        data_rem_missing,groups=data_rem_missing['subjects'],re_formula='~blocks')
+
+    md_num_correct_seq = smf.mixedlm(
+        "num_correct_seq ~ seq_new + seq_new*blocks",
+        data, groups=data['subjects'], re_formula='~blocks')
     

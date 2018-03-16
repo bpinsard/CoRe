@@ -98,52 +98,42 @@ Based on theoretical model [@albouy_hippocampus_2013;@doyon_current_2018] that a
 
 # Results {#sec:results}
 
-To investigate the representations of sequences along the course of learning, subjects that learned two finger presses sequences separately in the first two days of the experiment were scanned on the third day while performing a task in which they performed these two sequences, that were allowed a consolidation period including sleep, as well as two new sequences.
+To investigate the representations of sequences along the course of learning, subjects (n=18) that learned two finger presses sequences separately in the first two days of the experiment, on the third day, performed a task in which they practiced these two sequences, as well as two new sequences in pseudo-randomly ordered short blocks.
+All sequences were executed using their non-dominant hand while functional MRI data was acquired.
 
+## Behavioral performance
 
-Eighteen young healthy volunteers were trained to perform, using their non-dominant hand, two sequences of 5 finger presses, each separately practiced on two successive days in order to avoid their consolidation to interfere.
-On the third day the participants were retested on both sequences separately, and then performed a task (MVPA-task) designed to investigate neuronal representation from fMRI BOLD activity pattern using multivariate statistics.
-This task consisted in the practice of the two consolidated sequences as well as two new sequences, separatly performed in pseudo-randomly ordered short practice blocks of 5 uninterrupted repetitions.
-
-## MVPA-task behavioral performance
-
-The consolidated sequences execution showed no difference in average sequence duration ($t(17)=-1.89, p=0.07$) and number of correct sequences ($t(17)=-1.38, p=0.18$).
-Similarly, the newly acquired sequences were not found different in term of average sequence duration ($t(17)=0.82, p=0.42$) and number of correct sequences ($t=0.55, p=0.58$).
-As expected, the consolidated sequences significantly differ from the newly learned ones in both sequence duration ($t(17)=-5.60, p=0.00003$) and number of correctly performed sequence ($t(17)=2.86, p=0.01$).
-The difference in execution speed was observed until the last block ($t(17)=-2.69, p=0.02$) showing a persistent benefit of previous training and consolidation as compared to newly trained sequences of matched difficulty.
-
-The newly trained sequences indeed showed a learning curve (@fig:mvpa_task_groupInt_seq_duration), speed increasing from first to last block ($t(17)=-3.78, p=0.001$) while accuracy did not significantly improve ($t(17)=0.97, p=0.34$) likely caused by the number of correct sequence being discrete and bounded (ie. 0 to 5).
-The consolidated sequences speed also significantly improved during this new task ($t(17)=-2.49, p=0.02$), potentially combining improvements in sequence performance but also more general competence in the novel task.
+New sequences were performed slower ($\beta=.365 , SE=0.047, p<.001$) and less accurately ($\beta=-0.304, SE=0.101,p<.001$) than consolidated one.
+Significant improvement across blocks in term of speed ($\beta=-0.018, SE=0.002, p<.001$) but not of accuracy ($\beta=0.014, SE=0.010, p=0.152$) was observed for new sequences, thus showing an expected learning curve visible in @fig:mvpa_task_groupInt_seq_duration.
+The consolidated sequences, on the contrary, did not show significant changes in speed ($\beta=-0.006, SE=0.005, p=0.192$) nor accuracy ($\beta=-0.006, SE=0.057, p=0.919$), the asymptotic performance being already reached through practice and consolidation.
 
 ![Average and standard deviation of correct sequence durations across the MVPA task blocks.](../../results/behavior/mvpa_task_groupInt_seq_duration.pdf){#fig:mvpa_task_groupInt_seq_duration}
 
+We also verified that there was no significant difference between consolidated sequences in term of speed ($\beta=0.031, SE=0.026, p=0.234$) and accuracy ($\beta=-0.030, SE=0.111, p=0.789$), and ran a similar verification between new sequences which speed ($\beta=0.025, SE=0.045, p=0.577$) and accuracy ($\beta=-0.245, SE=0.138, p=0.076$) did not differ.
+
 ## A common distributed sequence representation for consolidated and new sequences
 
-The functional MRI data was corrected and signal was extracted from gray-matter cortical surface and subcortical regions of interest by applying a novel integrated preprocessing method [@pinsard_integrated_2018].
-The brain brain-oxygen-level-dependent (BOLD) activity pattern elicited by the practice of the sequences was deconvolved from these preprocessed signals.
-In order to measure sequences representation, we chose to compute cross-validated Mahalanobis distance [@kriegeskorte_individual_2007;@nili_toolbox_2014].
-This unbiased measure of stable pattern difference overcomes the limitations of previously used classification accuracy measures [@walther_reliability_2016] by providing a continuous metric of pattern distinctiveness and robustness to spurious baseline shifts.
+From preprocessed functional MRI data we extracted patterns of activity for each block of practice and computed a cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016] using Searchlight approach [@kriegeskorte_information-based_2006] over brain cortical surfaces and subcortical regions of interest.
+This multivariate distance, when positive, assesses that there is a stable pattern difference between the conditions compared, and thus reflect the discriminability of these conditions.
+To assess true pattern and not mere global activity differences, we computed this discriminability measure for sequences which are in the same stage of learning, thus separately for consolidated and new sequences.
+From the individual discriminability maps, we then measured the prevalence of discriminability at the group level, using non-parametric testing with Threshold-Free-Cluster-Enhancement (TFCE) [@smith_threshold-free_2009] to enable locally adaptive cluster-correction.
 
-For this multivariate approach to not merely reflect global activity levels differences, the conditions which patterns are directly compared needs to be similar.
-Consequently, cross-validated Mahalanobis distance was computed between the consolidated sequences, that underwent similar amount of training, as well as between the new sequences.
-We explored local representation across the whole brain using a searchlight approach [@kriegeskorte_information-based_2006], each gray matter location being assigned the distance between the evoked activity pattern from its anatomical neighborhood (64 vertices), yielding two maps of multivariate distance per participants, one for each pair of sequences in the two different stages of learning studied here.
+To extract the common regions that show sequence representation at both stages of learning, we then submitted these separate consolidated and new sequences discriminability group results to a minimum-statistic conjunction.
+A large distributed network (@fig:new_cons_conj_crossnobis_map) displays significant discriminability, including primary visual, as well as posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.
+When looking at separate results for each learning stages, subcortical regions also show differing activity patterns, including ipsilateral cerebellum, bilateral thalamus, hippocampus and striatum (@fig:new_crossnobis_map,@fig:cons_crossnobis_map), which does not overlap across learning stages.
 
-The cross-validated Mahalanobis distance, when consistently larger than zero, assesses that the patterns of activity significantly and stably differs between the conditions imaged.
-Hence, we tested for significant difference from zero at the group level using sign-flipping Monte-Carlo non-parametric testing (n=10000) with Threshold-Free-Cluster-Enhancement (TFCE) [@smith_threshold-free_2009], enabling locally adaptive cluster-correction.
-To excerpt the common network that discriminate sequences at both stages of learning, we then submitted these results to a minimum-statistic conjunction.
-A large distributed network (@fig:new_cons_conj_crossnobis_map) is found to display differentiated patterns of activity, including primary visual, as well as posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.
-When looking at separate results for each stages, applying identical statistical testing, subcortical regions also show differing activity patterns, including ipsilateral cerebellum, bilateral thalamus, hippocampus and striatum (@fig:new_crossnobis_map,@fig:cons_crossnobis_map).
-
-![Group searchlight conjunction map cross-validated Mahalanobis distance within new and consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map.pdf){#fig:new_cons_conj_crossnobis_map}
+![Group searchlight conjunction of new and consolidated sequences discriminability maps (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map_vert_labels.pdf){#fig:new_cons_conj_crossnobis_map width=14cm}
 
 ## Reorganization of the distributed sequence representation with consolidation
 
-In order to evaluate the reorganization of sequence representation after consolidation at the group level, the consolidated and new sequences' searchlight Mahalanobis distance maps from all participants were submitted to pairwise t-test, assessing signficance by permutation testing (n=10000) with TFCE (@fig:contrast_cons_new_crossnobis_map).
-Discriminability is found to be significantly higher for consolidated sequences in bilateral putamen, thalamus as well as frontal, anterior insular, posterior cingulate and parietal cortices, ispilateral cerebellum lobule IX, contralateral caudate nuclei, cerebellum Crus I, ventral and dorsal premotor, supplementary motor, insular, and dorsolateral prefrontal cortices.
-Conversely, the representation strength decreases for consolidated sequences in bilateral hippocampus as well as ipsilateral body of the caudate nuclei and subthalamic nuclei.
-Hence, while striatal activity patterns differentiating newly acquired sequences exists in contralateral putamen and bilateral caudate (@fig:new_crossnobis_map), these distances are significantly larger for consolidated sequences in motor regions of bilateral putamen.
+In order to evaluate the reorganization of sequence representation undergone by consolidation at the group level, the consolidated and new sequences' discriminability maps from all participants were submitted to pairwise t-test with non-parametric testing with TFCE (@fig:contrast_conj_cons_new_crossnobis_map).
+To ascertain that differences were supported by significant discriminability, we then calculated the conjunction of the contrast maps with the separate consolidated and new sequences group results respectively for positive and negative differences.
 
-![Group searchlight contrasts of cross-validated Mahalanobis distance between consolidated and newly trained sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/contrast_cons_new_crossnobis_tfce_map.pdf){#fig:contrast_cons_new_crossnobis_map}
+Discriminability was found to be significantly higher for consolidated sequences as compared to new sequences in bilateral sensorimotor putamen, thalamus as well as frontal, anterior insular, posterior cingulate and parietal cortices, ispilateral cerebellar lobule IX, contralateral lateral and dorsal premotor, supplementary motor, insular, and dorsolateral prefrontal cortices and cerebellar Crus I.
+Conversely, the representation strength was higher for new sequences in bilateral hippocampus as well as ipsilateral body of the caudate nuclei and subthalamic nuclei.
+Hence, while striatal activity patterns differentiating newly acquired sequences exists in contralateral putamen (@fig:new_crossnobis_map), this distance was significantly larger for consolidated sequences in motor regions of bilateral putamen.
+
+![Conjunction of group searchlight contrast (paired t-test) between consolidated and new sequences discriminability maps and separate group discriminability maps for new and consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/contrast_conj_cons_new_crossnobis_tfce_map_vert.pdf){#fig:contrast_conj_cons_new_crossnobis_map width=14cm}
 
 # Discussion {#sec:discussion}
 
@@ -162,14 +152,14 @@ Unbeknownst to us during experimental design, the first finger press was recentl
 However, the primary motor representation was found to be relatively weak in our study in comparison to [@wiestler_skill_2013], likely explained by the uninterrupted repetition of the motor sequences during the practice singling this effect to the beginning of the block, as well as our 5-element sequences not engaging the thumb which distinctive M1 pattern would have brought stronger difference if initiating the sequence [@ejaz_hand_2015].
 
 The conjunction map reveals that a common cortical processing stream including non-motor support regions present sequential information from visually presented instruction to motor sequence production.
-Herein, occipital cortex, as well as ventro-temporal regions are found to discriminate the sequences [@fig:new_cons_conj_crossnobis_map], but likely reflect the processing of the visual stimuli respectively as low-level visual mapping of shapes [@pilgramm_motor_2016;@miyawaki_visual_2008] and higher level Arabic number representation [@shum_brain_2013;@peters_neural_2015] and thus do not differ between the stages of learning studied here [@fig:contrast_cons_new_crossnobis_map].
+Herein, occipital cortex, as well as ventro-temporal regions are found to discriminate the sequences [@fig:new_cons_conj_crossnobis_map], but likely reflect the processing of the visual stimuli respectively as low-level visual mapping of shapes [@pilgramm_motor_2016;@miyawaki_visual_2008] and higher level Arabic number representation [@shum_brain_2013;@peters_neural_2015] and thus do not differ between the stages of learning studied here [@fig:contrast_conj_cons_new_crossnobis_map].
 Interestingly these regions were not reported in previous study [@wiestler_skill_2013] which imaging field-of-view did not cover ventral cortex.
 The dorsolateral prefrontal cortex (DLPFC) also exhibit pattern specificity, and was previously reported as encoding the sequence spatial information in working memory, preceding motor command [@robertson_role_2001].
 In fact, the cognitive processing required by the MVPA task, implying notably to switch between sequences, maintain them in working memory and to inhibit interfering ones, could here magnify this frontal associative representation.
 
 ## Cortico-subcortical representational reorganization underlying memory consolidation
 
-We then investigated how representations are restructured after early consolidation of MSL by contrasting maps of multivariate distance for consolidated and newly acquired sequences [@fig:contrast_cons_new_crossnobis_map].
+We then investigated how representations are restructured after early consolidation of MSL by contrasting maps of multivariate distance for consolidated and newly acquired sequences [@fig:contrast_conj_cons_new_crossnobis_map].
 At the cortical level, we found that contralateral premotor and bilateral parietal regions acquire a stronger representation during consolidation, that likely reflects that the tuning of these neural populations to coordinated movements are consolidated early after learning [@makino_transformation_2017;@yokoi_does_2017;@pilgramm_motor_2016], as was previously observed with longer training [@wiestler_skill_2013].
 
 Exploring similar changes at subcortical level, significant differences are found in bilateral putamen and more specifically ventral posterior regions, which determine the previous report of their increased activation after consolidation [@debas_brain_2010;@albouy_hippocampus_2013;@debas_off-line_2014;@fogel_reactivation_2017;@vahdat_network-wide_2017].
@@ -179,7 +169,7 @@ Significant representational changes are also found in cerebellum ipsilateral lo
 
 Concurrently to this consolidation induced representational emergence, strikingly few regions showed decreased sequence discrimination, namely ipsilateral caudate nuclei and bilateral hippocampus.
 The hippocampal early representation have been hypothesized to buffer novel explicit motor sequence learning and concur to the reactivations of the distributed network for reprocessing during offline periods, though progressively disengaging afterward [@albouy_hippocampus_2013].
-Our novel findings of differential implication of dorsomedial and dorsolateral striatum in sequence representation during learning and expression of a mastered skill specifies the earlier described activity change in the course of MSL [@lehericy_distinct_2005;@jankowski_distinct_2009;@francois-brosseau_basal_2009;@kupferschmidt_parallel_2017;@corbit_corticostriatal_2017].
+Our novel findings of differential implication of dorsomedial and dorsolateral striatum in sequence representation during learning and expression of a mastered skill specifies the earlier described activity change in the course of MSL [@lehericy_distinct_2005;@jankowski_distinct_2009;@francois-brosseau_basal_2009;@kupferschmidt_parallel_2017;@corbit_corticostriatal_2017] in humans and corroborate to changes observed in animals [@yin_dynamic_2009].
 Here also, the alternate production of different sequences, require shifting between overlapping set of motor commands which could further implicate the dorsal striatum in collaboration with prefrontal cortex [@monchi_functional_2006;].
 
 While our results show that the distributed representational network during learning is reorganized during memory consolidation, the present study was not designed to investigate the nature of hippocampal, striatal or cerebellar sequence representation that were previously assessed at cortical level for finger sequences [@wiestler_effector-independent_2014;@kornysheva_human_2014] as well as for larger forearm movements [@haar_effector-invariant_2017].
@@ -212,7 +202,7 @@ These results prompt for further investigation of the dynamic of this sleep-depe
 
 Eigtheen right-handed young ($25\pm6.2$yr.) healthy individuals (14 female) participated in the study.
 They were recruited by advertising on academic and public website.
-Participants were excluded if they had a history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961], had a BMI greater than 27, smokers, had extreme chronotype, were night-workers, had traveled across meridians during the 3 previous months, or were trained as  musician or professional typist.
+Participants were excluded if they had a history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961], had a BMI greater than 27, smoke, had extreme chronotype, were night-workers, had traveled across meridians during the 3 previous months, or were trained as  musician or professional typist.
 Their sleep quality was assessed, and individuals with score to the Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989] greater or equal to 5, or daytime sleepiness Epworth Sleepiness Scale [@johns_new_1991] score greater than 9 were excluded.
 
 Participants included in the study were also instructed to abstain from caffeine, alcohol and nicotine, and have regular sleep schedule (bed-time 10PM-1AM, wake-time 7AM-10AM) and avoid taking daytime nap for the duration of the experiment.
@@ -221,7 +211,7 @@ Their sleep schedule was assessed by analyzing the data obtained from an actigra
 All participants provided written informed consent and received financial compensation for their participation.
 This study protocol was approved by the Research Ethics Board of the “Regroupement en Neuroimagerie du Québec” (RNQ).
 
-## Behavioral experiment
+## Procedures and tasks
 
 The study was conducted over 3 consecutive days.
 Each day, in the evening, participants performed the experimental tasks while their brain activity was recorded by an MRI scanner, using an ergonomic MRI-compatible 4-keys response pad.
@@ -249,13 +239,19 @@ Ordered assignment of sequences to blocks was chosen to include all possible suc
 A 2-length De Bruijn cycle of the 4 sequences repeats each one 4 times, yielding a total of 16 blocks.
 This cycle was repeated twice in each of the 2 scanning sessions separated by approximately 5 minutes, thus resulting in a total of 64 blocks (4 groups of 16 practice blocks).
 
+## Behavioral statistics
+
+We entered the mean duration per block of correctly performed sequences into a linear mixed-effect model with a sequence learning stage (new/consolidated) by block (1-16) interaction to test for difference in their performance level and evolution during the task, while sequences and subjects were set as random effects.
+The same model was run with the number of correct sequences as the outcome variable.
+Two other models were used to separately test if there was any significant difference in performance (speed and accuracy) between the two consolidated sequences and between the two new sequences.
+Full models outputs are reported in supplementary materials.
+
 ## MRI data acquisition
 
 MRI data were acquired on a Siemens TIM Trio 3T scanner on 2 two separate sessions.
 The first session used a 32-channel coil to acquire high-resolution anatomical T1 weighted saggital images using a Multi-Echo MPRAGE sequence (MEMPRAGE; voxel size=1mm isometric; TR=2530ms; TE=1.64,3.6,5.36,7.22ms; FA=7; GRAPPA=2; FoV=$256\times256\times176mm$) with the different echoes combined using a Root-Mean-Square (RMS). 
 
-Functional data were acquired during the second session with a 12-channel coil for comparison with other dataset and using an
-EPI sequence providing complete cortical and cerebellum coverage (40 axial slices, acquire in ascending order, TR=2160ms;FoV=$220\times220\times132$mm, voxel size=$3.44\times3.44\times3.3$mm, TE=30ms, FA=90, GRAPPA=2).
+Functional data were acquired during the second session with a 12-channel coil, which allowed to fit an additional EEG cap in sleep scans, and using an EPI sequence providing complete cortical and cerebellum coverage (40 axial slices, acquire in ascending order, TR=2160ms;FoV=$220\times220\times132$mm, voxel size=$3.44\times3.44\times3.3$mm, TE=30ms, FA=90, GRAPPA=2).
 Following fMRI data acquisition during task, four volume were acquired using the same EPI sequence but with reversed phase encoding to enable retrospective correction of distortions induced by B0 field inhomogeneity.
 
 ## MRI data preprocessing
@@ -264,7 +260,7 @@ High-resolution anatomical T1 weighted image was preprocessed with Freesurfer [@
 Pial and grey/white matter interface surfaces were downsampled to match the 32k sampling of Human Connectome Project (HCP) [@glasser_minimal_2013].
 HCP subcortical atlas coordinates were warped onto individual T1 data using non-linear registration using the Ants software [@avants_symmetric_2008;@klein_evaluation_2009].
 
-A custom pipeline [@pinsard_integrated_2018] was used to preprocess fMRI data prior to analysis and relied on an integrated method [@pinsard_integrated_2018] which combines slice-wise motion estimation and intensity correction followed by the extraction of BOLD timecourses in cortical and subcortical gray matter.
+A custom pipeline was used to preprocess fMRI data prior to analysis and relied on an integrated method [@pinsard_integrated_2018] which combines slice-wise motion estimation and intensity correction followed by the extraction of BOLD timecourses in cortical and subcortical gray matter.
 This interpolation concurrently removed B0 inhomogeneity induced EPI distortion estimated by FSL Topup tool using the fMRI data with reversed phase encoding [@andersson_how_2003] acquired after the task.
 BOLD signal was further processed by detecting whole-brain intensity changes that corresponded to large motion, and each continuous period without such detected event was then separately detrended to remove linear signal drifts.
 
@@ -282,8 +278,8 @@ Least-square separate (LS-S) regression of each event, which have been shown to 
 
 Similarly to @wiestler_skill_2013 and @nambu_decoding_2015, we aimed to uncover activity patterns that represent the different sequences that were performed by the participants.
 However, instead of calculating cross-validated classification accuracies, we opted for a representational approach by computing multivariate distance between evoked activity patterns, in order to avoid the former's ceiling effect and baseline drift sensitivity [@walther_reliability_2016].
-In the current study, cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016;@diedrichsen_distribution_2016] which is an unbiased metric that uses multivariate normalization by estimating the covariance from the GLM fitting residuals, was regularized through Ledoit-Wolf optimal shrinkage [@ledoit_honey_2004].
-Distance were estimated separately for pairs of sequences that were in a similar acquisition stage, that is, separately for the newly acquired and for the consolidated sequences.
+In the current study, we computed cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016;@diedrichsen_distribution_2016] which is an unbiased metric that uses multivariate normalization by estimating the covariance from the GLM fitting residuals and then regularized through Ledoit-Wolf optimal shrinkage [@ledoit_honey_2004].
+This distance, that measures discriminability of conditions, was estimated separately for pairs of sequences that were in a similar acquisition stage, that is, for the newly acquired, and for the consolidated sequences.
 
 ### Searchlight analysis
 
@@ -298,7 +294,7 @@ To assess statistical significance of multivariate distance and contrasts, group
 The statistical significance level was set at $p<.05$ (with confidence interval $\pm.0044$ for 10000 permutations) with a minimum cluster size of 25 features.
 TFCE enabled a locally adaptive statistics and cluster size correction that particularly fitted our BOLD sampling of sparse gray-matter coordinates, as well as the large differences in the sizes of the structures that were investigated.
 
-The MVPA analysis was done using the PyMVPA software [@hanke_pymvpa_2009] package with additional development of custom samples extraction, cross-validation scheme, efficient searchlight and multivariate measure computation, this to adapt to the study design and the anatomy-constrained data sampling.
+The MVPA analysis was done using the PyMVPA software [@hanke_pymvpa_2009] package with additional development of custom samples extraction, cross-validation scheme, efficient searchlight and multivariate measure computation, optimally adapted to the study design and the anatomy-constrained data sampling.
 
 # Acknowledgments {#sec:acknowledgments}
 
@@ -309,11 +305,166 @@ We thank J.Diedrichsen for methodological advice on multivariate representationa
 This work was supported by the Canadian Institutes of Health Research (MOP 97830) to JD, as well as by French Education and Research Ministry and Sorbonne Universités to BP. __+Ella? +Arnaud(QBIN)__
 
 # Supplementary materials{ label="S"}
-
 \beginsupplement
+## Behavioral linear mixed-effect model outputs
 
-![Group searchlight map of cross-validated Mahalanobis distance between the 2 new unconsolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map.pdf){#fig:new_crossnobis_map}
+#### Test for differences in speed as mean duration to perform a correct sequence per block
 
-![Group searchlight map of cross-validated Mahalanobis distance between the 2 consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/cons_crossnobis_tfce_map.pdf){#fig:cons_crossnobis_map}
+```
+mean_seq_duration ~ seq_new * blocks + (blocks+sequences | subjects)
+==========================================================================================
+Model:                     MixedLM          Dependent Variable:          mean_seq_duration
+No. Observations:          1146             Method:                      REML
+No. Groups:                18               Scale:                       0.0368
+Min. group size:           62               Likelihood:                  165.9658
+Max. group size:           64               Converged:                   Yes
+Mean group size:           63.7
+------------------------------------------------------------------------------------------
+                                                Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+------------------------------------------------------------------------------------------
+Intercept                                        1.269    0.076 16.790 0.000  1.121  1.417
+seq_new[T.True]                                  0.365    0.047  7.776 0.000  0.273  0.457
+blocks                                          -0.006    0.005 -1.304 0.192 -0.016  0.003
+seq_new[T.True]:blocks                          -0.018    0.002 -7.403 0.000 -0.023 -0.013
+Intercept RE                                     0.132    0.246
+Intercept RE x sequences[T.NewSeq2] RE          -0.004    0.051
+sequences[T.NewSeq2] RE                          0.007    0.021
+Intercept RE x sequences[T.TSeq1] RE            -0.039    0.098
+sequences[T.NewSeq2] RE x sequences[T.TSeq1] RE  0.001    0.024
+sequences[T.TSeq1] RE                            0.025    0.056
+Intercept RE x sequences[T.Tseq2] RE            -0.038    0.092
+sequences[T.NewSeq2] RE x sequences[T.Tseq2] RE  0.001    0.023
+sequences[T.TSeq1] RE x sequences[T.Tseq2] RE    0.023    0.049
+sequences[T.Tseq2] RE                            0.022    0.048
+Intercept RE x blocks RE                        -0.005    0.010
+sequences[T.NewSeq2] RE x blocks RE              0.000    0.002
+sequences[T.TSeq1] RE x blocks RE                0.002    0.005
+sequences[T.Tseq2] RE x blocks RE                0.002    0.004
+blocks RE                                        0.000    0.001
+==========================================================================================
+```
+
+#### Test for differences in accuracy as the number of correct sequences over the 5 repetitions in a block
+
+```
+num_correct_seq ~ seq_new * blocks + (blocks+sequences | subjects)
+==========================================================================================
+Model:                       MixedLM          Dependent Variable:          num_correct_seq
+No. Observations:            1152             Method:                      REML
+No. Groups:                  18               Scale:                       0.6018
+Min. group size:             64               Likelihood:                  -1409.7169
+Max. group size:             64               Converged:                   No
+Mean group size:             64.0
+------------------------------------------------------------------------------------------
+                                                Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+------------------------------------------------------------------------------------------
+Intercept                                        4.691    0.079 59.215 0.000  4.536  4.846
+seq_new[T.True]                                 -0.304    0.101 -3.003 0.003 -0.503 -0.106
+blocks                                          -0.006    0.057 -0.101 0.919 -0.117  0.106
+seq_new[T.True]:blocks                           0.014    0.010  1.434 0.152 -0.005  0.034
+Intercept RE                                     0.002    0.021
+Intercept RE x sequences[T.NewSeq2] RE          -0.003    0.019
+sequences[T.NewSeq2] RE                          0.016    0.028
+Intercept RE x sequences[T.TSeq1] RE            -0.005    0.022
+sequences[T.NewSeq2] RE x sequences[T.TSeq1] RE  0.019    0.032
+sequences[T.TSeq1] RE                            0.026    0.047
+Intercept RE x sequences[T.Tseq2] RE            -0.004    0.025
+sequences[T.NewSeq2] RE x sequences[T.Tseq2] RE  0.017    0.042
+sequences[T.TSeq1] RE x sequences[T.Tseq2] RE    0.027    0.058
+sequences[T.Tseq2] RE                            0.034    0.089
+Intercept RE x blocks RE                        -0.001    0.021
+sequences[T.NewSeq2] RE x blocks RE              0.001    0.016
+sequences[T.TSeq1] RE x blocks RE                0.002    0.018
+sequences[T.Tseq2] RE x blocks RE                0.002
+blocks RE                                        0.038
+==========================================================================================
+```
+
+#### Test for differences in speed and accuracy between the new sequences
+
+```
+mean_seq_duration ~ sequences*blocks + (1|subjects)
+======================================================================
+Model:               MixedLM   Dependent Variable:   mean_seq_duration
+No. Observations:    571       Method:               REML
+No. Groups:          18        Scale:                0.0655
+Min. group size:     30        Likelihood:           -76.5056
+Max. group size:     32        Converged:            Yes
+Mean group size:     31.7
+----------------------------------------------------------------------
+                            Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+----------------------------------------------------------------------
+Intercept                    1.630    0.071 22.931 0.000  1.490  1.769
+sequences[T.NewSeq2]         0.025    0.045  0.558 0.577 -0.063  0.113
+blocks                      -0.023    0.003 -7.157 0.000 -0.030 -0.017
+sequences[T.NewSeq2]:blocks -0.005    0.005 -1.174 0.241 -0.015  0.004
+groups RE                    0.073    0.102
+======================================================================
+
+num_correct_seq ~ sequences*blocks + (1|subjects)
+======================================================================
+Model:               MixedLM    Dependent Variable:    num_correct_seq
+No. Observations:    571        Method:                REML
+No. Groups:          18         Scale:                 0.6209
+Min. group size:     30         Likelihood:            -689.3501
+Max. group size:     32         Converged:             Yes
+Mean group size:     31.7
+----------------------------------------------------------------------
+                            Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+----------------------------------------------------------------------
+Intercept                    4.553    0.102 44.450 0.000  4.353  4.754
+sequences[T.NewSeq2]        -0.245    0.138 -1.772 0.076 -0.517  0.026
+blocks                      -0.007    0.010 -0.728 0.467 -0.027  0.012
+sequences[T.NewSeq2]:blocks  0.028    0.014  1.936 0.053 -0.000  0.056
+groups RE                    0.018    0.017
+======================================================================
+```
+
+#### Test for differences in speed and accuracy between the consolidated sequences
+
+```
+mean_seq_duration ~ sequences*blocks + (1|subjects)
+====================================================================
+Model:               MixedLM  Dependent Variable:  mean_seq_duration
+No. Observations:    575      Method:              REML
+No. Groups:          18       Scale:               0.0222
+Min. group size:     31       Likelihood:          226.1710
+Max. group size:     32       Converged:           Yes
+Mean group size:     31.9
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  1.256    0.057 21.949 0.000  1.144  1.368
+sequences[T.TSeq2]         0.031    0.026  1.191 0.234 -0.020  0.082
+blocks                    -0.008    0.002 -4.023 0.000 -0.011 -0.004
+sequences[T.TSeq2]:blocks -0.000    0.003 -0.165 0.869 -0.006  0.005
+groups RE                  0.053    0.125
+====================================================================
+
+num_correct_seq ~ sequences*blocks + (1|subjects)
+====================================================================
+Model:               MixedLM   Dependent Variable:   num_correct_seq
+No. Observations:    575       Method:               REML
+No. Groups:          18        Scale:                0.4050
+Min. group size:     31        Likelihood:           -569.8356
+Max. group size:     32        Converged:            Yes
+Mean group size:     31.9
+--------------------------------------------------------------------
+                          Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+--------------------------------------------------------------------
+Intercept                  4.694    0.081 58.093 0.000  4.535  4.852
+sequences[T.TSeq2]        -0.030    0.111 -0.267 0.789 -0.248  0.188
+blocks                    -0.012    0.008 -1.414 0.157 -0.028  0.004
+sequences[T.TSeq2]:blocks  0.014    0.012  1.207 0.228 -0.009  0.036
+groups RE                  0.006    0.010
+====================================================================
+```
+
+
+## Representational distance maps
+
+![Group searchlight map of cross-validated Mahalanobis distance between the two new sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map2.pdf){#fig:new_crossnobis_map}
+
+![Group searchlight map of cross-validated Mahalanobis distance between the two consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/cons_crossnobis_tfce_map2.pdf){#fig:cons_crossnobis_map width=20cm}
 
 # References
