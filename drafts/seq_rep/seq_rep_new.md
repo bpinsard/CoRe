@@ -58,58 +58,58 @@ abstract: |
   Moreover, a local increase of activity can indicate some form of specialization or more likely result from faster execution, a decrease could either reflect gained efficiency or lower involvement of non-specific circuits contributing to initial phases of learning, while plasticity could occur even without significant modification of average regional activity level.
   For these reasons, we investigated whole-brain local representational changes using novel multivariate distance between fine-grained patterns evoked through the production of motor sequences, either trained in a single session and consolidated or newly acquired.
   While both consolidated and new sequences were represented in large cortical networks, specific patterns in cortical prefrontal and motor secondary areas as well as dorsolateral striatal and associative cerebellar cortex were heightened by consolidation, while ones in hippocampus and dorsomedial striatum were fading.
-  These results show that complementary sequence-specific motor knowledge representations distributed in different striatal, cerebellar, cortical and hippocampal regions evolve differentially during the critical phases of skill acquisition and consolidation and thus specify their roles in its support.
+  These results show that complementary sequence-specific motor knowledge representations distributed in different striatal, cerebellar, cortical and hippocampal regions evolve distinctively during the critical phases of skill acquisition and consolidation and thus specify their roles in supporting the evolution of motor memories.
 ---
 
 # Introduction {#sec:introduction}
 
 Animals and humans are able to acquire and automatize new sequences of movements, allowing them to expand and update their repertoire of complex goal-oriented motor actions for long-term use.
-To study the mechanisms underlying this type of procedural memory in humans, a large body of behavioral experiments have used motor sequence learning (MSL) tasks designed to test the ability to perform temporally ordered coordinated movements acquired either implicitly or explicitly and assess their performances at different timescales [@abrahamse_control_2013;@diedrichsen_motor_2015;@verwey_cognitive_2015].
-While the practice of an explicit MSL task leads to substantial within-session improvements in performance, there is now ample evidence indicating that between-session increases, conservation or decreases in performance can also be observed [@landry_effects_2016;@nettersheim_role_2015].
-It is when this offline period includes sleep, that between-session gains are particularly stabilized, whereas performance tends to decay during an equal waking period [@brawn_consolidating_2010;@nettersheim_role_2015;@landry_effects_2016].
+To study the mechanisms underlying this type of procedural memory in humans, a large body of behavioral experiments has used motor sequence learning (MSL) tasks designed to test the ability to perform temporally ordered coordinated movements acquired either implicitly or explicitly and has assessed their performances at different phases of the acquisition process [@abrahamse_control_2013;@diedrichsen_motor_2015;@verwey_cognitive_2015].
+While practice of an explicit MSL task leads to substantial within-session execution improvements, there is now ample evidence indicating that between-session maintenance and even increases in performance can be observed after a night of sleep [@landry_effects_2016;@nettersheim_role_2015], while performance tends to decay during an equal waking period [@brawn_consolidating_2010;@nettersheim_role_2015;@landry_effects_2016].
 Therefore, it is thought that sleep favors reprocessing of the motor memory trace, thus promoting its consolidation for long-term skill proficiency [see @king_sleeping_2017 for a recent in-depth review].
 
 Functional magnetic resonance imaging (fMRI) studies using General-Linear-Model (GLM) contrasts have indicated that the MSL is associated with the recruitment of an extended network of cerebral [@hardwick_quantitative_2013], cerebellar and spinal regions [@vahdat_simultaneous_2015], whose contributions differentiate as learning progresses [@dayan_neuroplasticity_2011;@doyon_current_2018].
-In fact, critical plastic changes [@ungerleider_imaging_2002;@doyon_reorganization_2005] are known to occur within the initial training session, as well as the post-learning consolidation phase, the latter being characterized by a "reorganization" of the nervous system structures supporting this type of procedural memory function [@rasch_reactivation_2008;@born_system_2012;@albouy_hippocampus_2013;@dudai_consolidation_2015;@bassett_learning-induced_2015;@fogel_reactivation_2017;@vahdat_network-wide_2017].
-More specifically, MSL practice activates a cortical and cerebellar motor network throughout learning but is also assisted by the hippocampus, and striato-frontal associative regions in the fast-learning phase of the initial practice [@albouy_hippocampus_2013].
-These support activities decrease when approaching asymptotic behavioral performance, in parallel with an increase in sensorimotor striatum and cerebellar nuclei activations [@doyon_experience-dependent_2002], both conveying the transition to the slow-learning phase.
+In fact, critical plastic changes [@ungerleider_imaging_2002;@doyon_reorganization_2005] are known to occur within the initial training session, as well as during the offline consolidation phase, the latter being characterized by a "reorganization" of the nervous system structures supporting this type of procedural memory function [@rasch_reactivation_2008;@born_system_2012;@albouy_hippocampus_2013;@dudai_consolidation_2015;@bassett_learning-induced_2015;@fogel_reactivation_2017;@vahdat_network-wide_2017].
+More specifically, MSL practice is known to activate a cortical, associative striatal and cerebellar motor network which is assisted by the hippocampus at the beginning of the fast-learning phase [@albouy_hippocampus_2013].
+When approaching asymptotic behavioral performance after more extended practice,  however, activity within the hippocampus decreases while activity within the sensorimotor striatum and cerebellar nuclei increases [@doyon_experience-dependent_2002], both effects conveying the transition to the slow-learning phase.
+
 This network further emerges after being stabilized by consolidation and reactivated by further MSL practice extending over multiple days [@lehericy_distinct_2005].
 
 A critical issue typically overlooked by previous MSL neuroimaging research using GLM-based contrasts is that changes in brain activity may suggest differentially recruited processes, only some of which may be specifically related to plasticity induced by MSL.
-For instance, increases in activity could as well reflect a greater implication of specialized circuits as simply result from the faster motor execution.
-Likewise, activity decreases could either indicate optimization and efficiency gains of specific circuits or reduced recruitment of non-specific networks supporting acquisition.
+For instance, increases in activity could as well reflect a greater implication of specialized circuits as simply result from the inherent faster execution of the motor task.
+Likewise, a decrease in activity could either indicate some form of optimization and greater efficiency of the circuits involved in executiong the task or the reduced recruitment of non-specific networks supporting the acquisition process.
 Therefore, even with the use of control conditions to dissociate sequence-specific and unspecific processes [@orban_multifaceted_2010], the observed large-scale activation differences associated with different learning phases do not provide direct evidence of plasticity related to the processing of a motor sequence-specific representation [@berlot_search_2018].
 Moreover, it is conceivable that these plastic changes may even occur locally, without significant changes in the GLM-based regional activity level.
 Besides, in most studies investigating the consolidation of explicit MSL, these changes are assessed by contrasting brain activity level of novice subjects between their initial training and a delayed practice session, and thus measure not only plasticity for sequence-specific (e.g. optimized chunks) but also task-related expertise (eg. habituation to experimental apparatus, optimized execution strategies, attentional processes).
 The latter is notably observed if subject then practice other sequences, which initial performance are then better than that of the one learned first.
 
-To address these specificity limitations, Multivariate Pattern Analysis (MVPA) has been employed to evaluate how local patterns of activity are able to stably discriminate between stimuli or evoked memories of the same type over repeated occurrences, allowing to test information-based hypotheses that GLM contrasts cannot inquire [@hebart_deconstructing_2017].
-In the MSL literature, only a few studies have used such MVPA approach to identify the regions that specialize in processing the representation of motor sequences [@wiestler_skill_2013;@nambu_decoding_2015;@wiestler_integration_2011;@kornysheva_human_2014;@yokoi_does_2017], though focusing on later phases of MSL after repeated practice over multiple days.
-For instance, in a recent study covering dorsal cerebral cortices only [@wiestler_skill_2013], cross-validated classification accuracy was measured separately on activity patterns evoked by the practice of trained and untrained sets of sequences, showing that training increased the sequence discriminability in a network spanning bilaterally the primary and secondary motor to parietal cortices.
-In another study [@nambu_decoding_2015] that separately analyzed the preparation and execution, the representations of extensively trained sequences were identified in the contralateral dorsal premotor and supplementary motor cortices during preparation, and ispilateral parietal, bilateral premotor and motor cortices as well as cerebellum during execution.
-In both studies, the regions carrying sequence-specific representations overlapped only partly with GLM-based measures, illustrating the fact that directly measuring coarser differences between novel and trained sequences evoked activity levels cannot assess if these truly purport sequential information.
-However, the classification-based measures they used can bias parametric statistical results [@jamalabadi_classification_2016;@allefeld_valid_2015;@combrisson_exceeding_2015;@varoquaux_cross-validation_2017] and are suboptimal to detect representational changes [@walther_reliability_2016].
+To address these specificity limitations, Multivariate Pattern Analysis (MVPA) has been proposed to evaluate how local patterns of activity are able to reliably discriminate between stimuli or evoked memories of the same type over repeated occurrences, hence allowing to test information-based hypotheses that GLM contrasts cannot inquire [@hebart_deconstructing_2017].
+In the MSL literature, only a few studies have used such MVPA approach to identify the regions that specialize in processing the representation of learned motor sequences [@wiestler_skill_2013;@nambu_decoding_2015;@wiestler_integration_2011;@kornysheva_human_2014;@yokoi_does_2017], although the latter have mainly focused on later phases of MSL after repeated practice over multiple days.
+For instance, in a recent study covering dorsal cerebral cortices only [@wiestler_skill_2013], cross-validated classification accuracy was measured separately on activity patterns evoked by the practice of trained and untrained sets of sequences.
+These authors showed that training increased sequence discriminability in a network spanning bilaterally the primary and secondary motor as well as parietal cortices.
+In another study [@nambu_decoding_2015] that aimed to analyze the preparation and execution of sequential movements, representations of extensively trained sequences were identified in the contralateral dorsal premotor and supplementary motor cortices during preparation, while greater representations related to the execution were found in the parietal cortex ispilaterally,the premotor and motor cortices bilaterally as well as the cerebellum.
+In both studies, the regions carrying sequence-specific representations overlapped only partly with GLM-based measures, hence illustrating the fact that directly measuring coarser differences between novel and trained sequences evoked activity levels cannot assess if these truly purport plasticity for sequential information.
+However, the classification-based measures they used, could have biased their parametric statistical results by violating normality assumption and theoretical null-distribution [@jamalabadi_classification_2016;@allefeld_valid_2015;@combrisson_exceeding_2015;@varoquaux_cross-validation_2017] and were also shown to be suboptimal in detecting representational changes [@walther_reliability_2016].
 
-
-As a part of a larger study, the present experimental manipulation aims to address both the critical issues overlooked by studies investigating the MSL consolidation with GLM-based approach and the limitations of classifier-based MVPA studies.
-Specifically, we adopt a recently developed MVPA approach [@nili_toolbox_2014] that is unbiased and more sensitive to continuous representational changes [@walther_reliability_2016], such that occur in the early stage of MSL consolidation [@albouy_interaction_2013] onto which our focus here is.
-Our experimental manipulation hence allows to isolate sequence-specific plasticity, by extracting patterns evoked by the practice of consolidated and new sequences at the same task expertise level and computing this novel multivariate distance using a searchlight approach over the whole brain, in order to cover cortical and subcortical regions critical to MSL.
-Based on theoretical model [@albouy_hippocampus_2013;@doyon_current_2018] that account for imaging and animal studies, we hypothesized that offline consolidation following training should induce greater sequence-specific cortical and striatal representations, in conjunction with weaker hippocampal-based ones.
+As a part of a larger study, the present experimental manipulation aims to address both the critical issues overlooked by studies investigating the consolidation of MSL with GLM-based approach as well as the limitations encountered when using classifier-based MVPA methods.
+Specifically, we adopted a recently developed MVPA approach [@nili_toolbox_2014] that is unbiased and more sensitive to continuous representational changes [@walther_reliability_2016], such as those that occur in the early stage of MSL consolidation [@albouy_interaction_2013].
+Our experimental manipulation allowed to isolate sequence-specific plasticity, by extracting patterns evoked through practice of both consolidated and new sequences at the same task expertise level and by computing this novel multivariate distance using a searchlight approach over the whole brain, in order to cover cortical and subcortical regions critical to MSL.
+Based on theoretical model [@albouy_hippocampus_2013;@doyon_current_2018] that account for imaging and animal studies, we hypothesized that offline consolidation following training should induce greater cortical and striatal and weaker hippocampal sequence-specific representations.
 
 # Results {#sec:results}
 
-To investigate the representations of sequences along the course of learning, subjects (n=18) that learned two finger presses sequences separately in the first two days of the experiment, on the third day, performed a task in which they practiced these two sequences, as well as two new sequences in pseudo-randomly ordered short blocks.
+To investigate the representations sequences along the course of learning, the subjects (n=18) that had learned two finger presses sequences separately in the first two days of the experiment, performed on the third day a task in which they practiced these two sequences, as well as two new sequences in pseudo-randomly ordered short blocks.
 All sequences were executed using their non-dominant hand while functional MRI data was acquired.
 
 ## Behavioral performance
 
-New sequences were performed slower ($\beta=.365 , SE=0.047, p<.001$) and less accurately ($\beta=-0.304, SE=0.101,p<.001$) than consolidated one.
-Significant improvement across blocks in term of speed ($\beta=-0.018, SE=0.002, p<.001$) but not of accuracy ($\beta=0.014, SE=0.010, p=0.152$) was observed for new sequences, thus showing an expected learning curve visible in @fig:mvpa_task_groupInt_seq_duration.
-The consolidated sequences, on the contrary, did not show significant changes in speed ($\beta=-0.006, SE=0.005, p=0.192$) nor accuracy ($\beta=-0.006, SE=0.057, p=0.919$), the asymptotic performance being already reached through practice and consolidation.
+As awaited, new sequences were performed slower ($\beta=.365 , SE=0.047, p<.001$) and less accurately ($\beta=-0.304, SE=0.101,p<.001$) than consolidated one.
+Significant improvement across blocks was observed for new sequences in term of speed ($\beta=-0.018, SE=0.002, p<.001$), thus showing an expected learning curve visible in @fig:mvpa_task_groupInt_seq_duration, but not for accuracy ($\beta=0.014, SE=0.010, p=0.152$) which, ranging discretely from 0 to 5, have limited precision.
+The consolidated sequences, on the contrary, did not show significant changes in speed ($\beta=-0.006, SE=0.005, p=0.192$) nor accuracy ($\beta=-0.006, SE=0.057, p=0.919$), the asymptotic performances being already reached through practice and consolidation.
 
 ![Average and standard deviation of correct sequence durations across the MVPA task blocks.](../../results/behavior/mvpa_task_groupInt_seq_duration.pdf){#fig:mvpa_task_groupInt_seq_duration}
 
-We also verified that there was no significant difference between consolidated sequences in term of speed ($\beta=0.031, SE=0.026, p=0.234$) and accuracy ($\beta=-0.030, SE=0.111, p=0.789$), and ran a similar verification between new sequences which speed ($\beta=0.025, SE=0.045, p=0.577$) and accuracy ($\beta=-0.245, SE=0.138, p=0.076$) did not differ.
+We also verified that there was no significant difference between the consolidated sequences in term of speed ($\beta=0.031, SE=0.026, p=0.234$) and accuracy ($\beta=-0.030, SE=0.111, p=0.789$), and ran similar verification between the new sequences, which speed ($\beta=0.025, SE=0.045, p=0.577$) and accuracy ($\beta=-0.245, SE=0.138, p=0.076$) did not differ.
 
 ## A common distributed sequence representation for consolidated and new sequences
 
@@ -122,29 +122,29 @@ To extract the common regions that show sequence representation at both stages o
 A large distributed network (@fig:new_cons_conj_crossnobis_map) displays significant discriminability, including primary visual, as well as posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.
 When looking at separate results for each learning stages, subcortical regions also show differing activity patterns, including ipsilateral cerebellum, bilateral thalamus, hippocampus and striatum (@fig:new_crossnobis_map,@fig:cons_crossnobis_map), which does not overlap across learning stages.
 
-![Group searchlight conjunction of new and consolidated sequences discriminability maps (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map_vert_labels.pdf){#fig:new_cons_conj_crossnobis_map width=14cm}
+![Group searchlight conjunction of new and consolidated sequences discriminability maps (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map_vert_labels.pdf){#fig:new_cons_conj_crossnobis_map width=15cm}
 
 ## Reorganization of the distributed sequence representation with consolidation
 
-In order to evaluate the reorganization of sequence representation undergone by consolidation at the group level, the consolidated and new sequences' discriminability maps from all participants were submitted to pairwise t-test with non-parametric testing with TFCE (@fig:contrast_conj_cons_new_crossnobis_map).
-To ascertain that differences were supported by significant discriminability, we then calculated the conjunction of the contrast maps with the separate consolidated and new sequences group results respectively for positive and negative differences.
+In order to evaluate the reorganization of sequence representation undergone by consolidation at the group level, the consolidated and new sequences' discriminability maps from all participants were submitted to non-parametric pairwise t-test with TFCE.
+To ascertain that differences were supported by significant discriminability, we then calculated the conjunction of the contrast maps with the separate consolidated and new sequences group results respectively for positive and negative differences (@fig:contrast_conj_cons_new_crossnobis_map).
 
-Discriminability was found to be significantly higher for consolidated sequences as compared to new sequences in bilateral sensorimotor putamen, thalamus as well as frontal, anterior insular, posterior cingulate and parietal cortices, ispilateral cerebellar lobule IX, contralateral lateral and dorsal premotor, supplementary motor, insular, and dorsolateral prefrontal cortices and cerebellar Crus I.
-Conversely, the representation strength was higher for new sequences in bilateral hippocampus as well as ipsilateral body of the caudate nuclei and subthalamic nuclei.
+Discriminability was found to be significantly higher for consolidated sequences as compared to new sequences in bilateral sensorimotor putamen, thalamus and anterior insula, and also in ispilateral cerebellar lobule IX, posterior cingulate and parietal cortices, as well as contralateral lateral and dorsal premotor, supplementary motor, frontopolar and dorsolateral prefrontal cortices and cerebellar Crus I.
+Conversely, the pattern dissimilarity was higher for new sequences in bilateral hippocampi as well as the body of the caudate nuclei, subthalamic nuclei, and cerebellar Crus II ipsilaterally.
 Hence, while striatal activity patterns differentiating newly acquired sequences exists in contralateral putamen (@fig:new_crossnobis_map), this distance was significantly larger for consolidated sequences in motor regions of bilateral putamen.
 
-![Conjunction of group searchlight contrast (paired t-test) between consolidated and new sequences discriminability maps and separate group discriminability maps for new and consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/contrast_conj_cons_new_crossnobis_tfce_map_vert.pdf){#fig:contrast_conj_cons_new_crossnobis_map width=14cm}
+![Conjunction of group searchlight contrast (paired t-test) between consolidated and new sequences discriminability maps and separate group discriminability maps for new and consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/contrast_conj_cons_new_crossnobis_tfce_map_vert_labels.pdf){#fig:contrast_conj_cons_new_crossnobis_map width=15cm}
 
 # Discussion {#sec:discussion}
 
 In the present study we aimed to measure the changes in activity patterns in a distributed network supporting the execution of multiple motor sequential skills associated with behaviorally assessed consolidation.
-Locally stable patterns of activity are here used as a proxy for the specialization of neuronal circuits for the support of efficient memory retrieval and expression.
+Locally stable patterns of activity are here used as a proxy for the specialization of neuronal circuits in the support of efficient motor memory retrieval and expression.
 To investigate the differential pattern strength, we computed novel unbiased multivariate distance and applied robust permutation-based statistics with adaptive cluster correction.
 
 ## A distributed representation of finger motor sequence
 
 Our results provide evidence that an extended network of regions shows reliable sequence-specific activity patterns for both consolidated and novel sequences.
-Cortically, a previously described network [@wiestler_skill_2013;@nambu_decoding_2015] encompasses bilateral supplementary and premotor areas, as well as posterior parietal cortices, while contralateral primary sensorimotor regions were only shown to elicit different patterns for novel sequences.
+Cortically, a previously described network [@wiestler_skill_2013;@nambu_decoding_2015] encompasses bilateral supplementary and premotor areas, as well as posterior parietal cortices, while contralateral primary sensorimotor regions were only shown to activate in distinct patterns for novel sequences.
 It is noteworthy that discrimination of motor sequence representations within the ipsilateral motor, premotor and parietal cortices has been previously described [@wiestler_skill_2013;@waters-metenier_bihemispheric_2014;@waters_cooperation_2017], notably when non-dominant hand is used for fine dexterous manual skills.
 
 Difference in activity patterns within the primary motor cortex was only found for newly learned sequences [@fig:new_crossnobis_map], which could reflect their motoric differences in terms of finger presses ordering.
@@ -200,59 +200,66 @@ These results prompt for further investigation of the dynamic of this sleep-depe
 
 ## Participants
 
-Eigtheen right-handed young ($25\pm6.2$yr.) healthy individuals (14 female) participated in the study.
-They were recruited by advertising on academic and public website.
-Participants were excluded if they had a history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961], had a BMI greater than 27, smoke, had extreme chronotype, were night-workers, had traveled across meridians during the 3 previous months, or were trained as  musician or professional typist.
-Their sleep quality was assessed, and individuals with score to the Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989] greater or equal to 5, or daytime sleepiness Epworth Sleepiness Scale [@johns_new_1991] score greater than 9 were excluded.
+Right-handed young ($n=34, 25\pm6.2$yr.) healthy individuals (19 female), recruited by advertising on academic and public website, participated in the study.
+Participants were excluded if they had a history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961], had a BMI greater than 27, smoke, had extreme chronotype, were night-workers, had traveled across meridians during the 3 previous months, or were trained as musician or professional typist for more than a year.
+Their sleep quality was subjectively assessed, and individuals with score to the Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989] greater or equal to 5, or daytime sleepiness Epworth Sleepiness Scale [@johns_new_1991] score greater than 9 were excluded.
 
 Participants included in the study were also instructed to abstain from caffeine, alcohol and nicotine, and have regular sleep schedule (bed-time 10PM-1AM, wake-time 7AM-10AM) and avoid taking daytime nap for the duration of the experiment.
-Their sleep schedule was assessed by analyzing the data obtained from an actigraph (Actiwatch 2, Philips Respironics, Andover, MA, USA) worn on the wrist of the non-dominant hand for the week preceding and for the duration of the experiment, and cerfified that all included subjects complied to the instructions.
+EEG activity was recorded while participants sleeped at night in a mock MRI scanner while gradients sounds were played to both screen for potential sleep disorders and test their ability to sleep in the experimental environment, and 18 were excluded for not spending a minimum of 20min. in NREM2 sleep.
+After this last inclusion step, their sleep schedule was assessed by analyzing the data obtained from an actigraph (Actiwatch 2, Philips Respironics, Andover, MA, USA) worn on the wrist of the non-dominant hand for the week preceding and for the duration of the experiment, and cerfified that all included subjects complied to the instructions.
+
+Among the 34 participants, one did not show within-session improvement in the task, one didn't slept on the first night, and four withdrawn.
 
 All participants provided written informed consent and received financial compensation for their participation.
-This study protocol was approved by the Research Ethics Board of the “Regroupement en Neuroimagerie du Québec” (RNQ).
+This study protocol was approved by the Research Ethics Board of the “Comité mixte d'éthique de la recherche - Regroupement en Neuroimagerie du Québec” (CMER-RNQ).
 
 ## Procedures and tasks
 
 The study was conducted over 3 consecutive days.
-Each day, in the evening, participants performed the experimental tasks while their brain activity was recorded by an MRI scanner, using an ergonomic MRI-compatible 4-keys response pad.
+Each day, in the evening to record ensuing sleep at night, participants performed the experimental tasks while their brain activity was recorded by an MRI scanner.
+Their non-dominant hand (left) was placed on an ergonomic MRI-compatible response pad equiped of 4-keys corresponding to 1 for little finger to 4 for index in instructions.
 
-TODO:do we describe CoRe?
+On the first day (D1), participants were trained to perform repeatedly a 5-elements sequence (TSeq1: 1-4-2-3-1).
+The motor sequence was performed in blocks interspersed separated by rest periods to avoid fatigue.
+Apart for a green or a red cross displayed in the center of the screen, instructing the participants to execute the sequence or take a break, respectively, there were no other visual stimuli presented during the task.
+Participants were instructed to execute the sequence repeatedly, and as fast and accurate as possible, as long as the cross was green and they were instructed to rest for the period of 25 sec. indicated by the cross was red.
+During each of the 14 practice blocks, participants performed 12 motor sequences repetitions of the motor sequences (i.e. 60 keypresses per block).
+In case of mistake during sequence production, participants were instructed to stop their performance and to immediately start practicing again from the beginning of the sequence until the end of the block.
+After the completion of the training phase, participants were instructed to visually fixate a white cross for two ensuing resting-state scans of 7 minutes each, and were then administered a retention test, which consisted of a single block of 12 sequences repetitions.
+Then the participants were scanned for approximately two hours while trying to sleep.
 
-On the first day (D1), participants were trained to perform repeatdly with their non-dominant hand (left) a 5 elements sequence (TSeq1) for 14 blocks (indicated by a green cross displayed in the center of the screen) each composed of 12 repetitions of the motor sequences (ie. 60 keypresses per block).
-Participants were instructed to execute repeatedly as fast and accurate as possible the sequence of keypresses until completion of the practice block.
-Practice blocks were interspersed with 25-s rest periods (indicated by the onset of a red cross on the screen) to prevent fatigue.
-In case of mistake during sequence production, participants were asked to stop their performance and to immediately start practicing again from the beginning of the sequence until the end of the block.
-Approximately 20 minutes after the completion of the training phase, they were administered a retention test, which consisted of a single block similar to training ones.
+On the second day (D2), participants were first evaluated on the TSeq1 (1 block retest), and were then trained on a new sequence (TSeq2: 1-3-2-4-1) which was performed for 14 blocks of 12 sequences each, similarly to TSeq1 training on D1.
 
-On the second evening (D2), participants were evaluated on the TSeq1 during a retest session (1 block), and were then trained on a new sequence (TSeq2) of 5 elements with their left-hand for 14 blocks of 12 sequences as for TSeq1.
+On the third day (D3), participants first performed TSeq1 for 7 blocks followed by 7 blocks of TSeq2, each block including 12 repetitions of the sequence or 60 keypresses. 
 
-On the third evening (D3), they first performed TSeq1 for 7 blocks followed by 7 blocks of TSeq2, each block including 12 repetitions of the sequence or 60 keypresses. 
+Then, they performed the experimental task that constitutes the object of the current study, similar to that in a previous study [@wiestler_skill_2013].
+Specifically, participants performed short practice blocks of 4 different sequences, including TSeq1 et TSeq2 as well as two new sequences (NewSeq1: 1-2-4-3-1, NewSeq2: 4-1-3-2-4).
+It however differed in that, in our study, all 4 sequences used the left-hand 4 fingers, thus excluding the thumb.
+Also, as for the initial training, sequences were instead repeated uninterruptedly and without feedback, this in order to probe the processes underlying automatization of the skill.
 
-This was followed by a task specifically designed for MVPA analysis, similar to a previous study [@wiestler_skill_2013], which alternates short practice blocks of 4 different sequences, including TSeq1 et TSeq2 as well as two new sequences NewSeq1 and NewSeq2.
-It however differed in that, in our study, all 4 sequences used the left-hand 4 fingers excluding the thumb.
-Also, as for the initial training, sequences were performed repeatedly and without interruption nor any feedback, this in order to probe the processes underlying automatization of the skill.
+Each block was composed of an instruction period of 4 seconds during which the sequences to be performed was displayed as theseries of 5 numbers (e.g. 1-4-2-3-1), which was followed by an execution period indicated by a green cross.
+Participants performed 5 times the sequence (a maximum of 25 key-presses), before being instructed to stop and rest by displaying the red cross.
 
-Each block was composed of an instruction period of 4 sec. when was displayed 5 numbers (eg. 1-4-2-3-1) representing in reading order the sequence of fingers to be pressed, which was followed by an execution period indicated by a green cross.
-Participants had to perform 5 times the sequence, or a maximum of 25 key-presses, before being instructed to stop and rest by displaying a red cross.
-
-Ordered assignment of sequences to blocks was chosen to include all possible successive pairs of the sequences using De Bruijn cycles [@aguirre_bruijn_2011], this preventing systematic leakage of BOLD activity between blocks of this rapid design.
+The four sequences were assigned to blocks such as to include all possible successive pairs of the sequences using De Bruijn cycles [@aguirre_bruijn_2011], thus preventing the systematic leakage of BOLD activity between blocks in this rapid design.
 A 2-length De Bruijn cycle of the 4 sequences repeats each one 4 times, yielding a total of 16 blocks.
-This cycle was repeated twice in each of the 2 scanning sessions separated by approximately 5 minutes, thus resulting in a total of 64 blocks (4 groups of 16 practice blocks).
+In our study, this cycle was repeated twice in each of the 2 scanning runs separated by approximately 5 minutes of rest, thus resulting in a total of 64 blocks (4 groups of 16 practice blocks for a total of 16 blocks per sequence).
+
+Among the 26 participants that completed the study, only 18 were selected for the present analysis, the remaining 8 not practicing the second sequence (Tseq2) on D2.
 
 ## Behavioral statistics
 
-We entered the mean duration per block of correctly performed sequences into a linear mixed-effect model with a sequence learning stage (new/consolidated) by block (1-16) interaction to test for difference in their performance level and evolution during the task, while sequences and subjects were set as random effects.
+Using data from the rapid-design task with all sequences, we entered the mean duration per block of correctly performed sequences into a linear mixed-effect model with a sequence learning stage (new/consolidated) by block (1-16) interaction to test for difference in their performance level and evolution during the task, with sequences and blocks as random effects and subjects as the grouping factor.
 The same model was run with the number of correct sequences as the outcome variable.
-Two other models were used to separately test if there was any significant difference in performance (speed and accuracy) between the two consolidated sequences and between the two new sequences.
+Two other models were used on subsets of data to separately test if there was any significant difference in performance (speed and accuracy) between the two consolidated sequences and between the two new sequences.
 Full models outputs are reported in supplementary materials.
 
 ## MRI data acquisition
 
 MRI data were acquired on a Siemens TIM Trio 3T scanner on 2 two separate sessions.
-The first session used a 32-channel coil to acquire high-resolution anatomical T1 weighted saggital images using a Multi-Echo MPRAGE sequence (MEMPRAGE; voxel size=1mm isometric; TR=2530ms; TE=1.64,3.6,5.36,7.22ms; FA=7; GRAPPA=2; FoV=$256\times256\times176mm$) with the different echoes combined using a Root-Mean-Square (RMS). 
+The first session used a 32-channel coil to acquire high-resolution anatomical T1 weighted sagittal images using a Multi-Echo MPRAGE sequence (MEMPRAGE; voxel size=1mm isometric; TR=2530ms; TE=1.64,3.6,5.36,7.22ms; FA=7; GRAPPA=2; FoV=$256\times256\times176mm$) with the different echoes combined using a Root-Mean-Square (RMS).
 
-Functional data were acquired during the second session with a 12-channel coil, which allowed to fit an additional EEG cap in sleep scans, and using an EPI sequence providing complete cortical and cerebellum coverage (40 axial slices, acquire in ascending order, TR=2160ms;FoV=$220\times220\times132$mm, voxel size=$3.44\times3.44\times3.3$mm, TE=30ms, FA=90, GRAPPA=2).
-Following fMRI data acquisition during task, four volume were acquired using the same EPI sequence but with reversed phase encoding to enable retrospective correction of distortions induced by B0 field inhomogeneity.
+Functional data were acquired during the second session with a 12-channel coil, which allowed to fit an EEG cap to monitor sleep after training, and using an EPI sequence providing complete cortical and cerebellum coverage (40 axial slices, acquire in ascending order, TR=2160ms;FoV=$220\times220\times132$mm, voxel size=$3.44\times3.44\times3.3$mm, TE=30ms, FA=90, GRAPPA=2).
+Following task fMRI data acquisition, four volume were acquired using the same EPI sequence but with reversed phase encoding to enable retrospective correction of distortions induced by B0 field inhomogeneity.
 
 ## MRI data preprocessing
 
@@ -271,13 +278,13 @@ This approach was intended to minimize the blurring of data in order to preserve
 
 ### Samples
 
-Each block was modeled by having 2 boxcars, corresponding to the instruction and execution phases respectively, which were convolved with the Hemodynamic Response Functions.
+Each block was modeled by two boxcars, corresponding to the instruction and execution phases respectively, convolved with the single-gamma Hemodynamic Response Function.
 Least-square separate (LS-S) regression of each event, which have been shown to provide improved activation patterns estimates for MVPA [@mumford_deconvolving_2012], yielded instruction and execution phases beta maps for each block that were further used as MVPA samples.
 
 ### Cross-validated multivariate distance
 
 Similarly to @wiestler_skill_2013 and @nambu_decoding_2015, we aimed to uncover activity patterns that represent the different sequences that were performed by the participants.
-However, instead of calculating cross-validated classification accuracies, we opted for a representational approach by computing multivariate distance between evoked activity patterns, in order to avoid the former's ceiling effect and baseline drift sensitivity [@walther_reliability_2016].
+However, instead of calculating cross-validated classification accuracies, we opted for a representational approach by computing multivariate distance between activity patterns evoked by the execution of sequences, in order to avoid the former's ceiling effect and baseline drift sensitivity [@walther_reliability_2016].
 In the current study, we computed cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016;@diedrichsen_distribution_2016] which is an unbiased metric that uses multivariate normalization by estimating the covariance from the GLM fitting residuals and then regularized through Ledoit-Wolf optimal shrinkage [@ledoit_honey_2004].
 This distance, that measures discriminability of conditions, was estimated separately for pairs of sequences that were in a similar acquisition stage, that is, for the newly acquired, and for the consolidated sequences.
 
@@ -305,10 +312,12 @@ We thank J.Diedrichsen for methodological advice on multivariate representationa
 This work was supported by the Canadian Institutes of Health Research (MOP 97830) to JD, as well as by French Education and Research Ministry and Sorbonne Universités to BP. __+Ella? +Arnaud(QBIN)__
 
 # Supplementary materials{ label="S"}
-\beginsupplement
+
 ## Behavioral linear mixed-effect model outputs
 
 #### Test for differences in speed as mean duration to perform a correct sequence per block
+
+\footnotesize
 
 ```
 mean_seq_duration ~ seq_new * blocks + (blocks+sequences | subjects)
@@ -460,11 +469,12 @@ groups RE                  0.006    0.010
 ====================================================================
 ```
 
-
 ## Representational distance maps
 
-![Group searchlight map of cross-validated Mahalanobis distance between the two new sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map2.pdf){#fig:new_crossnobis_map}
+\beginsupplement
 
-![Group searchlight map of cross-validated Mahalanobis distance between the two consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/cons_crossnobis_tfce_map2.pdf){#fig:cons_crossnobis_map width=20cm}
+![Group searchlight map of cross-validated Mahalanobis distance between the two new sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map2.pdf){#fig:new_crossnobis_map width=16cm}
+
+![Group searchlight map of cross-validated Mahalanobis distance between the two consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/cons_crossnobis_tfce_map2.pdf){#fig:cons_crossnobis_map width=16cm}
 
 # References
