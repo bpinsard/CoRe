@@ -215,56 +215,56 @@ Yet such consolidation-related representational changes need to be further inves
 ## Participants
 
 Right-handed young ($n=34, 25\pm6.2$yr.) healthy individuals (19 female), recruited by advertising on academic and public website, participated in the study.
-Participants were excluded if they had a history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961], had a BMI greater than 27, smoke, had extreme chronotype, were night-workers, had traveled across meridians during the 3 previous months, or were trained as musician or professional typist for more than a year.
-Their sleep quality was subjectively assessed, and individuals with score to the Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989] greater or equal to 5, or daytime sleepiness Epworth Sleepiness Scale [@johns_new_1991] score greater than 9 were excluded.
+Participants were excluded if they had a history of neurological psychological or psychiatric disorders or scoring 4 and above on the short version of Beck Depression Scale [@beck_inventory_1961], had a BMI greater than 27, smoked, had extreme chronotype, were night-workers, had traveled across meridians during the 3 previous months, or were trained as musician or professional typist for more than a year.
+Their sleep quality was subjectively assessed, and individuals with score to the Pittsburgh Sleep Quality Index questionnaire [@buysse_pittsburgh_1989] greater or equal to 5, or daytime sleepiness Epworth Sleepiness Scale [@johns_new_1991] score greater than 9, were excluded.
 
-Participants included in the study were also instructed to abstain from caffeine, alcohol and nicotine, and have regular sleep schedule (bed-time 10PM-1AM, wake-time 7AM-10AM) and avoid taking daytime nap for the duration of the experiment.
-EEG activity was recorded while participants slept at night in a mock MRI scanner while gradients sounds were played to both screen for potential sleep disorders and test their ability to sleep in the experimental environment, and 18 were excluded for not spending a minimum of 20min. in NREM2 sleep.
-After this last inclusion step, their sleep schedule was assessed by analyzing the data obtained from an actigraph (Actiwatch 2, Philips Respironics, Andover, MA, USA) worn on the wrist of the non-dominant hand for the week preceding and for the duration of the experiment, and cerfified that all included participants complied to the instructions.
+Participants included in the study were also instructed to abstain from caffeine, alcohol and nicotine, to maintain a regular sleep schedule (bed-time 10PM-1AM, wake-time 7AM-10AM) and avoid taking daytime nap for the duration of the experiment.
+In a separate screening session, EEG activity was also recorded while participants slept at night in a mock MRI scanner and gradients sounds were played to both screen for potential sleep disorders and test their ability to sleep in the experimental environment, and 18 were excluded for not matching the criterion of a minimum of 20min. in NREM2 sleep.
+After this last inclusion step, their sleep schedule was assessed by analyzing the data obtained from an actigraph (Actiwatch 2, Philips Respironics, Andover, MA, USA) worn on the wrist of the non-dominant hand for the week preceding as well as during the three days of experiment, hence certifying that all participants complied to the instructions.
 
-Among the 34 participants, one did not show within-session improvement in the task, one didn't sleep on the first night, two were withdrawn for technical problems, and four withdrew themselves before completion of the experiment.
-Among the 26 participants that completed the research project, only one group of 18 which, by design, followed the appropriate behavioral intervention for the present study, were retained for our analysis.
+Among the 34 participants, one did not show within-session improvement in the task, one didn't sleep on the first night, two were withdrawn for technical problems <todo:check with Arnaud and Ella>, and four withdrew themselves before completion of the experiment.
+Thus, among the 26 participants that completed the research project, a group of 18 which, by design, followed the appropriate behavioral intervention for the present study, were retained for our analysis.
 
 All participants provided written informed consent and received financial compensation for their participation.
 This study protocol was approved by the Research Ethics Board of the “Comité mixte d'éthique de la recherche - Regroupement en Neuroimagerie du Québec” (CMER-RNQ).
 
 ## Procedures and tasks
 
-The study was conducted over 3 consecutive days.
-Each day, in the evening, participants performed the experimental tasks while their brain activity was recorded by an MRI scanner.
-Their non-dominant hand (left) was placed on an ergonomic MRI-compatible response pad equipped of 4-keys corresponding to each of the finger excluding the thumb.
+The study was conducted over 3 consecutive evenings and is part of an experiment that aimed to investigate the neural substrates mediating the re-consolidation of motor sequence memories.
+On each day, participants performed the experimental tasks while their brain activity was recorded by an MRI scanner.
+Their non-dominant hand (left) was placed on an ergonomic MRI-compatible response pad equipped with 4-keys corresponding to each of the fingers excluding the thumb.
 
 On the first day (D1), participants were trained to perform repeatedly a 5-elements sequence (TSeq1: 1-4-2-3-1  where 1 indicate the little finger and 4 the index finger).
 The motor sequence was performed in blocks separated by rest periods to avoid fatigue.
 Apart for a green or a red cross displayed in the center of the screen, respectively instructing the participants to execute the sequence or to rest, there were no other visual stimuli presented during the task.
-Participants were instructed to execute the sequence repeatedly, and as fast and accurately as possible, as long as the cross was green and they were instructed to rest for the period of 25 sec. indicated by the red cross.
+Participants were instructed to execute the sequence repeatedly, and as fast and accurately as possible, as long as the cross was green, and they were instructed to rest for the period of 25 sec. indicated by the red cross.
 During each of the 14 practice blocks, participants performed repeatedly 12 motor sequences (i.e. 60 keypresses per block).
-In case of mistake during sequence production, participants were instructed to stop their performance and to immediately start practicing again from the beginning of the sequence until the end of the block.
-After the completion of the training phase, participants were instructed to visually fixate a white cross for two ensuing resting-state scans of 7 minutes each, and were then administered a retention test, which consisted of a single block of 12 sequences repetitions.
+In case participants made a mistake during sequence production, they were instructed to stop their performance and to immediately start practicing again from the beginning of the sequence until the end of the block.
+After completion of the training phase, participants were then instructed to visually fixate a white cross for two ensuing resting-state scans of 7 minutes each, and were then administered a retention test, which consisted of a single block comprising 12 repetitions of the sequence.
 Then the participants were scanned with concurrent EEG and fMRI for approximately two hours while instructed to sleep.
 
-On the second day (D2), participants were first evaluated on the TSeq1 (1 block retest), and were then trained on a new sequence (TSeq2: 1-3-2-4-1) which was again performed for 14 blocks of 12 sequences each, similarly to TSeq1 training on D1, and first two hours of sleep were also recorded with EEG and fMRI.
+On the second day (D2), participants were first evaluated on the TSeq1 (1 block retest) to test their level of consolidation of the motor sequence, and were then trained on a new sequence (TSeq2: 1-3-2-4-1) which was again performed for 14 blocks of 12 sequences each, similarly to TSeq1 training on D1, and then the first two hours of sleep were also recorded with EEG and fMRI.
 
-On the third day (D3), participants first performed TSeq1 for 7 blocks followed by 7 blocks of TSeq2, each block including 12 repetitions of the sequence or 60 keypresses. 
-
-Then, they performed the experimental task that constitutes the object of the current study, similar to that in a previous study [@wiestler_skill_2013].
-Specifically, participants performed short practice blocks of 4 different sequences, including TSeq1 et TSeq2 as well as two new sequences (NewSeq1: 1-2-4-3-1, NewSeq2: 4-1-3-2-4).
-In contrast to that previous study, all 4 sequences used the 4 fingers of the left-hand, thus excluding the thumb.
+Finally, on the third day (D3), participants first performed TSeq1 for 7 blocks followed by 7 blocks of TSeq2, each block including 12 repetitions of the sequence or 60 keypresses
+Following this last testing session, participants were then asked to complete an experimental task (here called MVPA task) that constitutes the object of the current study, which was similar to that in a previous study investigating sequence representation by means of multivariate classification [@wiestler_skill_2013].
+Specifically, participants performed short practice blocks of 4 different sequences, including TSeq1 et TSeq2 that were then consolidated, as well as two new finger sequences (NewSeq1: 1-2-4-3-1, NewSeq2: 4-1-3-2-4).
+In contrast @wiestler_skill_2013, however, all four sequences used only four fingers of the left-hand, excluding the thumb.
 Also, as for the initial training, sequences were instead repeated uninterruptedly and without feedback, in order to probe the processes underlying automatization of the skill.
 
-Each block was composed of an instruction period of 4 seconds during which the sequences to be performed was displayed as a series of 5 numbers (e.g. 1-4-2-3-1), which was followed by an execution period indicated by a green cross.
-Participants performed 5 times the sequence (a maximum of 25 key-presses), before being instructed to stop and rest by displaying the red cross.
+Each block was composed of an instruction period of 4 seconds during which the sequences to be performed was displayed as a series of 5 numbers (e.g. 1-4-2-3-1).
+The latter was then followed by an execution phase triggered by the appearance of a green cross.
+Participants performed 5 times the same sequence (or a maximum of 25 key-presses), before being instructed to stop and rest by displaying the red cross.
 
-The four sequences were assigned to blocks such as to include all possible successive pairs of the sequences using De Bruijn cycles [@aguirre_bruijn_2011], thus preventing the systematic leakage of BOLD activity between blocks in this rapid design.
-A 2-length De Bruijn cycle of the 4 sequences have to include each sequence 4 times, yielding a total of 16 blocks.
-In our study, this cycle was repeated twice in each of the 2 scanning runs separated by approximately 5 minutes of rest, thus resulting in a total of 64 blocks (4 groups of 16 practice blocks for a total of 16 blocks per sequence).
+The four sequences were assigned to blocks such as to include all possible successive pairs of the sequences using De Bruijn cycles [@aguirre_bruijn_2011], thus preventing the systematic leakage of BOLD activity patterns between blocks in this rapid design.
+As a 2-length De Bruijn cycle of the 4 sequences has to include each sequence 4 times, this yielded a total of 16 blocks.
+In our study, two different De Bruijn cycles were each repeated twice in two separate scanning runs separated by approximately 5 minutes of rest, hence resulting in a total of 64 blocks (4 groups of 16 practice blocks for a total of 16 blocks per sequence).
 
 
 ## Behavioral statistics
 
-Using data from the rapid-design task with all sequences, we entered the mean duration per block of correctly performed sequences into a linear mixed-effect model with a sequence learning stage (new/consolidated) by block (1-16) interaction to test for difference in their performance level and evolution during the task, with sequences and blocks as random effects and participants as the grouping factor.
+Using data from the MVPA-task, we entered the mean duration per block of correctly performed sequences into a linear mixed-effect model with a sequence learning stage (new/consolidated) by block (1-16) interaction to test for difference in their performance level, as well as the evolution during the task, with sequences and blocks as random effects and participants as the grouping factor.
 The same model was run with the number of correct sequences as the outcome variable.
-Two other models were used on subsets of data to separately test if there was any significant difference in performance (speed and accuracy) between the two consolidated sequences and between the two new sequences.
+Two other models were also used on subsets of data to test separately if there was any significant difference in performance (speed and accuracy) between the two consolidated sequences and between the two new sequences.
 Full models outputs are reported in supplementary materials.
 
 ## MRI data acquisition
@@ -277,11 +277,11 @@ Following task fMRI data acquisition, four volume were acquired using the same E
 
 ## MRI data preprocessing
 
-High-resolution anatomical T1 weighted image was preprocessed with Freesurfer [@dale_cortical_1999;@fischl_high-resolution_1999;@fischl_cortical_2008] to segment subcortical regions, reconstruct cortical surfaces and provide inter-individual alignment of cortical folding patterns.
+High-resolution anatomical T1 weighted images were preprocessed with Freesurfer [@dale_cortical_1999;@fischl_high-resolution_1999;@fischl_cortical_2008] to segment subcortical regions, reconstruct cortical surfaces and provide inter-individual alignment of cortical folding patterns.
 Pial and grey/white matter interface surfaces were downsampled to match the 32k sampling of Human Connectome Project (HCP) [@glasser_minimal_2013].
 HCP subcortical atlas coordinates were warped onto individual T1 data using non-linear registration using the Ants software [@avants_symmetric_2008;@klein_evaluation_2009].
 
-A custom pipeline was used to preprocess fMRI data prior to analysis and relied on an integrated method [@pinsard_integrated_2018] which combines slice-wise motion estimation and intensity correction followed by the extraction of BOLD timecourses in cortical and subcortical gray matter.
+A custom pipeline was then used to preprocess fMRI data prior to analysis and relied on an integrated method [@pinsard_integrated_2018] which combines slice-wise motion estimation and intensity correction followed by the extraction of BOLD timecourses in cortical and subcortical gray matter.
 This interpolation concurrently removed B0 inhomogeneity induced EPI distortion estimated by FSL Topup tool using the fMRI data with reversed phase encoding [@andersson_how_2003] acquired after the task.
 BOLD signal was further processed by detecting whole-brain intensity changes that corresponded to large motion, and each continuous period without such detected event was then separately detrended to remove linear signal drifts.
 
@@ -299,7 +299,7 @@ Least-square separate (LS-S) regression of each event, which have been shown to 
 
 Similarly to @wiestler_skill_2013 and @nambu_decoding_2015, we aimed to uncover activity patterns that represent the different sequences that were performed by the participants.
 However, instead of calculating cross-validated classification accuracies, we opted for a representational approach by computing multivariate distance between activity patterns evoked by the execution of sequences, in order to avoid ceiling effect and baseline drift sensitivity [@walther_reliability_2016].
-In the current study, we computed cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016;@diedrichsen_distribution_2016] which is an unbiased metric that uses multivariate normalization by estimating the covariance from the GLM fitting residuals and then regularized through Ledoit-Wolf optimal shrinkage [@ledoit_honey_2004].
+In the current study, we computed the cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016;@diedrichsen_distribution_2016], which is an unbiased metric that uses multivariate normalization by estimating the covariance from the GLM fitting residuals and regularizing it through Ledoit-Wolf optimal shrinkage [@ledoit_honey_2004].
 This distance, which measures discriminability of conditions, was estimated separately for pairs of sequences that were in a similar acquisition stage, that is, for the newly acquired, and for the consolidated sequences.
 
 ### Searchlight analysis
