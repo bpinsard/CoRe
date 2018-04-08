@@ -248,7 +248,7 @@ On the second day (D2), participants were first evaluated on the TSeq1 (1 block 
 Finally, on the third day (D3), participants first performed TSeq1 for 7 blocks followed by 7 blocks of TSeq2, each block including 12 repetitions of the sequence or 60 keypresses
 Following this last testing session, participants were then asked to complete an experimental task (here called MVPA task) that constitutes the object of the current study, which was similar to that in a previous study investigating sequence representation by means of multivariate classification [@wiestler_skill_2013].
 Specifically, participants performed short practice blocks of 4 different sequences, including TSeq1 et TSeq2 that were then consolidated, as well as two new finger sequences (NewSeq1: 1-2-4-3-1, NewSeq2: 4-1-3-2-4).
-In contrast @wiestler_skill_2013, however, all four sequences used only four fingers of the left-hand, excluding the thumb.
+In contrast to @wiestler_skill_2013, however, all four sequences used only four fingers of the left-hand, excluding the thumb.
 Also, as for the initial training, sequences were instead repeated uninterruptedly and without feedback, in order to probe the processes underlying automatization of the skill.
 
 Each block was composed of an instruction period of 4 seconds during which the sequences to be performed was displayed as a series of 5 numbers (e.g. 1-4-2-3-1).
@@ -312,7 +312,7 @@ The extent of the searchlight was thus kept to such a local range to limit the i
 ### Statistical testing
 
 To assess statistical significance of multivariate distance and contrasts, group-level Monte-Carlo non-parametric statistical testing using 10000 permutations was conducted on searchlight distance maps with Threshold-Free-Cluster-Enhancement (TFCE) correction [@smith_threshold-free_2009].
-The statistical significance level was set at $p<.05$ (with confidence interval $\pm.0044$ for 10000 permutations) with a minimum cluster size of 25 features.
+The statistical significance level was set at $p<.05$ (with confidence interval $\pm.0044$ for 10000 permutations) with a minimum cluster size of 10 features.
 TFCE enabled a locally adaptive statistics and cluster size correction that particularly fitted our BOLD sampling of sparse gray-matter coordinates, as well as the large differences in the sizes of the structures that were investigated.
 
 The MVPA analysis was done using the PyMVPA software [@hanke_pymvpa_2009] package with additional development of custom samples extraction, cross-validation scheme, efficient searchlight and multivariate measure computation, optimally adapted to the study design and the anatomy-constrained data sampling.
