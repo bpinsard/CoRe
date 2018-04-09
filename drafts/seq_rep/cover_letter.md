@@ -1,5 +1,5 @@
 ---
-opening: Dear <editors chosen>,
+opening: Dear [editors chosen],
 closing: Sincerely yours,
 address: Elife Editorial Office
 author:
@@ -11,7 +11,7 @@ author:
  - Centre de Recherche de l'Institut Universitaire de Gériatrie de Montréal
 ---
  
-Please find attached the manuscript "<place final title here>" by Pinsard, Boutin, Gabitov, Lungu, Benali and Doyon, for consideration as a research article in Elife neuroscience category.
+Please find attached the manuscript "Consolidation alters the motor sequence-specific distributed representations." by Pinsard, Boutin, Gabitov, Lungu, Benali and Doyon, for consideration as a research article in Elife neuroscience category.
 
 This article investigates the reorganization of the networks supporting the expression of newly acquired sequential skills after their consolidation using novel multivariate measures between fMRI BOLD activity patterns.
 
@@ -35,7 +35,8 @@ Therefore, we think that Elife readers would be interested in these results that
 I remain at your disposal for any further information.
 
 cover letter Elife guidelines :
-How will your work make others in the field think differently and move the field forward?
-How does your work relate to the current literature on the topic?
-Who do you consider to be the most relevant audience for this work?
-Have you made clear in the letter what the work has and has not achieved?
+
+- How will your work make others in the field think differently and move the field forward?
+- How does your work relate to the current literature on the topic?
+- Who do you consider to be the most relevant audience for this work?
+- Have you made clear in the letter what the work has and has not achieved?
