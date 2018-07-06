@@ -50,15 +50,12 @@ chapters: True
 chaptersDepth: 1
 chapDelim: ""
 abstract: |
-  The acquisition and skilled production of sequential motor skills is mediated by the dynamic contribution of different brain networks over the course of learning.
-  Indeed, numerous investigations using functional magnetic resonance imaging in humans have revealed that functional reorganizations within the cortico-striatal and cortico-cerebellar motor systems in link with the hippocampus, are manifested by learning-related increases of activity in some regions and decreases in others.
-  Yet, the functional significance of these changes is not fully understood as they convey both the evolution of sequence-specific knowledge, as well as the development of unspecific expertise in the task.
-  Moreover, the presence or absence of activity level changes does not specifically assess the occurrence of learning-related plasticity.
-  To address these issues, we investigated here the whole-brain local representational changes using novel multivariate distances between fine-grained patterns evoked through the production of motor sequences, either trained in a single session and consolidated or newly acquired.
-  We use the strength and stability of such patterns in discriminating sequences to infer the tuning of local circuit to sequence-specific information.
-  Results revealed that while sequences were discriminable in a large cortical network common to both these stages of learning, sequence representations in prefrontal, motor secondary cortices as well as dorsolateral striatum and associative cerebellum were greater when executing consolidated sequences than untrained ones.
-  By contrast, sequence representations in the hippocampus and dorsomedial striatum were less engaged.
-  Our findings show, for the first time in human, that complementary sequence-specific motor knowledge representations distributed in different striatal, cerebellar, cortical and hippocampal regions evolve distinctively during the critical phases of skill acquisition and consolidation.
+  FMRI studies investigating the acquisition of sequential motor skills in humans have revealed learning-related functional reorganizations of the cortico-striatal and cortico-cerebellar motor systems in link with the hippocampus.
+  Yet, the functional significance of these activity level changes is not fully understood as they convey the evolution of both sequence-specific knowledge and unspecific task expertise.
+  Moreover, these changes do not specifically assess the occurrence of learning-related plasticity.
+  To address these issues, we investigated local circuits tuning to sequence-specific information using multivariate distances between patterns evoked by consolidated or newly acquired motor sequences production.
+  Results reveal that representations in dorsolateral striatum, prefrontal and secondary motor cortices are greater when executing consolidated sequences than untrained ones. By contrast, sequence representations in the hippocampus and dorsomedial striatum are less engaged.
+  Our findings show, for the first time in humans, that complementary sequence-specific motor representations evolve distinctively during critical phases of skill acquisition and consolidation.
 ---
 
 # Introduction {#sec:introduction}
@@ -520,8 +517,8 @@ groups RE                  0.006    0.010
 
 \beginsupplement
 
-![Group searchlight map of cross-validated Mahalanobis distance between the two new sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map_rois_fade.pdf){#fig:new_crossnobis_map width=16cm}
+![Group searchlight map of cross-validated Mahalanobis distance between the two new sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/new_crossnobis_tfce_map_rois_fade.pdf){#fig:new_crossnobis_map width=15cm}
 
-![Group searchlight map of cross-validated Mahalanobis distance between the two consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/cons_crossnobis_tfce_map_rois_fade.pdf){#fig:cons_crossnobis_map width=16cm}
+![Group searchlight map of cross-validated Mahalanobis distance between the two consolidated sequences (z-score thresholded at $p<.05$ TFCE-cluster-corrected) ](../../results/crossnobis_tfce/cons_crossnobis_tfce_map_rois_fade.pdf){#fig:cons_crossnobis_map width=15cm}
 
 # References
