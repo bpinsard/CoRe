@@ -1,4 +1,4 @@
-import os,sys
+import os,sys,glob
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
@@ -125,15 +125,17 @@ def get_num_correct_seq(blocks,seq):
 def get_block_dur(blocks,seq):
     return np.asarray([np.hstack(b[-1])['rt_pre'][1:60].sum() for b in blocks if b[0] in seq])
 
-
+from . import core_rsa as core_rsa
+from .. import behavior as core_behavior
+import pandas
 def mvpa_stats():
 
     mvpa1_files = [sorted(glob.glob(os.path.join(data_dir,'CoRe_%03d_D3/CoRe_%03d_mvpa-1-D-Three_*.mat'%(s,s))))[-1] \
-                   for s in core.analysis.core_rsa.group_Int]
+                   for s in core_rsa.group_Int]
     mvpa2_files = [sorted(glob.glob(os.path.join(data_dir,'CoRe_%03d_D3/CoRe_%03d_mvpa-2-D-Three_*.mat'%(s,s))))[-1] \
-                   for s in core.analysis.core_rsa.group_Int]
+                   for s in core_rsa.group_Int]
 
-    mvpa_blocks = [core.behavior.load_behavior(m1)+core.behavior.load_behavior(m2) \
+    mvpa_blocks = [core_behavior.load_behavior(m1)+core_behavior.load_behavior(m2) \
                    for m1,m2 in zip(mvpa1_files,mvpa2_files)]
     
     mean_seq_duration_per_block = dict([(seq,np.asarray([get_correct_seq_dur(m,seq) for m in mvpa_blocks]))
@@ -145,7 +147,7 @@ def mvpa_stats():
 
     color_cycle_elife = ['#90CAF9','#FFB74D','#9E86C9','#E57373']
     
-    f,ax=subplots()
+    f,ax=plt.subplots()
     for seqi,seq in enumerate(uniq_seq):
         dur_mean = np.nanmean(mean_seq_duration_per_block[seq],0)
         dur_std = np.nanstd(mean_seq_duration_per_block[seq],0)
@@ -164,12 +166,12 @@ def mvpa_stats():
         
 
 
-    nsubj = len(core.analysis.core_rsa.group_Int)
+    nsubj = len(core_rsa.group_Int)
 
     seq_consolidated = np.asarray([True]*2+[False]*2)[np.newaxis,:,np.newaxis].repeat(nsubj,0).repeat(16,2).ravel()
     # flat order: subject, sequence, block
     data = pandas.DataFrame(dict(
-        subjects = np.asarray(core.analysis.core_rsa.group_Int)[:,np.newaxis].repeat(16*4).ravel(),
+        subjects = np.asarray(core_rsa.group_Int)[:,np.newaxis].repeat(16*4).ravel(),
         sequences = np.asarray(seq_article_shortnames)[np.newaxis,:,np.newaxis].repeat(nsubj,0).repeat(16,2).ravel(),
         seq_consolidated = seq_consolidated,
         seq_new = np.logical_not(seq_consolidated),
@@ -179,7 +181,8 @@ def mvpa_stats():
     ))
     
 
-
+    return data
+    
     md_seq_duration = smf.mixedlm(
         "mean_seq_duration ~ seq_new + seq_new*blocks",
         data_rem_missing,groups=data_rem_missing['subjects'],re_formula='~blocks')

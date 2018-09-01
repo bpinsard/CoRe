@@ -24,7 +24,9 @@ author:
   affiliation: 1,5
 - family: Doyon
   given: Julien
+  email: julien.doyon@mcgill.ca
   affiliation: 2,3,4
+  initials: JD
 institute: here
 organization:
 - id: 1
