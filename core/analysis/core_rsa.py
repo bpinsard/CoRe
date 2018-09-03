@@ -1,3 +1,4 @@
+
 import sys, os, glob
 import numpy as np
 import scipy.stats, scipy.ndimage.measurements, scipy.sparse
@@ -613,6 +614,7 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
 #    sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(6,6,-1).mean(0).astype(np.float32) for f in files])
     sl_ress = np.asarray([Dataset.from_hdf5(f).samples.reshape(6,6,-1).astype(np.float32) for f in files])
 
+    #return sl_ress 
     nsubj = len(sl_ress)
 
     neighborhood = np.load(os.path.join(proc_dir,'connectivity_96k.npy')).tolist()
@@ -654,7 +656,7 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
         sum_higher = (permttest >= tfce).sum(0)
         vox_pvalue = sum_higher/float(nperm)
         
-        results['main_fx'][main_fx] = (data_mean, tfce, vox_pvalue)
+        results['main_fx'][main_fx] = (data_mean, tfce, vox_pvalue, data.mean(0))
         del data, permttest
 
     results['contrasts'] = dict()
@@ -702,7 +704,7 @@ def group_rsa_cnbis_tfce(block_phase='exec',groupInt=None,
         p_high = sum_higher/float(nperm)
         p_low = sum_lower/float(nperm)
         two_tailed_voxp = np.minimum(sum_higher, sum_lower)/float(nperm)
-        results['contrasts'][contrast] = (data_mean, tfce, tfce_low, two_tailed_voxp, p_high, p_low)
+        results['contrasts'][contrast] = (data_mean, tfce, tfce_low, two_tailed_voxp, p_high, p_low, data.mean(0))
 
         del data, permttest
     np.save('results_group_cluster_%s.npy'%block_phase,results)
@@ -851,3 +853,4 @@ hv.set_data(
 )
 
 '''
+
