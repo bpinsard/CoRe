@@ -115,7 +115,7 @@ By contrast, the consolidated sequences did not show significant changes in spee
 
 Importantly, there were also no significant differences between the two consolidated sequences in term of speed ($\beta=0.031, SE=0.026, p=0.234$) and accuracy ($\beta=-0.030, SE=0.111, p=0.789$), nor between the two new sequences speeds ($\beta=0.025, SE=0.045, p=0.577$) and accuracies ($\beta=-0.245, SE=0.138, p=0.076$).
 
-## A common distributed network for sequence representation irrespective of learning stage
+## *A common distributed sequence representation irrespective of learning stage*
 
 From the preprocessed functional MRI data we extracted patterns of activity for each block of practice, and computed a cross-validated Mahalanobis distance [@nili_toolbox_2014;@walther_reliability_2016] using a Searchlight approach [@kriegeskorte_information-based_2006] over brain cortical surfaces and subcortical regions of interest.
 Such multivariate distance, when positive, demonstrate that there is a stable difference in activity patterns between the conditions compared, and thus reflect the level of discriminability between these conditions.
@@ -123,9 +123,9 @@ To assess true patterns and not mere global activity differences, we computed th
 From the individual discriminability maps, we then measured the prevalence of discriminability at the group level, using non-parametric testing with a Threshold-Free-Cluster-Enhancement approach (TFCE) [@smith_threshold-free_2009] to enable locally adaptive cluster-correction.
 
 To extract the brain regions that show discriminative activity patterns for specific sequence during both learning stages, we then submitted these separate group results for the consolidated and new sequences to a minimum-statistic conjunction.
-A large distributed network (@fig:new_cons_conj_crossnobis_map) displayed significant discriminability, including the primary visual, as well as the posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.(see the statistical maps for each learning stage separately in the Supplementary material (@fig:new_crossnobis_map,@fig:cons_crossnobis_map).
+A large distributed *set of regions* (@fig:new_cons_conj_crossnobis_map) displayed significant discriminability, including the primary visual, as well as the posterior parietal, primary and supplementary motor, premotor and dorsolateral prefrontal cortices.(see the statistical maps for each learning stage separately in the Supplementary material (@fig:new_crossnobis_map,@fig:cons_crossnobis_map).
 
-![Group searchlight conjunction of new and consolidated sequences discriminability maps (z-score thresholded at $p<.05$ TFCE-cluster-corrected) showing a large distributed cortical network showing sequence disciminative patterns at both learning stages; Regions of interest with Freesurfer colors: Acc.:Accumbens; Pt.:Putamen; Caud.:Caudate; Pal.:Pallidum; vDC:ventral Diencephalon; Am.:Amygdala; Hc.:Hippocampus; Thal.:Thalamus; Cb.:Cerebellum; BS:brain-stem](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map_vert_rois_fade_labels.pdf){#fig:new_cons_conj_crossnobis_map width=11cm}
+![Group searchlight conjunction of new and consolidated sequences discriminability maps (z-score thresholded at $p<.05$ TFCE-cluster-corrected) showing a large distributed cortical *set of regions* showing sequence disciminative patterns at both learning stages; Regions of interest with Freesurfer colors: Acc.:Accumbens; Pt.:Putamen; Caud.:Caudate; Pal.:Pallidum; vDC:ventral Diencephalon; Am.:Amygdala; Hc.:Hippocampus; Thal.:Thalamus; Cb.:Cerebellum; BS:brain-stem](../../results/crossnobis_tfce/new_cons_conj_crossnobis_tfce_map_vert_rois_fade_labels.pdf){#fig:new_cons_conj_crossnobis_map width=11cm}
 
 ## Reorganization of the distributed sequence representation after memory consolidation
 
@@ -140,14 +140,14 @@ Although striatal activity patterns differentiating newly acquired sequences wer
 
 # Discussion {#sec:discussion}
 
-In the present study, we aimed to identify the brain networks whose activity patterns differentiate between representations of multiple motor sequences during their execution in different phases of learning (newly learned vs consolidated).
+In the present study, we aimed to identify the brain *regions* whose activity patterns differentiate between representations of multiple motor sequences during their execution in different phases of learning (newly learned vs consolidated).
 Using an MVPA approach, we considered that stable local patterns of activity could be used as proxy for the specialization of neuronal circuits supportive of the efficient retrieval and expression of sequential motor memory traces.
 To investigate the differential pattern strength, we computed novel unbiased multivariate distance and applied robust permutation-based statistics with adaptive cluster correction.
 
-## A distributed network for the representation of finger motor sequence
+## *A distributed representation of finger motor sequence*
 
-Our results provide evidence for an extended network of brain regions that shows reliable discrimination of sequence-specific activity patterns for both the consolidated and novel sequences.
-At the cortical level, we found a network encompassing the supplementary motor and premotor areas as well as posterior parietal cortices bilaterally and contralateral somatosensory motor cortex.
+Our results provide evidence for an extended *set* of brain regions that shows reliable discrimination of sequence-specific activity patterns for both the consolidated and novel sequences.
+At the cortical level, *it encompasses* *the medial and lateral* premotor areas as well as posterior parietal cortices bilaterally and contralateral somatosensory motor cortex.
 These findings are consistent with earlier MVPA investigations [@wiestler_skill_2013;@nambu_decoding_2015].
 Indeed, similar discriminative power of motor sequence representations within the ipsilateral premotor and parietal cortices has previously been described [@wiestler_skill_2013;@waters-metenier_bihemispheric_2014;@waters_cooperation_2017], notably when the non-dominant hand is used for fine dexterous manual skills.
 Interestingly, we also found significant neural representations for both learning stages in the contralateral primary motor and somatosensory (M1/S1) cortices, more specifically around the hand knob area [@yousry_localization_1997] for which finger somatotopy is measurable using fMRI [@ejaz_hand_2015].
@@ -167,7 +167,7 @@ However, we also found significant representations in the occipital, temporal an
 
 ## Cortico-subcortical representational reorganization underlying memory consolidation following MSL
 
-By contrasting the maps of multivariate distances for consolidated and newly acquired sequences, we identified the networks that reveal increased versus decreased discriminability of sequential representations in the early stages of the MSL consolidation (@fig:contrast_conj_cons_new_crossnobis_map).
+By contrasting the maps of multivariate distances for consolidated and newly acquired sequences, we identified the *set of regions* that reveal increased versus decreased discriminability of sequential representations in the early stages of the MSL consolidation (@fig:contrast_conj_cons_new_crossnobis_map).
 
 At the cortical level, we found that the contralateral premotor and bilateral parietal regions showed a stronger representation for consolidated sequences.
 This pattern *suggests* that the tuning of these neural populations to coordinated movements is consolidated early after learning [@makino_transformation_2017;@yokoi_role_2018;@pilgramm_motor_2016], as was previously observed when contrasting sequence that underwent a longer training to new ones [@wiestler_skill_2013].
@@ -182,13 +182,13 @@ Significant representational changes were also found in the bilateral thalami, a
 Finally, representation changes were detected in the cerebellum, including ipsilateral Lobule IX, shown to correlate with sequential skill performance [@orban_multifaceted_2010;@tomassini_structural_2011] as well as contralateral Crus II which connectivity with prefrontal cortex is thought to support motor functions [@ramnani_primate_2006].
 However, no significant difference was observed in Lobule V of the cerebellum that is known to carry finger somatotopic representations [@wiestler_integration_2011] and to show global activation during practice [@doyon_experience-dependent_2002].
 
-Concurrently with the representational increase in the above-mentioned network, we found only a few disparate regions that showed decreased sequence discrimination, namely the caudate nuclei, subthalamic nuclei and cerebellar Crus II ipsilaterally as well as bilateral hippocampi.
+Concurrently with the representational increase in the above-mentioned *areas*, we found only a few disparate regions that showed decreased sequence discrimination, namely the caudate nuclei, subthalamic nuclei and cerebellar Crus II ipsilaterally as well as bilateral hippocampi.
 Hippocampal activation in early learning has formerly been hypothesized to support the temporary storage of *new* explicitly acquired motor sequence knowledge and to contribute to the reactivations of the distributed network during offline periods and sleep in particular.
 Yet such contribution of the hippocampus has been shown to be progressively disengaging afterward [@albouy_hippocampus_2013], and thus our results are consistent with the idea of the hippocampus playing a transient supportive role in early MSL, notably in encoding sequential information [@davachi_how_2015].
 Our findings of a differential implication of dorsomedial and dorsolateral striatum in sequence representation during learning and expression of a *consolidated* skill *give specificity* the changes in activity in these regions in the course of MSL described by earlier studies [@lehericy_distinct_2005;@jankowski_distinct_2009;@francois-brosseau_basal_2009;@kupferschmidt_parallel_2017;@corbit_corticostriatal_2017;@fogel_reactivation_2017;@reithler_continuous_2010].
 Indeed, our results uncover that *this shift in activity is consistent with animal studies showing a reorganization at the neuronal level in these regions* [@costa_differential_2004;@yin_dynamic_2009;@miyachi_differential_2002].
 
-While our results show that the topology of the network representing motor sequential information differs between consolidated and newly acquired memory traces, the present study was not designed to investigate the information-content of hippocampal, striatal or cerebellar sequence representations.
+While our results show *regional magnitude of motor sequential information* differs between consolidated and newly acquired memory traces, the present study was not designed to investigate the information-content of hippocampal, striatal or cerebellar sequence representations.
 These were previously assessed at cortical level for finger sequences [@wiestler_effector-independent_2014;@kornysheva_human_2014] as well as for larger forearm movements [@haar_effector-invariant_2017].
 However, the hypothesized extrinsic and intrinsic skill encoding in the respective hippocampal and striatal systems [@albouy_daytime_2013] remains to be assessed with a dedicated experimental design similar to that used by @wiestler_effector-independent_2014 to investigate such representations at the cortical level.
 
@@ -214,9 +214,9 @@ The use of a novel multivariate distance could have contributed to obtain these 
 
 # Conclusion {#sec:conclusion}
 
-Our study shows that the consolidation of sequential motor knowledge is supported by the reorganization of newly acquired representations within a distributed cerebral network.
+Our study shows that the consolidation of sequential motor knowledge is supported by the reorganization of newly acquired representations *across a distributed group of cerebral regions*.
 We uncover that following learning, local activity patterns tuned to represent sequential knowledge are enhanced not only in extended cortical areas, similarly to those shown after longer training [@wiestler_skill_2013], but also in dorsolateral striatum, thalamus and cerebellar regions.
-Conversely, a smaller network showed a decrease of sequence specific patterned activation after consolidation, occurring specifically in dorsomedial striatum that supports cognitive processing during early-learning [@doyon_current_2018] as well as in the hippocampus which carries explicit encoding of motor sequential extrinsic representation [@albouy_hippocampus_2013;@king_sleeping_2017] and play a significant role in the offline reprocessing.
+Conversely, a smaller *set of regions* showed a decrease of sequence specific patterned activation after consolidation, occurring specifically in dorsomedial striatum that supports cognitive processing during early-learning [@doyon_current_2018] as well as in the hippocampus which carries explicit encoding of motor sequential extrinsic representation [@albouy_hippocampus_2013;@king_sleeping_2017] and play a significant role in the offline reprocessing.
 Despite discrepancies with GLM-based activity changes observed previously, the results of our novel representational approach corroborate their interpretations that the differential plasticity changes in the latter regions subtend MSL consolidation [@albouy_maintaining_2015].
 Importantly, these results reveal for the first time in humans that such changes are accompanied by the local implementation of distributed neural coding of sequential information.
 Yet such consolidation-related representational changes need to be further investigated through exploration of the dynamic mechanism mediating this sleep-dependent mnemonic process, which is known to reorganize progressively the cerebral network by repeatedly reactivating the memory trace [@boutin_transient_2018;@fogel_reactivation_2017;@vahdat_network-wide_2017].

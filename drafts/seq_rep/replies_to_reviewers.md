@@ -16,6 +16,7 @@ All three reviewers highlighted major concerns that fall under seven general the
 The behavioral results clearly show that the performance (both speed and accuracy) is different between the trained and untrained sequences. Thus the differences in multivariate patterns could be driven by differences in performance rather than differences in encoding. There is (at least) one way to look at this issue: The behavioral performance shown in Figure 1 reveals that performance for the untrained sequences steadily improves across runs and appears to reach an asymptote half-way through the experiment. If the difference in mutlivariate patterns is truly related to long-term consolidation, as opposed to being the consequent result of changes in performance, then comparing the last 8 blocks of the trained vs. untrained sequences should replicate the key results (i.e., Figure 3). In contrast, comparing the last 8 blocks of the untrained sequences to the first 8 blocks of the of the untrained sequences should not reveal a similar set of clusters. However, if this split-half comparison on the untrained sequences produces qualitatively similar maps as the trained vs. untrained comparison, then it would strongly suggest that the differences in multivariate distances is driven largely by performance effects.
 
 *TODO: compute contrast on second run only : doesn't give the same results
+compute contrast of new sequences between run1 and run2 : 
 - we go from 6-folds to 1-fold, huge loss of statistical power
 - among the 6-folds, 4 folds are across the beginning and end of task, thus the measure mainly reflects what patterns are stable across the runs independently of the behavioral changes.
 - The behavioral difference is a limitation common to all design comparing trained and untrained task? The previous articles investigating trained vs. untrained sequence representation just omitted to present the behavioral performance evolution whithin run.
@@ -24,18 +25,24 @@ The behavioral results clearly show that the performance (both speed and accurac
 2. Elaboration of representational distances.
 The true power of the RSA approach is that you can directly measure the distinctiveness of representations across conditions. Yet it is used mainly here as an alternative to traditional decoding methods. It would be nice for the authors to show the representational distances across sequences in key regions (e.g., cortical motor clusters, striatum, cerebellum). This would give the reader a sense of how training may be altering sequence-related representations.
 
-*TODO: whut?? run ROI analysis??*
+*TODO: whut?? run ROI analysis?? distance matrix?*
 
 3. Distinguishing between signal amplitude and representational discriminability.
 The map of clusters that discriminate between any of the four sequences (Figure 2), reveals a pretty standard sensorimotor network. Is RSA discriminability really driven by regions with significant task-related BOLD responses as estimated from traditional univariate GLM maps (in contrast to true differences in the covariance pattern of local voxels)? How well does the discriminability of the searchlight correlate with local task-related activity maps from univariate GLM? If they are correlated, how can you distinguish between searchlight results just being the result of local signal-to-noise differences from results driven by true differences in encoding?
-Related to this was concern that, even after accounting for the potential first-finger effect, there remains potential differences in overall activity levels across the new and old sequences. Can this be addressed, especially given the differences in behavioural performance between new and consolidated sequences. How much were the overall activities different across the blocks and sequences?). Note that the pair-wise dissimilarities between fingers changed quite a bit in different activation levels (= tapping frequencies) (see Fig. 4a), indicating that the direct comparison between thumb/index distance in one tapping frequency and index/little one in another frequency would not be meaningful. The authors could try, for instance, using multivariate pattern angle, which is less affected by pattern scaling (Walther et al., 2016), or assessing the XOR (disjunctive union) of the prevalence of cross-validated distances for the consolidated and the new sequences, avoiding the direct comparison between them.
+
 
 *TODO: run GLM analysis*
+
+Related to this was concern that, even after accounting for the potential first-finger effect, there remains potential differences in overall activity levels across the new and old sequences. Can this be addressed, especially given the differences in behavioural performance between new and consolidated sequences. How much were the overall activities different across the blocks and sequences?). Note that the pair-wise dissimilarities between fingers changed quite a bit in different activation levels (= tapping frequencies) (see Fig. 4a *which article?*), indicating that the direct comparison between thumb/index distance in one tapping frequency and index/little one in another frequency would not be meaningful. The authors could try, for instance, using multivariate pattern angle, which is less affected by pattern scaling (Walther et al., 2016), or assessing the XOR (disjunctive union) of the prevalence of cross-validated distances for the consolidated and the new sequences, avoiding the direct comparison between them.
+
+*TODO:*
 
 4. Elaboration of learning mechanisms & dynamics.
 The authors make an extensive effort in the Introduction and Discussion to try to link these results to hippocampus. However, there is not a direct assessment of the role of the hippocampus to the rest of the network. There is only the observation of a cluster in each hippocampus that reliably distinguishes between the trained and untrained sequences, not an analysis that shows this is driving the rest of the changes in encoding in other areas.
 
-*The approach that we adopted is a data-driven mapping technique that explores the localized representations of information using an alternative metric and as such does not model interactions between regions. The results obtained show the stronger implication in the initial learning phase of the hippocampus, that we discuss in relation to previous studies with conventional measures.*
+*The approach that we adopted is a data-driven mapping technique that explores the localized representations of information using an alternative metric and as such does not model interactions between regions. The results obtained show the stronger implication in the initial learning phase of the hippocampus, that we discuss in relation to previous studies with conventional measures.
+As per the reviewers comment below, we removed references of our results as network, as we are not conducting any sort of network analysis, such as connectivity.
+We hope that this clarification will improve the reader's understanding of our results.*
 
 5. Issues with behavioral data:
 One reviewer noted that you have referenced a recent paper that shows movement rate differences that are performed with a single digit do not appreciably alter classification results. However, there are likely speed accuracy tradeoff differences between the samples, which may bias classification comparisons.
@@ -47,7 +54,14 @@ compute sequence duration difference between 5 first sequences of block1 of day3
 6. Controlling for first-finger effects.
 As you note in the Discussion, the pattern discriminability between the sequences starting with different fingers might reflect a "first-finger effect", where the discriminability of two sequences is almost solely driven by which finger was moved the first, not by the sequential order per se. This also applies to the pattern dissimilarity between the two new sequences (1-2-4-3-1 and 4-1-3-2-4) which, in contrast to the two consolidated sequences that had the same first finger (1-4-2-3-1, and 1-3-2-4-1), had different first fingers. Without accounting for this potential confound, the comparison made between the "new/new" and the "old/old" dissimilarities is hard to interpret, as it is unclear whether we are comparing between genuine sequence representations, or between sequence representation and individual finger representation.
 
-already discussed, it is impossible to account for?
+*The reviewers are right that this is a limitation for a part of the current results as we discuss in the manuscript.
+However, the design of the present task is different of the one that uncovered this effect in that each sequence is executed separately in that the execution is uninterrupted and should thus theoretically reduce considerably this initiating effect.
+Moreover, the main results of our article are the differences in striatal and hippocampal representations, and these regions are not expected to show strong and reliable somatotopy for individual finger movements.
+Therefore, we do not expect a pattern associated with the first finger in these regions.
+While this effect is known to impact the motor cortical regions, it would be expected to positively bias the new sequences discriminability, but no cortical regions show higher discriminability than for consolidated sequences.
+At most, this effect could have caused some false-negative results in the contrast between conditions.
+As such we still believe that these results are of interest for the understanding of motor sequence learning.*
+
 
 7. Clarification of methods.
 How did participants know that they made an error? Were they explicitly told a key press was incorrect? Or did they have to self-monitor performance during training? Was the same button box apparatus used during scanning as in training? Was the presentation of sequence blocks counterbalanced during scanning? How many functional runs were performed? Is the classification performance different between runs?
@@ -77,6 +91,7 @@ Some tempering of 'expertise' and 'automatization' seems warranted here given th
 
 Similarly, the description of the results as 'networks' needs some tempering or clarification. The results do not reflect networks, but regional searchlight-derived effects performed over the cortex and subcortical ROIs.
 
+*We agree with the reviewers that we are not conducting here a network analysis (eg. connectivity) and that our approach reveals sets of regions which carries signal discriminating sequences. We changed the manuscript to remove the descriptions of our results as networks.*
 
 Why are the results in Figures 2, 3, S1, & S2 not shown as H-statistics (i.e., the crossnobis statistic). The cross-validated nature of this metric means it is a statistical estimator with meaningful units. I'm not exactly sure what the z-scores are showing.
 
@@ -121,7 +136,7 @@ It would be helpful if the authors could add a little more detail about how the 
 
 Lines 232-236 and 270-275: This reasoning looks somewhat contradicting with what was stated in the previous part that sequences are represented around M1/S1 (lines 227-230). There is no prior reason to think that genuine sequence representation would reflect the property of the single finger representation (i.e., the thumb has a distinct pattern). Maybe a little more elaborated explanation would be needed here.
 
-
+*TODO??*
 
 This is slightly nitpicking, but matching the first finger alone may not guarantee that the observed pattern discriminability is actually reflecting genuine sequence representation. The weight decay on each press might be more like exponential when examined by high-frequency band activity of LFP (see Hermes et al., J Neurosci, 2012), meaning that there might be the "second-finger" effect, although this may be very small compared to the first-finger effect. Just a heads-up.
 
@@ -130,6 +145,8 @@ This is slightly nitpicking, but matching the first finger alone may not guarant
 It seems that most of the detailed description of experimental design/tasks described in the Method is not directly related to the particular result presented in the manuscript. Please consider re-structure them into what is directly relevant to the current results, and what is not. Perhaps the complete description could go into the Supplementary material?
 
 I am curious to see the result of instruction-phase activity patterns.
+
+*TODO*
 
 Please re-summarise the demographic info for the survived subjects.
 
@@ -171,7 +188,7 @@ Therefore, TFCE enabled a locally adaptive statistics and cluster size correctio
 
 Line 211 -212: SMA is a premotor area. Maybe include something like medial and lateral premotor areas?
 
-
+*changes done accordingly*
 
 Line 222: Please consider changing out 'critical role' for something less definite. Further, an alternative explanation could be that SMC reflects different patterns of movement, and nothing to do with a representation of the sequence.
 
